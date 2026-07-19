@@ -14,6 +14,7 @@ from typing import Protocol
 
 from .geometry import Direction, Position
 from .maze import Maze
+from .pathfinding import next_direction
 
 
 class GhostContext(Protocol):
@@ -193,8 +194,10 @@ class Ghost(Entity):
         #: Vitesses modulables par niveau (voir rules.LevelRules).
         self.frightened_speed = self.FRIGHTENED_SPEED
         self.eaten_speed = self.EATEN_SPEED
-        #: Case juste au-dessus de la porte. Renseignee par Game, qui connait le plan.
+        #: Case juste au-dessus de la porte, et case de regeneration dans la maison.
+        #: Renseignees par Game, qui seul connait le plan du niveau.
         self.house_exit: Position | None = None
+        self.home_target: Position | None = None
         # Generateur pseudo-aleatoire propre au fantome, sement par son nom. En mode
         # effraye le choix doit paraitre erratique tout en restant reproductible :
         # deux parties identiques doivent se derouler a l'identique.
@@ -251,7 +254,8 @@ class Ghost(Entity):
         if self.mode is GhostMode.LEAVING:
             return self.house_exit or self.start
         if self.mode is GhostMode.EATEN:
-            return self.start
+            # Meme un fantome qui demarre dehors se reconstitue dans la maison.
+            return self.home_target or self.start
         if self.mode is GhostMode.SCATTER:
             return self.scatter_target
         if self.mode is GhostMode.CHASE:
@@ -270,6 +274,16 @@ class Ghost(Entity):
 
         if self.mode is GhostMode.HOUSE:
             return Direction.NONE
+
+        # Rentrer a la maison ou en sortir ne doit jamais echouer : sur ces deux
+        # trajets seulement, le fantome suit un vrai plus court chemin au lieu de
+        # la regle myope. Le greedy s'y bloquait dans les impasses de la maison.
+        if self.mode in (GhostMode.EATEN, GhostMode.LEAVING):
+            planned = next_direction(
+                maze, self.position, self.target_tile(context), through_door=True
+            )
+            if planned is not Direction.NONE:
+                return planned
 
         options = maze.neighbors(
             self.position,

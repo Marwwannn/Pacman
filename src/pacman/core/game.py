@@ -281,7 +281,7 @@ class Game:
 
     def _tick_ghosts(self) -> None:
         for ghost in self.ghosts:
-            if ghost.mode is GhostMode.EATEN and ghost.position == ghost.start:
+            if ghost.mode is GhostMode.EATEN and ghost.position == ghost.home_target:
                 # Les yeux sont rentres : le fantome se reconstitue et ressort.
                 ghost.set_mode(GhostMode.LEAVING, reverse=False)
                 continue
@@ -368,9 +368,11 @@ class Game:
         """Replace tout le monde au depart et relance l'alternance de modes."""
         self.pacman.reset()
         exit_tile = self._house_exit()
+        home_tile = self._house_center(exit_tile)
         for ghost in self.ghosts:
             ghost.reset()
             ghost.house_exit = exit_tile
+            ghost.home_target = home_tile
 
         self._frightened_timer = 0
         self._ghost_chain = 0
@@ -390,6 +392,14 @@ class Game:
             return self.maze.pacman_start
         door = min(self.maze.doors, key=lambda p: (p.y, p.x))
         return Position(door.x, door.y - 1)
+
+    def _house_center(self, exit_tile: Position) -> Position:
+        """Case de la maison ou les fantomes manges se reconstituent."""
+        if not self.maze.house:
+            return exit_tile
+        # La plus proche de la porte : les yeux n'ont pas a traverser toute la maison.
+        door = min(self.maze.doors, key=lambda p: (p.y, p.x))
+        return min(self.maze.house, key=lambda p: (p.manhattan(door), p.y, p.x))
 
     def _emit(self, type_: str, **payload) -> None:
         self.events.append(Event(type_, payload))
