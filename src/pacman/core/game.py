@@ -20,9 +20,9 @@ from .maze import Maze
 class GameState(Enum):
     """Etat global de la partie."""
 
-    READY = "ready"              # compte a rebours avant le depart
+    READY = "ready"  # compte a rebours avant le depart
     PLAYING = "playing"
-    DYING = "dying"              # Pac-Man vient d'etre attrape
+    DYING = "dying"  # Pac-Man vient d'etre attrape
     LEVEL_COMPLETE = "level_complete"
     GAME_OVER = "game_over"
     PAUSED = "paused"
@@ -76,6 +76,12 @@ class Game:
         self._dots_eaten = 0
         self._extra_life_at = rules.EXTRA_LIFE_SCORE
         self._paused_from = GameState.PLAYING
+
+        #: Fruit present sur le plateau, s'il y en a un.
+        self.fruit: Position | None = None
+        self.fruit_name: str = ""
+        self._fruit_timer = 0
+        self._fruits_spawned = 0
 
         self._apply_level_rules()
         self._place_entities()
@@ -146,6 +152,7 @@ class Game:
             return self.events
 
         self._tick_modes()
+        self._tick_fruit()
         self._tick_pacman()
 
         # Une collision peut survenir avant comme apres le pas des fantomes :
@@ -195,6 +202,7 @@ class Game:
         self.pellets = set(self.maze.pellets)
         self.power_pellets = set(self.maze.power_pellets)
         self._dots_eaten = 0
+        self._fruits_spawned = 0
         self._apply_level_rules()
         self._place_entities()
         self.state = GameState.READY
@@ -260,10 +268,44 @@ class Game:
 
     # ---------------------------------------------------------------- entites
 
+    def _tick_fruit(self) -> None:
+        """Fait expirer le fruit present. Il ne reste affiche qu'un temps limite."""
+        if self.fruit is None:
+            return
+        self._fruit_timer -= 1
+        if self._fruit_timer <= 0:
+            self.fruit = None
+            self._emit("fruit_gone")
+
+    def _maybe_spawn_fruit(self) -> None:
+        """Fait apparaitre un fruit aux paliers de pastilles du jeu d'origine."""
+        if self._fruits_spawned >= len(rules.FRUIT_DOT_TRIGGERS):
+            return
+        if self._dots_eaten < rules.FRUIT_DOT_TRIGGERS[self._fruits_spawned]:
+            return
+
+        self._fruits_spawned += 1
+        self.fruit = self.maze.fruit_start or self.maze.pacman_start
+        self.fruit_name, points = rules.fruit_for(self.level)
+        self._fruit_timer = rules.FRUIT_DURATION
+        self._emit(
+            "fruit_spawn",
+            x=self.fruit.x,
+            y=self.fruit.y,
+            name=self.fruit_name,
+            points=points,
+        )
+
     def _tick_pacman(self) -> None:
         if not self.pacman.update(self):
             return
         pos = self.pacman.position
+
+        if self.fruit is not None and pos == self.fruit:
+            _, points = rules.fruit_for(self.level)
+            self.fruit = None
+            self._add_score(points)
+            self._emit("fruit_eaten", name=self.fruit_name, points=points)
 
         if pos in self.pellets:
             self.pellets.discard(pos)
@@ -271,12 +313,14 @@ class Game:
             self._dots_eaten += 1
             self._emit("pellet", x=pos.x, y=pos.y)
             self._release_ghosts()
+            self._maybe_spawn_fruit()
         elif pos in self.power_pellets:
             self.power_pellets.discard(pos)
             self._add_score(rules.POINTS_POWER_PELLET)
             self._dots_eaten += 1
             self._emit("power_pellet", x=pos.x, y=pos.y)
             self._release_ghosts()
+            self._maybe_spawn_fruit()
             self._start_frightened()
 
     def _tick_ghosts(self) -> None:
@@ -378,6 +422,9 @@ class Game:
         self._ghost_chain = 0
         self._wave_index = 0
         self._wave_timer = self._rules.mode_waves[0] if self._rules.mode_waves else 0
+        # Un fruit non ramasse ne survit pas a la perte d'une vie.
+        self.fruit = None
+        self._fruit_timer = 0
 
         # Blinky commence toujours dehors : c'est lui qui met la pression d'entree.
         blinky = self._by_name.get("blinky")

@@ -157,12 +157,12 @@ class Pacman(Entity):
 class GhostMode(Enum):
     """Etat de comportement d'un fantome."""
 
-    HOUSE = "house"          # enferme dans la maison, attend son tour
-    LEAVING = "leaving"      # remonte vers la porte pour sortir
-    SCATTER = "scatter"      # rejoint son coin, ignore Pac-Man
-    CHASE = "chase"          # poursuit selon sa personnalite
+    HOUSE = "house"  # enferme dans la maison, attend son tour
+    LEAVING = "leaving"  # remonte vers la porte pour sortir
+    SCATTER = "scatter"  # rejoint son coin, ignore Pac-Man
+    CHASE = "chase"  # poursuit selon sa personnalite
     FRIGHTENED = "frightened"  # fuit, vulnerable
-    EATEN = "eaten"          # yeux seuls, retourne a la maison
+    EATEN = "eaten"  # yeux seuls, retourne a la maison
 
 
 class Ghost(Entity):
@@ -223,7 +223,11 @@ class Ghost(Entity):
         """Change de mode. Tout changement impose un demi-tour, comme dans l'original."""
         if mode is self.mode:
             return
-        if reverse and self.is_active and mode in (GhostMode.SCATTER, GhostMode.CHASE, GhostMode.FRIGHTENED):
+        if (
+            reverse
+            and self.is_active
+            and mode in (GhostMode.SCATTER, GhostMode.CHASE, GhostMode.FRIGHTENED)
+        ):
             self.pending_reverse = True
         self.mode = mode
 

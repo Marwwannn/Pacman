@@ -35,6 +35,9 @@ SPAWN_CHARS = {
     "C": "clyde",
 }
 
+#: Case ou apparaissent les fruits. Optionnelle : a defaut, ce sera le depart de Pac-Man.
+FRUIT_CHAR = "F"
+
 
 class MazeError(ValueError):
     """Fichier de labyrinthe invalide."""
@@ -51,6 +54,7 @@ class Maze:
     power_pellets: frozenset[Position]
     doors: frozenset[Position]
     house: frozenset[Position] = field(default_factory=frozenset)
+    fruit_start: Position | None = None
 
     # ------------------------------------------------------------------ dimensions
 
@@ -135,6 +139,7 @@ class Maze:
 
         rows: list[tuple[Tile, ...]] = []
         pacman_start: Position | None = None
+        fruit_start: Position | None = None
         ghost_starts: dict[str, Position] = {}
         pellets: set[Position] = set()
         power_pellets: set[Position] = set()
@@ -144,6 +149,10 @@ class Maze:
             row: list[Tile] = []
             for x, char in enumerate(line):
                 pos = Position(x, y)
+                if char == FRUIT_CHAR:
+                    fruit_start = pos
+                    row.append(Tile.EMPTY)
+                    continue
                 if char in SPAWN_CHARS:
                     name = SPAWN_CHARS[char]
                     if name == "pacman":
@@ -184,6 +193,7 @@ class Maze:
             power_pellets=frozenset(power_pellets),
             doors=frozenset(doors),
             house=frozenset(house),
+            fruit_start=fruit_start or pacman_start,
         )
 
     @classmethod

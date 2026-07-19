@@ -13,6 +13,7 @@ from ..core.entities import Ghost, Pacman
 from ..core.game import Event, Game
 from ..core.geometry import Direction
 from ..core.maze import Maze
+from ..core.rules import fruit_for
 
 
 class DirectionInput(BaseModel):
@@ -25,7 +26,9 @@ class DirectionInput(BaseModel):
             return Direction[self.direction.strip().upper()]
         except KeyError as exc:
             valides = ", ".join(d.name.lower() for d in Direction)
-            raise ValueError(f"direction inconnue : {self.direction!r} (attendu : {valides})") from exc
+            raise ValueError(
+                f"direction inconnue : {self.direction!r} (attendu : {valides})"
+            ) from exc
 
 
 class NewGameRequest(BaseModel):
@@ -106,6 +109,13 @@ class GhostModel(BaseModel):
         )
 
 
+class FruitModel(BaseModel):
+    x: int
+    y: int
+    name: str
+    points: int
+
+
 class EventModel(BaseModel):
     type: str
     payload: dict = {}
@@ -128,6 +138,8 @@ class GameStateModel(BaseModel):
     frightened: bool
     pacman: PacmanModel
     ghosts: list[GhostModel]
+    #: Fruit present sur le plateau, absent la plupart du temps.
+    fruit: FruitModel | None = None
     #: Pastilles restantes. Absentes par defaut : trop lourdes a envoyer a chaque
     #: image, le client les retire lui-meme au vu des evenements.
     pellets: list[tuple[int, int]] | None = None
@@ -154,6 +166,16 @@ class GameStateModel(BaseModel):
             frightened=game.frightened,
             pacman=PacmanModel.from_entity(game.pacman),
             ghosts=[GhostModel.from_entity(g) for g in game.ghosts],
+            fruit=(
+                FruitModel(
+                    x=game.fruit.x,
+                    y=game.fruit.y,
+                    name=game.fruit_name,
+                    points=fruit_for(game.level)[1],
+                )
+                if game.fruit is not None
+                else None
+            ),
             pellets=sorted((p.x, p.y) for p in game.pellets) if include_pellets else None,
             power_pellets=(
                 sorted((p.x, p.y) for p in game.power_pellets) if include_pellets else None

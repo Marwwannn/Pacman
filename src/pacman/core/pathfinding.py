@@ -152,7 +152,9 @@ def distance_map(
     return distances
 
 
-def _rebuild(came_from: dict[Position, Position], start: Position, goal: Position) -> list[Position]:
+def _rebuild(
+    came_from: dict[Position, Position], start: Position, goal: Position
+) -> list[Position]:
     path = [goal]
     while path[-1] != start:
         path.append(came_from[path[-1]])

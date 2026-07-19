@@ -39,6 +39,34 @@ LEVEL_END_DURATION = seconds(2)
 FRUIT_DURATION = seconds(9.5)
 
 
+# --------------------------------------------------------------------- fruits
+
+#: Nombre de pastilles mangees declenchant l'apparition d'un fruit.
+FRUIT_DOT_TRIGGERS = (70, 170)
+
+#: Fruit et points par niveau. Au-dela du dernier, le fruit le plus cher reste.
+FRUITS = (
+    ("cerise", 100),
+    ("fraise", 300),
+    ("orange", 500),
+    ("orange", 500),
+    ("pomme", 700),
+    ("pomme", 700),
+    ("melon", 1000),
+    ("melon", 1000),
+    ("galboss", 2000),
+    ("galboss", 2000),
+    ("cloche", 3000),
+    ("cloche", 3000),
+    ("cle", 5000),
+)
+
+
+def fruit_for(level: int) -> tuple[str, int]:
+    """Fruit du niveau `level` : nom et valeur en points."""
+    return FRUITS[min(max(1, level), len(FRUITS)) - 1]
+
+
 @dataclass(frozen=True, slots=True)
 class LevelRules:
     """Parametres dependant du niveau."""

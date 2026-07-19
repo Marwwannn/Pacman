@@ -15,7 +15,7 @@ from fastapi import (
     Depends,
     FastAPI,
     HTTPException,
-    Path,
+    Path as PathParam,
     Query,
     Request,
     WebSocket,
@@ -24,9 +24,13 @@ from fastapi import (
 )
 from fastapi.middleware.cors import CORSMiddleware
 
+import os
+from pathlib import Path
+
 from ..core.maze import MazeError
 from ..core.rules import TICKS_PER_SECOND
 from .realtime import Broadcaster
+from .scores import ScoreBoard, ScoreEntry, ScoreSubmission
 from .schemas import (
     DirectionInput,
     GameStateModel,
@@ -53,14 +57,21 @@ app.add_middleware(
 )
 
 app.state.sessions = SessionStore()
+# Emplacement du classement, surchargeable pour les tests et le deploiement.
+app.state.scores = ScoreBoard(Path(os.environ.get("PACMAN_SCORES", "data/scores.json")))
 
 
 def get_store(request: Request) -> SessionStore:
     return request.app.state.sessions
 
 
+def get_scores(request: Request) -> ScoreBoard:
+    return request.app.state.scores
+
+
 StoreDep = Annotated[SessionStore, Depends(get_store)]
-GameId = Annotated[str, Path(description="identifiant de la partie")]
+ScoresDep = Annotated[ScoreBoard, Depends(get_scores)]
+GameId = Annotated[str, PathParam(description="identifiant de la partie")]
 
 
 def get_session(store: SessionStore, game_id: str) -> GameSession:
@@ -86,7 +97,9 @@ async def health(store: StoreDep) -> dict:
 
 
 @app.get("/api/mazes/{name}", response_model=MazeModel, tags=["service"])
-async def read_maze(store: StoreDep, name: str = Path(description="nom du labyrinthe")) -> MazeModel:
+async def read_maze(
+    store: StoreDep, name: str = PathParam(description="nom du labyrinthe")
+) -> MazeModel:
     """Plan d'un labyrinthe, sans creer de partie."""
     try:
         return MazeModel.from_maze(store.maze(name), name)
@@ -103,7 +116,9 @@ async def read_maze(store: StoreDep, name: str = Path(description="nom du labyri
     status_code=status.HTTP_201_CREATED,
     tags=["parties"],
 )
-async def create_game(store: StoreDep, body: NewGameRequest = Body(default=NewGameRequest())) -> NewGameResponse:
+async def create_game(
+    store: StoreDep, body: NewGameRequest = Body(default=NewGameRequest())
+) -> NewGameResponse:
     """Cree une partie et renvoie le plan avec l'etat initial.
 
     Le plan n'est envoye qu'ici : il est immuable, le client le garde.
@@ -139,9 +154,7 @@ async def read_game(
     """Etat courant de la partie."""
     session = get_session(store, game_id)
     async with session.lock:
-        return GameStateModel.from_game(
-            session.game, session.id, include_pellets=include_pellets
-        )
+        return GameStateModel.from_game(session.game, session.id, include_pellets=include_pellets)
 
 
 @app.post("/api/games/{game_id}/tick", response_model=GameStateModel, tags=["parties"])
@@ -203,6 +216,26 @@ async def delete_game(store: StoreDep, game_id: GameId) -> None:
     """Abandonne la partie et libere sa memoire."""
     get_session(store, game_id)
     store.delete(game_id)
+
+
+# ===================================================================== scores
+
+
+@app.get("/api/scores", response_model=list[ScoreEntry], tags=["scores"])
+async def read_scores(scores: ScoresDep) -> list[ScoreEntry]:
+    """Meilleurs scores, du plus haut au plus bas."""
+    return scores.top()
+
+
+@app.post("/api/scores", tags=["scores"], status_code=status.HTTP_201_CREATED)
+async def submit_score(scores: ScoresDep, body: ScoreSubmission) -> dict:
+    """Propose un score au classement.
+
+    Le serveur ne peut pas verifier qu'un score a reellement ete realise : ce
+    classement est declaratif, comme sur une borne d'arcade.
+    """
+    entry, rank = scores.submit(body)
+    return {"entry": entry.model_dump(), "rank": rank, "ranked": rank is not None}
 
 
 # ===================================================================== temps reel

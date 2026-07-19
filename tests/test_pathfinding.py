@@ -24,8 +24,7 @@ class TestBfs:
         assert chemin[0] == Position(1, 1) and chemin[-1] == Position(26, 29)
         assert all(not classic_maze.is_wall(case) for case in chemin)
         assert all(
-            a.manhattan(b) == 1 or classic_maze.is_tunnel(a)
-            for a, b in zip(chemin, chemin[1:])
+            a.manhattan(b) == 1 or classic_maze.is_tunnel(a) for a, b in zip(chemin, chemin[1:])
         )
 
     def test_cible_inatteignable(self, classic_maze):

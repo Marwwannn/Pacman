@@ -107,7 +107,9 @@ class TestPartie:
         assert apres["x"] < avant["x"]
 
     def test_input_insensible_a_la_casse(self, client, game_id):
-        assert client.post(f"/api/games/{game_id}/input", json={"direction": "UP"}).status_code == 200
+        assert (
+            client.post(f"/api/games/{game_id}/input", json={"direction": "UP"}).status_code == 200
+        )
 
     def test_direction_invalide(self, client, game_id):
         reponse = client.post(f"/api/games/{game_id}/input", json={"direction": "diagonale"})
