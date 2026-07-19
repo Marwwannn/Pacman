@@ -37,6 +37,9 @@ class GameSession:
     lock: asyncio.Lock = field(default_factory=asyncio.Lock)
     #: Abonnes temps reel (voir le canal WebSocket).
     subscribers: set = field(default_factory=set)
+    #: Boucle de diffusion, creee au premier abonne. Type volontairement libre :
+    #: sessions.py ne doit rien savoir du transport.
+    broadcaster: object | None = None
 
     def touch(self, now: float) -> None:
         self.last_seen = now

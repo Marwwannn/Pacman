@@ -10,11 +10,23 @@ from __future__ import annotations
 import time
 from typing import Annotated
 
-from fastapi import Body, Depends, FastAPI, HTTPException, Path, Query, Request, status
+from fastapi import (
+    Body,
+    Depends,
+    FastAPI,
+    HTTPException,
+    Path,
+    Query,
+    Request,
+    WebSocket,
+    WebSocketDisconnect,
+    status,
+)
 from fastapi.middleware.cors import CORSMiddleware
 
 from ..core.maze import MazeError
 from ..core.rules import TICKS_PER_SECOND
+from .realtime import Broadcaster
 from .schemas import (
     DirectionInput,
     GameStateModel,
@@ -191,6 +203,87 @@ async def delete_game(store: StoreDep, game_id: GameId) -> None:
     """Abandonne la partie et libere sa memoire."""
     get_session(store, game_id)
     store.delete(game_id)
+
+
+# ===================================================================== temps reel
+
+
+@app.websocket("/ws/games/{game_id}")
+async def play(websocket: WebSocket, game_id: str) -> None:
+    """Canal temps reel d'une partie.
+
+    A la connexion, le client recoit le plan et l'etat complet, puis une image
+    par tick. Il envoie ses entrees sur le meme canal. La partie n'avance que
+    tant qu'au moins un client est connecte : personne ne regarde, rien ne
+    tourne.
+    """
+    store: SessionStore = websocket.app.state.sessions
+    try:
+        session = store.get(game_id)
+    except KeyError:
+        # 1008 : violation de regle applicative, la partie n'existe pas.
+        await websocket.close(code=1008, reason="partie inconnue")
+        return
+
+    await websocket.accept()
+    session.subscribers.add(websocket)
+    session.touch(time.monotonic())
+
+    if session.broadcaster is None:
+        session.broadcaster = Broadcaster(session)
+
+    try:
+        await websocket.send_json(
+            {
+                "type": "init",
+                "maze": MazeModel.from_maze(session.game.maze, session.maze_name).model_dump(),
+                "state": GameStateModel.from_game(
+                    session.game, session.id, include_pellets=True
+                ).model_dump(),
+            }
+        )
+        session.broadcaster.start()
+
+        while True:
+            message = await websocket.receive_json()
+            await _handle_client_message(session, websocket, message)
+
+    except WebSocketDisconnect:
+        pass
+    finally:
+        session.subscribers.discard(websocket)
+        session.touch(time.monotonic())
+        # Le dernier parti eteint la lumiere : plus d'abonne, plus de simulation.
+        if not session.subscribers and session.broadcaster is not None:
+            await session.broadcaster.stop()
+
+
+async def _handle_client_message(session: GameSession, websocket: WebSocket, message: dict) -> None:
+    """Traite une commande recue du client. Une commande invalide n'interrompt pas la partie."""
+    action = (message or {}).get("action")
+
+    if action == "input":
+        try:
+            direction = DirectionInput(direction=message.get("direction", "none")).to_direction()
+        except ValueError as exc:
+            await websocket.send_json({"type": "error", "message": str(exc)})
+            return
+        async with session.lock:
+            session.set_direction(direction)
+
+    elif action == "pause":
+        async with session.lock:
+            session.game.pause()
+
+    elif action == "resume":
+        async with session.lock:
+            session.game.resume()
+
+    elif action == "ping":
+        await websocket.send_json({"type": "pong"})
+
+    else:
+        await websocket.send_json({"type": "error", "message": f"action inconnue : {action!r}"})
 
 
 def main() -> None:  # pragma: no cover - point d'entree
