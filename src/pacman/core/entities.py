@@ -42,6 +42,8 @@ class Entity(ABC):
         self.name = name
         self.start = start
         self.position = start
+        #: Case occupee avant le dernier pas, pour detecter deux entites qui se croisent.
+        self.previous_position = start
         self.direction = Direction.NONE
         self.base_speed = speed
         self._progress = 0.0
@@ -91,12 +93,14 @@ class Entity(ABC):
             return False
 
         self.direction = direction
+        self.previous_position = self.position
         self.position = target
         return True
 
     def reset(self) -> None:
         """Replace l'entite a son point de depart."""
         self.position = self.start
+        self.previous_position = self.start
         self.direction = Direction.NONE
         self._progress = 0.0
 
@@ -186,6 +190,20 @@ class Ghost(Entity):
         self.scatter_target = scatter_target
         self.mode = GhostMode.HOUSE
         self.pending_reverse = False
+        #: Vitesses modulables par niveau (voir rules.LevelRules).
+        self.frightened_speed = self.FRIGHTENED_SPEED
+        self.eaten_speed = self.EATEN_SPEED
+        #: Case juste au-dessus de la porte. Renseignee par Game, qui connait le plan.
+        self.house_exit: Position | None = None
+        # Generateur pseudo-aleatoire propre au fantome, sement par son nom. En mode
+        # effraye le choix doit paraitre erratique tout en restant reproductible :
+        # deux parties identiques doivent se derouler a l'identique.
+        self._rng_state = sum(ord(c) * (i + 1) for i, c in enumerate(name)) or 1
+
+    def _next_random(self, modulo: int) -> int:
+        """Generateur congruentiel lineaire minimal, suffisant pour un choix de couloir."""
+        self._rng_state = (1103515245 * self._rng_state + 12345) % (1 << 31)
+        return (self._rng_state >> 16) % modulo
 
     # ------------------------------------------------------------------ etat
 
@@ -211,9 +229,9 @@ class Ghost(Entity):
     @property
     def speed(self) -> float:
         if self.mode is GhostMode.EATEN:
-            return self.EATEN_SPEED
+            return self.eaten_speed
         if self.mode is GhostMode.FRIGHTENED:
-            return self.FRIGHTENED_SPEED
+            return self.frightened_speed
         return self.base_speed
 
     def effective_speed(self, maze: Maze) -> float:
@@ -230,6 +248,8 @@ class Ghost(Entity):
 
     def target_tile(self, context: GhostContext) -> Position:
         """Case visee selon le mode courant."""
+        if self.mode is GhostMode.LEAVING:
+            return self.house_exit or self.start
         if self.mode is GhostMode.EATEN:
             return self.start
         if self.mode is GhostMode.SCATTER:
@@ -273,6 +293,11 @@ class Ghost(Entity):
 
         if len(forward) == 1:
             return forward[0][0]
+
+        # Un fantome effraye ne vise rien : il erre. Sans cela, tous prendraient
+        # la meme direction et resteraient groupes.
+        if self.mode is GhostMode.FRIGHTENED:
+            return forward[self._next_random(len(forward))][0]
 
         target = self.target_tile(context)
         # `Direction.moves()` fixe l'ordre : a egalite, haut > gauche > bas > droite.
