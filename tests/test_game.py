@@ -202,6 +202,24 @@ class TestNiveaux:
     def test_plus_de_mode_effraye_aux_niveaux_extremes(self):
         assert rules.rules_for(30).frightened_duration == 0
 
+    def test_la_vitesse_reste_jouable(self):
+        """Le deplacement est discret : la cadence fixe la vitesse en cases/s.
+
+        La borne d'arcade tourne autour de 9 cases/s. Sans cette garde, une
+        cadence de 60 ticks/s ferait traverser le labyrinthe en une demi-seconde
+        et rendrait le jeu injouable des qu'un rendu graphique existe.
+        """
+        for niveau in (1, 5, 20):
+            cases_par_seconde = rules.rules_for(niveau).pacman_speed * rules.TICKS_PER_SECOND
+            assert 6 <= cases_par_seconde <= 14
+
+    def test_une_case_au_plus_par_tick(self):
+        """Au-dela de 1.0 case/tick, le moteur plafonne : les reglages ne doivent
+        pas promettre une vitesse que le deplacement discret ne peut pas tenir."""
+        reglages = rules.rules_for(256)
+        assert reglages.pacman_speed <= 1.0
+        assert reglages.ghost_speed <= 1.0
+
 
 class TestVagues:
     def test_alternance_scatter_chase(self, game):

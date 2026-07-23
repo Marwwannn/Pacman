@@ -9,7 +9,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 #: Cadence de simulation. Toutes les durees ci-dessous sont en ticks.
-TICKS_PER_SECOND = 60
+#:
+#: Le deplacement etant discret (une case au plus par tick, cf. `core.entities`),
+#: la cadence fixe aussi la vitesse du jeu : a `speed = 0.8`, Pac-Man parcourt
+#: `0.8 * TICKS_PER_SECOND` cases par seconde. La borne de 12 place le niveau 1
+#: a 9,6 cases/s, proche des ~9 cases/s de la borne d'arcade de 1980. Toutes les
+#: durees restent exprimees en secondes via `seconds()` : changer la cadence
+#: change la vitesse, jamais l'equilibrage temporel.
+TICKS_PER_SECOND = 12
 
 
 def seconds(value: float) -> int:
