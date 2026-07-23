@@ -10,12 +10,41 @@
  * quelque chose de dessinable. Toute la regle du jeu reste au back-end.
  */
 
-/** Duree d'interpolation par defaut, si l'on n'a pas encore mesure la cadence. */
-const INTERVALLE_DEFAUT = 1000 / 12;
+/** Intervalle entre deux images du serveur, avant premiere mesure. */
+const INTERVALLE_DEFAUT = 1000 / 60;
 
 /** Bornes de la cadence mesuree : au-dela, c'est une hesitation du reseau. */
-const INTERVALLE_MIN = 40;
+const INTERVALLE_MIN = 5;
 const INTERVALLE_MAX = 250;
+
+/** Duree d'un pas d'une case, avant d'avoir observe le rythme reel. */
+const DUREE_CASE_DEFAUT = 1000 / 9.6;
+
+/** Bornes du rythme des pas : du fantome mange au fantome ralenti en tunnel. */
+const PAS_MIN = 40;
+const PAS_MAX = 400;
+
+/** Au-dela, ce n'est plus du retard mais un replacement : on teleporte. */
+const ECART_TELEPORT = 1.5;
+
+/**
+ * Seuil de rattrapage, en cases. En dessous, le personnage avance a vitesse
+ * constante ; au-dela, il accelere a proportion de son retard.
+ *
+ * C'est le reglage qui arbitre entre fluidite et latence, et les deux
+ * s'opposent : rattraper vite rapproche le dessin de la verite du serveur,
+ * mais le personnage rejoint alors sa case avant le pas suivant et se fige en
+ * l'attendant. Mesure a 60 images/s, pour Pac-Man au niveau 1 :
+ *
+ *     seuil 0,3 -> 36 % d'images figees, 12 ms de retard
+ *     seuil 0,7 ->  4 % d'images figees, 36 ms de retard
+ *     seuil 1,2 ->  0 % d'images figees, 52 ms de retard
+ *
+ * Le retard se stabilise a une demi-case quoi qu'il arrive — c'est le prix
+ * d'un serveur qui ne dit que la case occupee, jamais la fraction parcourue.
+ * Autant le payer et avoir un mouvement parfaitement continu.
+ */
+const RETARD_VISE = 1.2;
 
 /** Duree d'affichage d'un gain de points. */
 const DUREE_POPUP = 900;
@@ -25,35 +54,73 @@ const SEUIL_CLIGNOTEMENT = 2000;
 
 const cle = (x, y) => `${x},${y}`;
 
+/**
+ * Un personnage, entre la case ou le serveur le place et le point ou on le
+ * dessine.
+ *
+ * L'avance se fait a vitesse constante, pas sur la duree d'une image du
+ * serveur. C'est la difference entre un mouvement fluide et un mouvement
+ * saccade : les pas du moteur sont irreguliers — une entite a 0,16 case par
+ * tick avance un tick sur six, jamais exactement le meme — alors qu'a l'oeil,
+ * un personnage se deplace a vitesse egale. On lisse donc sur le rythme moyen
+ * des pas, mesure en cours de partie plutot que suppose.
+ */
 class Mobile {
   constructor(x, y) {
-    this.from = { x, y };
+    this.pos = { x, y };
     this.to = { x, y };
-    this.t0 = 0;
-    this.duree = INTERVALLE_DEFAUT;
+    this.dureeParCase = DUREE_CASE_DEFAUT;
+    this._dernierPas = 0;
+    this._dernierRendu = 0;
   }
 
-  /** Vise une nouvelle case en partant de la position affichee a l'instant. */
-  viser(x, y, maintenant, duree) {
-    const actuelle = this.sample(maintenant);
-    this.from = actuelle;
-    this.to = { x, y };
-    this.t0 = maintenant;
-    this.duree = duree;
+  /** Position a dessiner. Pure : la lire ne fait pas avancer le personnage. */
+  get position() {
+    return { x: this.pos.x, y: this.pos.y };
+  }
 
-    // Passage par un tunnel : le personnage ressort a l'oppose du plateau.
-    // Interpoler le traverserait de part en part, on le teleporte donc.
-    if (Math.abs(this.to.x - this.from.x) > 1 || Math.abs(this.to.y - this.from.y) > 1) {
-      this.from = { ...this.to };
+  /** Enregistre la case ou le serveur place le personnage. */
+  viser(x, y, maintenant) {
+    if (x === this.to.x && y === this.to.y) return;
+
+    if (this._dernierPas) {
+      const ecart = maintenant - this._dernierPas;
+      if (ecart >= PAS_MIN && ecart <= PAS_MAX) {
+        this.dureeParCase = this.dureeParCase * 0.7 + ecart * 0.3;
+      }
+    }
+    this._dernierPas = maintenant;
+    this.to = { x, y };
+
+    // Passage par un tunnel, ou replacement apres une mort : le personnage
+    // reapparait loin. L'y faire glisser lui ferait traverser tout le plateau.
+    if (
+      Math.abs(x - this.pos.x) > ECART_TELEPORT ||
+      Math.abs(y - this.pos.y) > ECART_TELEPORT
+    ) {
+      this.pos = { x, y };
     }
   }
 
-  sample(maintenant) {
-    const avancement = Math.min(1, Math.max(0, (maintenant - this.t0) / this.duree));
-    return {
-      x: this.from.x + (this.to.x - this.from.x) * avancement,
-      y: this.from.y + (this.to.y - this.from.y) * avancement,
-    };
+  /** Rapproche la position dessinee de la case visee. Un appel par image. */
+  avancer(maintenant) {
+    // Onglet revenu au premier plan, ou image tres en retard : on borne le
+    // saut plutot que de projeter le personnage a travers un mur.
+    const dt = Math.min(100, Math.max(0, maintenant - this._dernierRendu));
+    this._dernierRendu = maintenant;
+
+    const reste = Math.abs(this.to.x - this.pos.x) + Math.abs(this.to.y - this.pos.y);
+    if (reste === 0) return;
+
+    // On accelere a proportion du retard, ce qui le stabilise autour de la
+    // valeur visee. A vitesse fixe, il s'accumulerait pas apres pas.
+    const pas = (dt / this.dureeParCase) * Math.max(1, reste / RETARD_VISE);
+
+    for (const axe of ["x", "y"]) {
+      const ecart = this.to[axe] - this.pos[axe];
+      if (Math.abs(ecart) <= pas) this.pos[axe] = this.to[axe];
+      else this.pos[axe] += Math.sign(ecart) * pas;
+    }
   }
 }
 
@@ -70,7 +137,7 @@ export class GameView {
     this.mortDepuis = 0;
     this.intervalle = INTERVALLE_DEFAUT;
     this.dernierMessage = 0;
-    this.tickRate = 12;
+    this.tickRate = 60;
     /** Evenements du dernier tick, a la disposition du son et du HUD. */
     this.derniersEvenements = [];
   }
@@ -96,15 +163,24 @@ export class GameView {
     this.etat = message;
     this.derniersEvenements = message.events ?? [];
 
-    this.pacman.viser(message.pacman.x, message.pacman.y, maintenant, this.intervalle);
+    this.pacman.viser(message.pacman.x, message.pacman.y, maintenant);
     for (const fantome of message.ghosts) {
       const mobile = this.ghosts.get(fantome.name);
-      if (mobile) mobile.viser(fantome.x, fantome.y, maintenant, this.intervalle);
+      if (mobile) mobile.viser(fantome.x, fantome.y, maintenant);
       else this.ghosts.set(fantome.name, new Mobile(fantome.x, fantome.y));
     }
 
     for (const evenement of this.derniersEvenements) this._appliquerEvenement(evenement, maintenant);
     this.popups = this.popups.filter((p) => maintenant - p.t0 < DUREE_POPUP);
+  }
+
+  /**
+   * Fait avancer tous les personnages d'une image.
+   * Un seul appel par image, sinon ils avanceraient deux fois plus vite.
+   */
+  avancer(maintenant) {
+    this.pacman?.avancer(maintenant);
+    for (const mobile of this.ghosts.values()) mobile.avancer(maintenant);
   }
 
   /** La cadence reelle se mesure : elle depend de la charge du serveur. */
@@ -114,6 +190,10 @@ export class GameView {
     if (ecart >= INTERVALLE_MIN && ecart <= INTERVALLE_MAX) {
       // Moyenne glissante : une image en retard ne doit pas tout desequilibrer.
       this.intervalle = this.intervalle * 0.8 + ecart * 0.2;
+      // Le serveur envoie une image par tick : sa cadence se deduit de la
+      // notre. C'est ce qui permet de convertir en secondes les durees qu'il
+      // exprime en ticks, sans coder en dur une valeur qu'il peut changer.
+      this.tickRate = 1000 / this.intervalle;
     }
   }
 
@@ -132,10 +212,9 @@ export class GameView {
       this.frightenedJusqua = 0;
     } else if (type === "ghost_eaten") {
       const mobile = this.ghosts.get(payload.ghost);
-      const ou = mobile ? mobile.sample(maintenant) : { x: 14, y: 17 };
-      this._popup(payload.points, ou, maintenant, "#00ffff");
+      this._popup(payload.points, mobile?.position ?? { x: 14, y: 17 }, maintenant, "#00ffff");
     } else if (type === "fruit_eaten") {
-      this._popup(payload.points, this.pacman.sample(maintenant), maintenant, "#ffb8ff");
+      this._popup(payload.points, this.pacman.position, maintenant, "#ffb8ff");
     } else if (type === "pacman_died") {
       this.mortDepuis = maintenant;
     } else if (type === "level_start" || type === "round_start") {

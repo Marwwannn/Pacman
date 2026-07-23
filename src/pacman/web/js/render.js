@@ -54,6 +54,10 @@ export class Renderer {
     const { ctx, view } = this;
     if (!this.decor || !view.etat) return;
 
+    // Les personnages avancent une fois par image, avant d'etre dessines :
+    // c'est ici, et nulle part ailleurs, que le temps s'ecoule pour eux.
+    view.avancer(maintenant);
+
     ctx.clearRect(0, 0, this.largeur, this.hauteur);
     ctx.drawImage(this.decor, 0, 0);
 
@@ -96,7 +100,7 @@ export class Renderer {
       const frange = Math.floor(maintenant / 150) % 2;
       const clignote = view.clignotement(maintenant);
       for (const fantome of etat.ghosts) {
-        const position = view.ghosts.get(fantome.name)?.sample(maintenant);
+        const position = view.ghosts.get(fantome.name)?.position;
         if (!position) continue;
         drawGhost(ctx, centre(position.x), centre(position.y), {
           couleur: fantome.color,
@@ -109,7 +113,7 @@ export class Renderer {
       }
     }
 
-    const position = view.pacman.sample(maintenant);
+    const position = view.pacman.position;
     if (mourant) {
       drawPacmanDeath(ctx, centre(position.x), centre(position.y), view.progressionMort(maintenant));
       return;
