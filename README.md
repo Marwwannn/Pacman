@@ -65,8 +65,8 @@ Documentation interactive de l'API : http://127.0.0.1:8000/docs
 ## Tests
 
 ```bash
-pytest                                  # 160 tests
-pytest --cov=pacman --cov-report=term   # 97 % de couverture
+pytest                                  # 175 tests
+pytest --cov=pacman --cov-report=term   # 98 % de couverture
 ruff check src tests
 ```
 
