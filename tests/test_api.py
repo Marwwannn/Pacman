@@ -37,6 +37,36 @@ class TestService:
         assert client.get("/api/mazes/nexiste-pas").status_code == 404
 
 
+class TestNomDeLabyrinthe:
+    """Le nom vient de l'exterieur : il ne doit jamais devenir un chemin.
+
+    Sans garde, `../mazes/classic` chargeait bien le plan — donc n'importe quel
+    fichier .txt du disque, dont le parseur recrachait le contenu caractere par
+    caractere dans ses messages d'erreur.
+    """
+
+    @pytest.mark.parametrize(
+        "nom",
+        ["../mazes/classic", "../../pacman/mazes/classic", "..", "classic/../classic", "a/b"],
+    )
+    def test_un_chemin_est_refuse(self, client, nom):
+        reponse = client.post("/api/games", json={"maze": nom})
+        assert reponse.status_code == 404
+        assert "invalide" in reponse.json()["detail"]
+
+    def test_le_nom_normal_marche_toujours(self, client):
+        assert client.post("/api/games", json={"maze": "classic"}).status_code == 201
+
+
+class TestOrigines:
+    def test_aucune_origine_tierce_par_defaut(self, client):
+        """Le client etant servi par ce serveur, aucune page externe n'a a l'appeler."""
+        reponse = client.post(
+            "/api/games", json={}, headers={"Origin": "https://site-tiers.example"}
+        )
+        assert "access-control-allow-origin" not in reponse.headers
+
+
 class TestFront:
     """Le client de jeu est servi par le meme serveur que l'API."""
 

@@ -103,6 +103,23 @@ class TestCommandes:
             erreur = lire_jusqua(ws, lambda m: m["type"] == "error")
             assert "action inconnue" in erreur["message"]
 
+    def test_message_illisible_ne_coupe_pas_la_partie(self, client, game_id):
+        """Un octet mal transmis ne doit pas faire perdre la partie en cours."""
+        with client.websocket_connect(f"/ws/games/{game_id}") as ws:
+            ws.receive_json()
+            ws.send_text("pas du json")
+            erreur = lire_jusqua(ws, lambda m: m["type"] == "error")
+            assert "illisible" in erreur["message"]
+            assert lire_jusqua(ws, lambda m: m["type"] == "state")
+
+    def test_commande_qui_nest_pas_un_objet(self, client, game_id):
+        with client.websocket_connect(f"/ws/games/{game_id}") as ws:
+            ws.receive_json()
+            ws.send_json([1, 2, 3])
+            erreur = lire_jusqua(ws, lambda m: m["type"] == "error")
+            assert "objet" in erreur["message"]
+            assert lire_jusqua(ws, lambda m: m["type"] == "state")
+
     def test_ping_pong(self, client, game_id):
         with client.websocket_connect(f"/ws/games/{game_id}") as ws:
             ws.receive_json()

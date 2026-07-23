@@ -48,10 +48,20 @@ app = FastAPI(
     summary="Moteur de jeu Pac-Man expose en REST et WebSocket",
 )
 
-# Le front est servi depuis une autre origine en developpement.
+# Le client de jeu etant servi par ce meme serveur, aucune origine tierce n'a
+# besoin d'appeler l'API : la liste est vide par defaut. Une origine ouverte
+# laisserait n'importe quelle page du web piloter le serveur local du joueur —
+# creer des parties jusqu'a la limite, ou remplir le classement.
+# PACMAN_ALLOWED_ORIGINS rouvre la porte pour un front servi a part.
+ALLOWED_ORIGINS = [
+    origine.strip()
+    for origine in os.environ.get("PACMAN_ALLOWED_ORIGINS", "").split(",")
+    if origine.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -279,7 +289,13 @@ async def play(websocket: WebSocket, game_id: str) -> None:
         session.broadcaster.start()
 
         while True:
-            message = await websocket.receive_json()
+            # Un message illisible ne doit pas couper la partie : le joueur
+            # perdrait tout parce qu'un octet s'est mal transmis.
+            try:
+                message = await websocket.receive_json()
+            except (ValueError, TypeError):
+                await websocket.send_json({"type": "error", "message": "message illisible"})
+                continue
             await _handle_client_message(session, websocket, message)
 
     except WebSocketDisconnect:
@@ -294,7 +310,12 @@ async def play(websocket: WebSocket, game_id: str) -> None:
 
 async def _handle_client_message(session: GameSession, websocket: WebSocket, message: dict) -> None:
     """Traite une commande recue du client. Une commande invalide n'interrompt pas la partie."""
-    action = (message or {}).get("action")
+    if not isinstance(message, dict):
+        # Du JSON valide mais qui n'est pas un objet : une liste, un nombre.
+        await websocket.send_json({"type": "error", "message": "commande attendue sous forme d'objet"})
+        return
+
+    action = message.get("action")
 
     if action == "input":
         try:

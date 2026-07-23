@@ -7,6 +7,7 @@ recharger le fichier.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from enum import Enum
 from importlib import resources
@@ -37,6 +38,11 @@ SPAWN_CHARS = {
 
 #: Case ou apparaissent les fruits. Optionnelle : a defaut, ce sera le depart de Pac-Man.
 FRUIT_CHAR = "F"
+
+
+#: Noms de labyrinthe acceptes par `Maze.load`. Volontairement etroit : ni
+#: separateur de chemin, ni point, donc aucune sortie du dossier possible.
+NAME_PATTERN = re.compile(r"\A[a-z0-9][a-z0-9_-]{0,31}\Z")
 
 
 class MazeError(ValueError):
@@ -202,7 +208,15 @@ class Maze:
 
     @classmethod
     def load(cls, name: str = "classic") -> Maze:
-        """Charge un labyrinthe livre avec le paquet (`src/pacman/mazes/`)."""
+        """Charge un labyrinthe livre avec le paquet (`src/pacman/mazes/`).
+
+        `name` designe un fichier du paquet, jamais un chemin. Le nom vient de
+        l'exterieur (corps de requete, parametre d'URL) : sans cette garde,
+        `../../secret` sortirait du dossier et le parseur renverrait le contenu
+        du fichier, caractere par caractere, dans ses messages d'erreur.
+        """
+        if not NAME_PATTERN.match(name):
+            raise MazeError(f"nom de labyrinthe invalide : {name!r}")
         try:
             source = resources.files("pacman.mazes").joinpath(f"{name}.txt")
             return cls.from_text(source.read_text(encoding="utf-8"))
