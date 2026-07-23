@@ -88,7 +88,7 @@ ruff check src tests
 
 ### WebSocket
 
-`ws://host/ws/games/{id}` — le serveur fait tourner la partie à 12 ticks/s et
+`ws://host/ws/games/{id}` — le serveur fait tourner la partie à 60 ticks/s et
 diffuse une image par tick.
 
 À la connexion, le client reçoit un message `init` avec le plan et l'état
@@ -108,8 +108,14 @@ Commandes du client :
 Une seule boucle de simulation par partie : ouvrir un second onglet ne fait pas
 jouer la partie deux fois plus vite. Sans aucun abonné, plus rien ne tourne.
 
-Le client, lui, affiche à la fréquence de l'écran et interpole entre deux
-images du serveur : sans cela le jeu avancerait par bonds d'une case entière.
+Le client affiche à la fréquence de l'écran et avance à vitesse constante
+vers la case que le serveur lui donne. Le moteur, lui, progresse par paliers
+irréguliers — une entité à 0,16 case par tick n'avance qu'un tick sur six.
+Sans ce lissage, l'œil voit chaque palier.
+
+La cadence ne fixe pas la vitesse : `SPEED_UNIT` traduit les vitesses,
+exprimées en fraction de `TILES_PER_SECOND`, vers des cases par tick. Monter
+la cadence affine le mouvement sans accélérer le jeu.
 
 ### Événements
 
