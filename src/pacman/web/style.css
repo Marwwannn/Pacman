@@ -1,0 +1,201 @@
+/* Habillage du client. Le jeu lui-meme est peint dans le canvas : ici on ne
+   fait que la borne autour, le HUD et les messages. */
+
+:root {
+  --jaune: #ffcc00;
+  --bleu: #2121de;
+  --texte: #f4f4f4;
+  --fond: #05050a;
+  --tuile: 16px; /* taille logique d'une case, cf. render.js */
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: radial-gradient(circle at 50% 0%, #12122a 0%, var(--fond) 70%);
+  color: var(--texte);
+  font-family: "Segoe UI", system-ui, sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  overscroll-behavior: none;
+}
+
+.cabinet {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: min(100%, 560px);
+}
+
+/* ------------------------------------------------------------------ HUD */
+
+.hud,
+.tray {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.hud-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.hud-block:last-child {
+  align-items: flex-end;
+}
+
+.hud-label {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #8a8ab0;
+}
+
+.hud-value {
+  font-family: ui-monospace, "Cascadia Mono", monospace;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+#score {
+  color: var(--jaune);
+}
+
+/* ------------------------------------------------------------ plateau */
+
+.stage {
+  position: relative;
+  border: 2px solid #1b1b3a;
+  border-radius: 10px;
+  background: #000;
+  overflow: hidden;
+  /* Le canvas garde le ratio du labyrinthe : 28 x 31 cases. */
+  aspect-ratio: 28 / 31;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  touch-action: none;
+}
+
+/* --------------------------------------------------------- superposition */
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px;
+  text-align: center;
+  background: rgba(3, 3, 12, 0.78);
+  backdrop-filter: blur(2px);
+}
+
+.overlay[hidden] {
+  display: none;
+}
+
+.overlay-title {
+  margin: 0;
+  font-size: clamp(22px, 6vw, 34px);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--jaune);
+}
+
+.overlay-text {
+  margin: 0;
+  max-width: 32ch;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #c9c9e4;
+}
+
+.overlay-text b {
+  color: var(--texte);
+}
+
+/* --------------------------------------------------------------- bandeau */
+
+.lives {
+  display: flex;
+  gap: 6px;
+  min-height: 18px;
+}
+
+.life {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--jaune);
+  /* Bouche de Pac-Man, ouverte vers la droite. */
+  clip-path: polygon(100% 22%, 50% 50%, 100% 78%, 100% 100%, 0 100%, 0 0, 100% 0);
+}
+
+.status {
+  margin: 0;
+  font-size: 12px;
+  color: #8a8ab0;
+  text-align: right;
+}
+
+.status.erreur {
+  color: #ff6b6b;
+}
+
+/* ------------------------------------------------------------- classement */
+
+.scores {
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 4px;
+  font-family: ui-monospace, "Cascadia Mono", monospace;
+  font-size: 13px;
+  min-width: 220px;
+}
+
+.scores li {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  color: #c9c9e4;
+}
+
+.scores li.moi {
+  color: var(--jaune);
+}
+
+.touche {
+  display: inline-block;
+  padding: 1px 6px;
+  border: 1px solid #4a4a72;
+  border-radius: 4px;
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  color: var(--texte);
+}
