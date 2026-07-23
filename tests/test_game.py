@@ -220,6 +220,29 @@ class TestNiveaux:
         assert reglages.pacman_speed <= 1.0
         assert reglages.ghost_speed <= 1.0
 
+    def test_la_cadence_ne_dicte_pas_la_vitesse(self):
+        """Monter la cadence doit affiner le mouvement, jamais accelerer le jeu.
+
+        Les deux ont ete le meme reglage : `pacman_speed` valant directement des
+        cases par tick, doubler la cadence doublait la vitesse. `SPEED_UNIT` les
+        separe, et c'est cette separation que le test protege.
+        """
+        cases_par_seconde = rules.rules_for(1).pacman_speed * rules.TICKS_PER_SECOND
+        assert cases_par_seconde == pytest.approx(0.8 * rules.TILES_PER_SECOND)
+
+    def test_le_pas_est_assez_fin_pour_paraitre_fluide(self):
+        """Un pas proche d'une case par tick se voit.
+
+        L'entite accumule sa vitesse et n'avance que lorsque l'accumulateur
+        passe 1 : a 0,8 case/tick elle saute un tick sur cinq, et la pause est
+        cinq fois plus longue que le pas — l'oeil lit une saccade. En dessous
+        d'un tiers de case par tick, l'irregularite se noie dans le mouvement.
+        """
+        for niveau in (1, 10, 256):
+            reglages = rules.rules_for(niveau)
+            assert reglages.pacman_speed <= 1 / 3
+            assert reglages.ghost_speed <= 1 / 3
+
 
 class TestVagues:
     def test_alternance_scatter_chase(self, game):

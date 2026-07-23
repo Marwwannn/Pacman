@@ -15,6 +15,7 @@ from typing import Protocol
 from .geometry import Direction, Position
 from .maze import Maze
 from .pathfinding import next_direction
+from .rules import SPEED_UNIT
 
 
 class GhostContext(Protocol):
@@ -117,7 +118,7 @@ class Pacman(Entity):
     agreable plutot que frustrant.
     """
 
-    BASE_SPEED = 0.8
+    BASE_SPEED = 0.8 * SPEED_UNIT
 
     def __init__(self, start: Position, speed: float = BASE_SPEED) -> None:
         super().__init__("pacman", start, speed)
@@ -175,10 +176,12 @@ class Ghost(Entity):
     battables. Le demi-tour n'est autorise que lors d'un changement de mode.
     """
 
-    BASE_SPEED = 0.75
-    FRIGHTENED_SPEED = 0.5
-    EATEN_SPEED = 1.5
-    TUNNEL_SPEED = 0.4
+    BASE_SPEED = 0.75 * SPEED_UNIT
+    FRIGHTENED_SPEED = 0.5 * SPEED_UNIT
+    #: Les yeux rentrent vite : c'est le seul moment ou une entite depasse la
+    #: vitesse de reference. Le plafond d'une case par tick ne les bride plus.
+    EATEN_SPEED = 1.5 * SPEED_UNIT
+    TUNNEL_SPEED = 0.4 * SPEED_UNIT
 
     def __init__(
         self,

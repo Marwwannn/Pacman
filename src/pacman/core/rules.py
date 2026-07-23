@@ -10,13 +10,23 @@ from dataclasses import dataclass
 
 #: Cadence de simulation. Toutes les durees ci-dessous sont en ticks.
 #:
-#: Le deplacement etant discret (une case au plus par tick, cf. `core.entities`),
-#: la cadence fixe aussi la vitesse du jeu : a `speed = 0.8`, Pac-Man parcourt
-#: `0.8 * TICKS_PER_SECOND` cases par seconde. La borne de 12 place le niveau 1
-#: a 9,6 cases/s, proche des ~9 cases/s de la borne d'arcade de 1980. Toutes les
-#: durees restent exprimees en secondes via `seconds()` : changer la cadence
-#: change la vitesse, jamais l'equilibrage temporel.
-TICKS_PER_SECOND = 12
+#: Elle fixe la finesse du jeu, pas sa vitesse : les deux sont separees par
+#: `SPEED_UNIT` ci-dessous. Plus elle est haute, plus les pas sont reguliers
+#: dans le temps et plus le mouvement parait fluide a l'ecran.
+TICKS_PER_SECOND = 60
+
+#: Vitesse de reference, en cases par seconde, pour une entite a 100 %.
+#: C'est le seul reglage a toucher pour rendre le jeu plus vif ou plus mou.
+TILES_PER_SECOND = 12.0
+
+#: Conversion d'une vitesse exprimee en fraction de la vitesse de reference
+#: vers le nombre de cases par tick attendu par le moteur.
+#:
+#: Sans cette separation, la cadence et la vitesse etaient le meme reglage :
+#: monter la cadence accelerait le jeu, la baisser rendait le mouvement
+#: saccade — a 12 ticks/s, une entite a 0,8 case/tick saute un tick sur cinq,
+#: et l'oeil voit la pause.
+SPEED_UNIT = TILES_PER_SECOND / TICKS_PER_SECOND
 
 
 def seconds(value: float) -> int:
@@ -115,10 +125,13 @@ def rules_for(level: int) -> LevelRules:
     else:
         waves = WAVES_LATE
 
-    # Vitesses : progression douce, plafonnee pour rester jouable.
-    pacman_speed = min(0.9, 0.8 + 0.01 * (level - 1))
-    ghost_speed = min(0.95, 0.75 + 0.02 * (level - 1))
-    frightened_speed = min(0.6, 0.5 + 0.01 * (level - 1))
+    # Vitesses : progression douce, plafonnee pour rester jouable. Les
+    # fractions se lisent comme dans la documentation d'origine — 0,8 veut
+    # dire « 80 % de la vitesse de reference » — et `SPEED_UNIT` les traduit
+    # en cases par tick.
+    pacman_speed = min(0.9, 0.8 + 0.01 * (level - 1)) * SPEED_UNIT
+    ghost_speed = min(0.95, 0.75 + 0.02 * (level - 1)) * SPEED_UNIT
+    frightened_speed = min(0.6, 0.5 + 0.01 * (level - 1)) * SPEED_UNIT
 
     # La vulnerabilite passe de 6 s a 0 : au-dela du niveau 19, les super-pastilles
     # ne font plus qu'inverser le sens des fantomes.
