@@ -28,7 +28,7 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 
 [tool.setuptools.package-data]
-pacman = ["mazes/*.txt"]
+pacman = ["mazes/*.txt", "web/*.html", "web/*.css", "web/js/*.js"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

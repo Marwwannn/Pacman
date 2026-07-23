@@ -23,6 +23,7 @@ from fastapi import (
     status,
 )
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 import os
 from pathlib import Path
@@ -317,6 +318,17 @@ async def _handle_client_message(session: GameSession, websocket: WebSocket, mes
 
     else:
         await websocket.send_json({"type": "error", "message": f"action inconnue : {action!r}"})
+
+
+# ===================================================================== front
+
+#: Client de jeu. Monte en dernier, sur la racine : Starlette essaie les routes
+#: dans l'ordre de declaration, l'API et le WebSocket passent donc avant. Le
+#: front est servi par le meme serveur pour eviter au joueur d'en lancer deux.
+WEB_ROOT = Path(__file__).resolve().parent.parent / "web"
+
+if WEB_ROOT.is_dir():  # pragma: no branch - toujours present dans le paquet
+    app.mount("/", StaticFiles(directory=WEB_ROOT, html=True), name="web")
 
 
 def main() -> None:  # pragma: no cover - point d'entree

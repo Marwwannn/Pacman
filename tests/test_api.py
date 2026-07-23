@@ -37,6 +37,22 @@ class TestService:
         assert client.get("/api/mazes/nexiste-pas").status_code == 404
 
 
+class TestFront:
+    """Le client de jeu est servi par le meme serveur que l'API."""
+
+    def test_la_racine_sert_le_client(self, client):
+        reponse = client.get("/")
+        assert reponse.status_code == 200
+        assert reponse.headers["content-type"].startswith("text/html")
+        assert "<canvas" in reponse.text
+
+    def test_le_front_ne_masque_pas_lapi(self, client):
+        # Le montage statique est sur "/" : il doit passer apres les routes API.
+        assert client.get("/health").status_code == 200
+        assert client.get("/api/mazes/classic").status_code == 200
+        assert client.get("/docs").status_code == 200
+
+
 class TestCreation:
     def test_creation_renvoie_plan_et_etat(self, client):
         reponse = client.post("/api/games")

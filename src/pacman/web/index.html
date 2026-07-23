@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Pac-Man</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main class="cabinet">
+    <header class="hud">
+      <div class="hud-block">
+        <span class="hud-label">Score</span>
+        <span class="hud-value" id="score">0</span>
+      </div>
+      <div class="hud-block">
+        <span class="hud-label">Record</span>
+        <span class="hud-value" id="best">0</span>
+      </div>
+      <div class="hud-block">
+        <span class="hud-label">Niveau</span>
+        <span class="hud-value" id="level">1</span>
+      </div>
+    </header>
+
+    <div class="stage">
+      <canvas id="board" width="448" height="496"></canvas>
+      <div class="overlay" id="overlay" hidden>
+        <p class="overlay-title" id="overlay-title"></p>
+        <p class="overlay-text" id="overlay-text"></p>
+      </div>
+    </div>
+
+    <footer class="tray">
+      <div class="lives" id="lives" aria-label="vies restantes"></div>
+      <p class="status" id="status">Connexion…</p>
+    </footer>
+  </main>
+
+  <script type="module" src="/js/main.js"></script>
+</body>
+</html>
