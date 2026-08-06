@@ -18,7 +18,16 @@ src/pacman/
 │   ├── pathfinding.py BFS / A* sur la grille
 │   ├── rules.py       équilibrage : cadence, vitesses, points, progression
 │   └── game.py        boucle de jeu, score, vies, états
-├── ai/            # comportements des fantômes
+├── ai/            # comportements des fantômes (écrits à la main)
+├── rl/            # agent joueur par apprentissage par renforcement
+│   ├── metrics.py     distances réelles et topologie du labyrinthe
+│   ├── environment.py une décision par intersection, épisodes tirés d'une graine
+│   ├── rewards.py     barème d'apprentissage
+│   ├── features.py    12 descripteurs bornés d'un couple (état, action)
+│   ├── agents.py      aléatoire, heuristique, Q-learning approximé
+│   ├── training.py    boucle d'entraînement, ε et α décroissants
+│   ├── evaluation.py  protocole de mesure sur graines jamais vues
+│   └── cli.py         `pacman-rl`
 ├── api/           # FastAPI : REST, WebSocket, scores
 ├── mazes/         # labyrinthes au format texte
 └── web/           # client de jeu (HTML, CSS, modules ES)
@@ -163,6 +172,83 @@ Un nom de labyrinthe désigne un fichier livré avec le paquet, jamais un
 chemin : il vient de l'extérieur, et servir de chemin le rendrait capable de
 lire n'importe quel fichier du disque.
 
+## Agent joueur : apprentissage par renforcement
+
+`ai/` contient l'intelligence des **fantômes**, écrite à la main. `rl/`
+contient un **joueur** qui, lui, apprend. Le moteur n'a pas été conçu pour ça
+mais coche tout ce qu'un environnement d'apprentissage demande : déterministe,
+sans horloge, clonable, et rapide (177 000 ticks/s, environ 50 parties
+complètes par seconde en simulation).
+
+### Pourquoi le renforcement
+
+Le non-supervisé strict — clustering, autoencodeur — ne produit pas de
+politique. Il peut construire une **représentation** de l'état, jamais décider
+quoi faire. Or la tâche demandée est bien de décider. L'apprentissage se fait
+donc par renforcement, sur des descripteurs construits à la main à partir de
+la structure du labyrinthe.
+
+### Les deux décisions de conception
+
+**Une décision par intersection, pas par tick.** Sur les 300 cases praticables
+du labyrinthe classique, **34 seulement** offrent un vrai choix : 89 % du plan
+est un couloir où la direction est imposée. Décider à chaque tick produirait
+2 440 décisions sans conséquence par partie. L'environnement traverse donc les
+couloirs lui-même et ne rend la main qu'aux intersections — l'horizon tombe de
+~2 500 pas à ~100, sans rien perdre.
+
+**Le déterminisme du moteur est traité comme un piège.** Même labyrinthe,
+mêmes fantômes, même départ, générateurs jamais resemés : un agent y mémorise
+une suite de coups qui donne un score flatteur à l'entraînement et s'effondre
+au moindre changement. Chaque épisode part donc d'une graine qui décale le
+départ de Pac-Man et l'errance des fantômes, et **l'évaluation se fait sur une
+plage de graines disjointe** de celle de l'entraînement — la fonction
+`evaluate` refuse d'ailleurs les graines d'entraînement.
+
+### Récompenses
+
+Le barème pèse plus lourd sur le résultat que α et γ réunis :
+
+| Événement | Valeur | Pourquoi |
+|---|---|---|
+| Pastille | +10 | |
+| Super-pastille | +50 | |
+| Fantôme mangé | +200 à +1600 | chaîne du jeu d'origine |
+| Fruit | valeur du niveau | |
+| **Mort** | **−500** | doit dominer, sinon l'agent se suicide pour abréger |
+| **Pas de décision** | **−1** | sinon il tourne devant une super-pastille sans la manger |
+| Niveau terminé | +500 | |
+
+Le score brut du jeu n'est pas repris : la vie supplémentaire à 10 000 points
+y crée une marche que rien dans l'état ne permet de prédire.
+
+### Les trois agents
+
+Un score d'agent entraîné ne veut rien dire seul. Il faut un plancher et un
+plafond raisonnable, mesurés dans les mêmes conditions :
+
+- **aléatoire** — tire une direction au sort à chaque intersection ;
+- **heuristique** — règles écrites à la main : fuir, chasser les fantômes
+  effrayés, sinon aller à la pastille la plus proche ;
+- **Q approximé** — `Q(s,a) = w · f(s,a)` sur 12 descripteurs bornés dans
+  [0, 1]. Le tabulaire est exclu (2^244 configurations de pastilles pour les
+  seules pastilles), le réseau profond aussi (dix à cent fois plus d'épisodes
+  pour une boîte noire). Douze poids s'entraînent en quelques minutes **et se
+  lisent** : on voit ce que l'agent a retenu.
+
+### Utilisation
+
+```bash
+pacman-rl baselines --ghosts 1                      # plancher et plafond
+pacman-rl train --episodes 2500 --ghosts 1 --out weights_1ghost.json
+pacman-rl train --episodes 2500 --ghosts 4 \
+    --resume weights_1ghost.json --out weights_4ghosts.json   # curriculum
+pacman-rl compare --ghosts 4 --weights weights_4ghosts.json
+```
+
+`--fixed-start` existe mais est déconseillé : il rend toutes les parties
+identiques, donc mémorisables.
+
 ## Sécurité
 
 Le serveur est prévu pour tourner en local, mais les entrées venant du réseau
@@ -190,7 +276,11 @@ sont traitées comme telles :
 - [x] 10 — fruits, meilleurs scores, polish
 - [x] 11 — client web : rendu canvas, entrées, son, classement
 - [x] 12 — audit sécurité et durcissement des entrées
+- [x] 13 — agent joueur par renforcement : harnais, baselines, Q approximé
 
 Jeu complet et jouable. Pistes si le projet continue : niveaux
-supplémentaires, mode multijoueur, ou fantômes « chasseurs » exploitant
-`pathfinding` pour un mode difficile.
+supplémentaires, mode multijoueur, fantômes « chasseurs » exploitant
+`pathfinding` pour un mode difficile, ou une quatrième colonne au comparatif
+avec une recherche en ligne (MCTS / expectimax) — plus forte en score brut
+sans aucun entraînement, ce qui rend l'écart « appris vs recherche »
+intéressant à discuter.
