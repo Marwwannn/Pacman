@@ -64,14 +64,21 @@ def cmd_baselines(args: argparse.Namespace) -> int:
 def cmd_train(args: argparse.Namespace) -> int:
     config = _env_config(args)
     defaults = Hyper()
+
+    # Reprendre des poids appris puis explorer a 100 % rejetterait l'acquis
+    # pendant des centaines d'episodes : un curriculum demarre tiede.
+    epsilon = args.epsilon
+    if epsilon is None:
+        epsilon = 0.3 if args.resume else defaults.epsilon
+
     hyper = Hyper(
         alpha=args.alpha,
         # Le plancher ne doit jamais depasser la valeur de depart, sinon le
         # taux d'apprentissage monterait au lieu de descendre.
         alpha_final=min(args.alpha, defaults.alpha_final),
         gamma=args.gamma,
-        epsilon=args.epsilon,
-        epsilon_final=min(args.epsilon, defaults.epsilon_final),
+        epsilon=epsilon,
+        epsilon_final=min(epsilon, defaults.epsilon_final),
     )
 
     # Curriculum : on reprend les poids appris a un fantome pour continuer a
@@ -156,7 +163,12 @@ def build_parser() -> argparse.ArgumentParser:
     trainer.add_argument("--games", type=int, default=100, help="parties d'evaluation finale")
     trainer.add_argument("--alpha", type=float, default=Hyper().alpha)
     trainer.add_argument("--gamma", type=float, default=Hyper().gamma)
-    trainer.add_argument("--epsilon", type=float, default=Hyper().epsilon)
+    trainer.add_argument(
+        "--epsilon",
+        type=float,
+        default=None,
+        help="exploration de depart (defaut : 1,0, ou 0,3 avec --resume)",
+    )
     trainer.add_argument("--seed", type=int, default=0)
     trainer.add_argument("--log-every", type=int, default=100)
     trainer.add_argument("--resume", help="poids de depart (curriculum)")

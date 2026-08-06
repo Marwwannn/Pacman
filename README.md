@@ -249,6 +249,10 @@ pacman-rl compare --ghosts 4 --weights weights_4ghosts.json
 `--fixed-start` existe mais est déconseillé : il rend toutes les parties
 identiques, donc mémorisables.
 
+La commande `pacman-rl` vient de `pyproject.toml` : sans installation du
+paquet, `python -m pacman.rl.cli …` (avec `src` dans le `PYTHONPATH`) fait
+exactement la même chose.
+
 ## Sécurité
 
 Le serveur est prévu pour tourner en local, mais les entrées venant du réseau

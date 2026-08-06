@@ -428,3 +428,48 @@ class TestEntrainement:
         appris = evaluate(agent, games=12, config=config)
         hasard = evaluate(RandomAgent(seed=1), games=12, config=config)
         assert appris.score_median > hasard.score_median
+
+
+class TestLigneDeCommande:
+    """La CLI est le chemin par lequel le projet sera relance : elle se teste."""
+
+    def test_baselines_sort_les_deux_bornes(self, capsys):
+        from pacman.rl.cli import main
+
+        assert main(["baselines", "--ghosts", "1", "--games", "2", "--json"]) == 0
+        rapports = json.loads(capsys.readouterr().out)
+        assert [item["agent"] for item in rapports] == ["aleatoire", "heuristique"]
+
+    def test_un_entrainement_ecrit_ses_poids(self, tmp_path, capsys):
+        from pacman.rl.cli import main
+
+        chemin = tmp_path / "poids.json"
+        code = main(
+            [
+                "train",
+                "--episodes", "8",
+                "--games", "2",
+                "--ghosts", "1",
+                "--log-every", "0",
+                "--json",
+                "--out", str(chemin),
+            ]
+        )
+        capsys.readouterr()
+        assert code == 0
+        assert set(json.loads(chemin.read_text(encoding="utf-8"))["weights"]) == set(FEATURE_NAMES)
+
+    def test_reprendre_des_poids_demarre_tiede(self, tmp_path):
+        from pacman.rl.cli import build_parser
+
+        parser = build_parser()
+        # Sans --resume l'exploration part de 1,0 ; avec, elle doit partir plus
+        # bas, sinon les centaines de premiers episodes jettent l'acquis.
+        assert parser.parse_args(["train"]).epsilon is None
+        assert parser.parse_args(["train", "--resume", str(tmp_path)]).resume == str(tmp_path)
+
+    def test_comparer_sans_poids_ne_compare_que_les_bornes(self, capsys):
+        from pacman.rl.cli import main
+
+        assert main(["compare", "--ghosts", "1", "--games", "2", "--json"]) == 0
+        assert len(json.loads(capsys.readouterr().out)) == 2
