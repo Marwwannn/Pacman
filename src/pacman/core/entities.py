@@ -206,6 +206,17 @@ class Ghost(Entity):
         # deux parties identiques doivent se derouler a l'identique.
         self._rng_state = sum(ord(c) * (i + 1) for i, c in enumerate(name)) or 1
 
+    def seed_rng(self, value: int) -> None:
+        """Reseme le generateur d'errance du mode effraye.
+
+        Le moteur est deterministe de bout en bout, ce qui est indispensable
+        pour les tests mais devient un piege pour l'apprentissage : sans
+        resemer, chaque partie rejoue exactement la meme sequence et un agent
+        peut la memoriser au lieu d'apprendre une politique. `rl/` s'en sert
+        pour varier les parties tout en gardant chacune reproductible.
+        """
+        self._rng_state = (abs(int(value)) % ((1 << 31) - 1)) or 1
+
     def _next_random(self, modulo: int) -> int:
         """Generateur congruentiel lineaire minimal, suffisant pour un choix de couloir."""
         self._rng_state = (1103515245 * self._rng_state + 12345) % (1 << 31)

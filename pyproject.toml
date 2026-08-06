@@ -19,6 +19,7 @@ dev = [
 
 [project.scripts]
 pacman-server = "pacman.api.server:main"
+pacman-rl = "pacman.rl.cli:main"
 
 [build-system]
 requires = ["setuptools>=68"]

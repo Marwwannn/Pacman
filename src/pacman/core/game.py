@@ -122,6 +122,19 @@ class Game:
     def ghost(self, name: str) -> Ghost | None:
         return self._by_name.get(name)
 
+    def limit_ghosts(self, count: int) -> None:
+        """Ne garde que les `count` premiers fantomes, dans l'ordre de sortie.
+
+        Sert au curriculum d'apprentissage : commencer a un fantome permet de
+        distinguer « l'agent n'apprend pas » de « le probleme est trop dur ».
+        Blinky est toujours conserve en premier, c'est lui que les autres
+        prennent comme reference.
+        """
+        if count >= len(self.ghosts):
+            return
+        self.ghosts = self.ghosts[: max(0, count)]
+        self._by_name = {ghost.name: ghost for ghost in self.ghosts}
+
     # ================================================================ entrees
 
     def set_direction(self, direction: Direction) -> None:
