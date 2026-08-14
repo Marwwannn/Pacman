@@ -33,9 +33,11 @@ EPISODES = 3_000
 #: Profondeurs balayees pour la recherche en ligne. Elle n'apprend rien : son
 #: seul reglage est « jusqu'ou je regarde », et son cout suit.
 PROFONDEURS = (1, 2, 3)
-#: Profondeur du comparatif final. Choisie sur la mediane et l'ecart-type, pas
-#: sur le taux de victoire seul.
-PROFONDEUR_RETENUE = 2
+#: Profondeur du comparatif final. Mesuree, pas supposee : 3 domine 2 sur la
+#: mediane (4990 contre 4290) ET sur les victoires (94 % contre 83 %). Son
+#: ecart-type est plus grand, mais c'est la dispersion de parties GAGNEES —
+#: une victoire vaut de 4000 a 10690 selon les fantomes manges.
+PROFONDEUR_RETENUE = 3
 
 
 def mesurer(agent, config: EnvConfig) -> dict:
@@ -129,12 +131,21 @@ def main(argv: list[str] | None = None) -> int:
     ]
 
     print("\n== Comparatif final a 4 fantomes ==", flush=True)
+    # La recherche a deja ete mesuree juste au-dessus, aux memes conditions et
+    # sur les memes graines : la rejouer donnerait le meme chiffre pour quatre
+    # minutes de calcul. On reprend la ligne du balayage.
+    recherche = next(
+        mesure
+        for mesure in campagne["etapes"]["profondeurs_recherche"]
+        if mesure["profondeur"] == PROFONDEUR_RETENUE
+    )
     campagne["etapes"]["comparatif_4f"] = [
         mesurer(RandomAgent(seed=1), config),
         mesurer(HeuristicAgent(seed=1), config),
         mesurer(ApproximateQAgent.load(str(poids_4f), seed=1), config),
-        mesurer(SearchAgent(depth=PROFONDEUR_RETENUE), config),
+        recherche,
     ]
+    print(f"  {recherche['agent']} (profondeur {PROFONDEUR_RETENUE}, repris du balayage)")
 
     destination.write_text(json.dumps(campagne, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"\nMesures ecrites dans {destination}", flush=True)

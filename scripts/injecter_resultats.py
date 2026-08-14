@@ -95,6 +95,19 @@ Et le témoin, entraîné directement à quatre fantômes sans passer par un :
 
 {tableau([direct_4f])}
 
+Le curriculum **n'améliore donc pas le score** — il n'apporte qu'un peu de
+régularité et quelques victoires. La recommandation initiale était bonne comme
+méthode (elle sépare « l'agent n'apprend pas » de « le problème est trop
+dur ») ; elle ne l'était pas comme gain de performance, et c'est la mesure qui
+le dit.
+
+### 5.2 bis — jusqu'où faut-il chercher ?
+
+La recherche n'a qu'un réglage : la profondeur, en points de décision. Son
+coût suit, et il se paie à chaque coup joué.
+
+{profondeurs(etapes)}
+
 ### 5.3 Ce que l'agent a appris, poids par poids
 
 Les douze poids du modèle entraîné à quatre fantômes, du plus fort au plus
@@ -115,6 +128,24 @@ l'exploration encore active, ce qui explique qu'il reste sous le score final.
 
 {descripteurs(campagne)}
 {FIN}"""
+
+
+def profondeurs(etapes: dict) -> str:
+    """Balayage de la profondeur de recherche, s'il a ete mesure."""
+    balayage = etapes.get("profondeurs_recherche")
+    if not balayage:
+        return "*Balayage non mesuré.*"
+
+    lignes = "\n".join(
+        f"| {mesure['profondeur']} | {mesure['score_median']:.0f} "
+        f"| {mesure['score_ecart_type']:.0f} | {mesure['taux_victoire']:.0%} "
+        f"| {mesure['taux_mort']:.0%} |"
+        for mesure in balayage
+    )
+    return (
+        "| Profondeur | Score médian | Écart-type | Victoires | Morts |\n"
+        "|---:|---:|---:|---:|---:|\n" + lignes
+    )
 
 
 def descripteurs(campagne: dict) -> str:

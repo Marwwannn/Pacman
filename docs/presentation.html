@@ -105,13 +105,14 @@
 <!-- 4 -->
 <section>
   <div class="etape">Les étapes</div>
-  <h2>Quatre mois, treize jalons</h2>
+  <h2>Quatre mois, quatorze jalons</h2>
   <ul>
     <li><b>1 — Le moteur</b> (juillet) : géométrie, labyrinthe, entités, boucle de jeu, score, vies, modes. Zéro dépendance.</li>
     <li><b>2 — L'IA des fantômes</b> : les 4 personnalités de l'arcade, bug d'adressage de 1980 compris.</li>
     <li><b>3 — L'exposition</b> : API REST, WebSocket, puis client web complet (canvas, son, classement).</li>
     <li><b>4 — L'audit sécurité</b> : 3 failles trouvées et fermées avant de pousser.</li>
     <li><b>5 — L'agent qui apprend</b> : mesure du moteur comme environnement, harnais, baselines, Q-learning approximé.</li>
+    <li><b>6 — L'agent qui ne sait rien</b> : la recherche en ligne, pour mesurer ce que l'apprentissage achète vraiment.</li>
   </ul>
 </section>
 
@@ -122,7 +123,9 @@
   <pre>pacman-server            # le jeu, sur http://127.0.0.1:8000
 
 pacman-rl baselines --ghosts 1     # le plancher et le plafond
-pacman-rl compare --ghosts 4 --weights results/poids_4fantomes.json</pre>
+pacman-rl compare --ghosts 4 --weights results/poids_4fantomes.json
+
+python scripts/campagne_rl.py     # toute la campagne, graines fixées</pre>
   <p>Trois choses à montrer : <b>on joue</b> (le terrain est réel), <b>l'agent joue</b> (on le voit hésiter aux intersections), <b>les chiffres tombent</b> (100 parties sur graines jamais vues).</p>
 </section>
 

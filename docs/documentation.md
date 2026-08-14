@@ -465,8 +465,35 @@ interaction avec la simulation, pas sur un corpus.
 | `results/campagne.json` | toutes les mesures du §5 | vérifier les chiffres |
 | `scripts/campagne_rl.py` | campagne complète, graines fixées | tout reproduire en une commande |
 
-Installation et lancement : voir le README (§ Installation, § Jouer,
-§ Utilisation).
+### 7.1 Installation et lancement
+
+```bash
+python -m venv .venv
+.venv\Scripts\activate          # Windows  (source .venv/bin/activate ailleurs)
+pip install -e ".[dev]"
+
+pacman-server                   # le jeu : http://127.0.0.1:8000
+pytest                          # 247 tests
+pacman-rl baselines --ghosts 1  # le plancher et le plafond
+python scripts/campagne_rl.py   # toute la campagne de mesure
+```
+
+Python 3.11 minimum. Le jeu et les agents n'ont **aucune dépendance** ;
+FastAPI et Uvicorn ne servent qu'au serveur, `markdown` qu'à produire ce
+document en HTML imprimable.
+
+### 7.2 Reproduire les chiffres de ce document
+
+```bash
+python scripts/campagne_rl.py            # ~25 min : entraîne et mesure
+python scripts/comparer_descripteurs.py  # ~30 min : base contre positions
+python scripts/injecter_resultats.py     # réécrit le §5 et le support oral
+python scripts/documentation_html.py     # docs/documentation.html -> Ctrl+P
+```
+
+`--sans-entrainement` sur la première rejoue les mesures à partir des poids
+déjà présents dans `results/`, sans réapprendre — c'est aussi le contrôle que
+les poids publiés donnent bien les chiffres publiés.
 
 ---
 
