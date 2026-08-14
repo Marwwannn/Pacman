@@ -349,6 +349,24 @@ L'agent **appris** dépasse l'heuristique écrite à la main. L'agent de **reche
 Détail complet, courbe d'apprentissage, poids appris et comparatif des jeux de
 descripteurs : [`docs/documentation.md`](docs/documentation.md), section 5.
 
+### Voir l'agent décider
+
+```bash
+python scripts/exporter_decisions.py     # puis ouvrir docs/decisions.html
+```
+
+Rejoue une partie et produit une page autonome où **chaque intersection se
+lit** : le labyrinthe à cet instant, les directions envisagées, ce que chacune
+valait, et la décomposition `poids × descripteur` qui a tranché.
+
+Un détail que la page rend visible et qu'aucun tableau ne montrerait : les
+termes **identiques pour toutes les directions** — le biais, l'avancement dans
+le niveau — peuvent peser très lourd sans jamais rien choisir. Ils sont donc
+sortis du chiffre affiché. Ce qui reste est ce qui décide vraiment.
+
+C'est le seul agent dont on puisse faire ça, et c'est la raison d'avoir
+préféré douze poids lisibles à un réseau de neurones.
+
 ### Rejouer toute la campagne de mesure
 
 ```bash

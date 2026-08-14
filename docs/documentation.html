@@ -795,7 +795,25 @@ budget d'épisodes — et un modèle linéaire ne peut de toute façon pas compo
 ces informations entre elles.</p>
 <!-- FIN RESULTATS -->
 
-<h3 id="57-apprendre-ou-recalculer">5.7 Apprendre ou recalculer</h3>
+<h3 id="57-voir-lagent-decider">5.7 Voir l'agent décider</h3>
+<p>Les poids du §5.4 disent ce que l'agent a appris <em>en moyenne</em>. Ils ne disent
+pas pourquoi il a tourné à gauche à la trente-deuxième intersection.</p>
+<pre><code class="language-bash">python scripts/exporter_decisions.py     # puis ouvrir docs/decisions.html
+</code></pre>
+<p>La page produite rejoue une partie et rend <strong>chaque décision lisible</strong> : le
+labyrinthe à cet instant, les directions envisagées, ce que chacune valait, et
+la décomposition terme à terme qui a tranché — en vert ce qui pousse à y
+aller, en rouge ce qui retient.</p>
+<p>Elle met aussi en évidence quelque chose qu'aucun tableau de poids ne montre :
+un descripteur <strong>identique pour toutes les directions</strong> ne choisit rien, quel
+que soit son poids. Le biais est dans ce cas par construction, et
+<code>avancement</code> aussi — il décrit l'état, pas le coup. Sur les douze
+descripteurs, deux ne participent donc jamais à un arbitrage. Ils sont sortis
+du chiffre affiché.</p>
+<p>C'est le seul des quatre agents dont on puisse ouvrir la décision de cette
+façon, et c'est exactement ce qui a été acheté en refusant le réseau de
+neurones (§3.4).</p>
+<h3 id="58-apprendre-ou-recalculer">5.8 Apprendre ou recalculer</h3>
 <p>L'agent de recherche ne sait rien, n'a rien appris, n'a aucun poids — et il
 gagne largement (§5.2). Le résultat n'est pas décevant pour l'apprentissage :
 il est <strong>la mesure de ce que l'apprentissage achète</strong>.</p>

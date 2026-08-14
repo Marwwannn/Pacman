@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pac-Man — le raisonnement de l'agent</title>
+<style>
+  :root {
+    --fond: #0d0f14; --carte: #161a22; --trait: #262c38;
+    --texte: #e8eaf0; --doux: #9aa3b5; --jaune: #ffcc00;
+    --bleu: #4da3ff; --rouge: #ff5f56; --vert: #4ade80;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--fond); color: var(--texte); min-height: 100vh;
+    font: 400 15px/1.5 "Segoe UI", system-ui, sans-serif; padding: 2rem;
+  }
+  h1 { font-size: 1.5rem; letter-spacing: -.02em; margin-bottom: .3rem; }
+  .sous { color: var(--doux); font-size: .9rem; margin-bottom: 1.5rem; }
+  .sous b { color: var(--jaune); }
+
+  .plateau { display: grid; grid-template-columns: minmax(320px, 1.1fr) minmax(300px, 1fr); gap: 1.5rem; align-items: start; }
+  @media (max-width: 860px) { .plateau { grid-template-columns: 1fr; } }
+
+  .cadre { background: var(--carte); border: 1px solid var(--trait); border-radius: 12px; padding: 1.2rem; }
+  .cadre h2 { font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; color: var(--jaune); margin-bottom: .9rem; }
+
+  svg { width: 100%; height: auto; display: block; }
+
+  .commandes { display: flex; gap: .5rem; align-items: center; margin: 1rem 0 .5rem; flex-wrap: wrap; }
+  button {
+    background: var(--carte); color: var(--texte); border: 1px solid var(--trait);
+    border-radius: 7px; padding: .45rem .9rem; font: inherit; font-size: .85rem; cursor: pointer;
+  }
+  button:hover { border-color: var(--jaune); color: var(--jaune); }
+  button:disabled { opacity: .35; cursor: default; border-color: var(--trait); color: var(--texte); }
+  input[type=range] { flex: 1; min-width: 140px; accent-color: var(--jaune); }
+  .compteur { font-variant-numeric: tabular-nums; color: var(--doux); font-size: .85rem; white-space: nowrap; }
+
+  .chiffres { display: flex; gap: 1.5rem; flex-wrap: wrap; margin-top: .8rem; font-size: .85rem; color: var(--doux); }
+  .chiffres b { color: var(--texte); font-variant-numeric: tabular-nums; }
+
+  .action { border: 1px solid var(--trait); border-radius: 9px; padding: .7rem .9rem; margin-bottom: .6rem; }
+  .action.retenue { border-color: var(--jaune); background: rgba(255,204,0,.07); }
+  .action .entete { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
+  .action .nom { font-weight: 600; text-transform: capitalize; }
+  .action.retenue .nom::after { content: " ← choisi"; color: var(--jaune); font-weight: 400; font-size: .8em; }
+  .action .valeur { font-variant-numeric: tabular-nums; color: var(--jaune); font-weight: 600; }
+  .action.rejetee .valeur { color: var(--doux); }
+  .action .fixe { color: #5b6478; font-size: .78rem; }
+  .terme.constant code, .terme.constant .apport { color: #5b6478; }
+  .terme.constant .barre i { background: #39404f; }
+
+  .terme { display: grid; grid-template-columns: 1fr auto; gap: .4rem 1rem; align-items: center; font-size: .78rem; margin-top: .45rem; }
+  .terme code { color: var(--doux); font-family: Consolas, monospace; }
+  .terme .apport { font-variant-numeric: tabular-nums; }
+  .barre { grid-column: 1 / -1; height: 3px; background: var(--trait); border-radius: 2px; position: relative; }
+  .barre i { position: absolute; top: 0; bottom: 0; border-radius: 2px; }
+  .barre i.pos { background: var(--vert); left: 50%; }
+  .barre i.neg { background: var(--rouge); right: 50%; }
+
+  .note { color: var(--doux); font-size: .82rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--trait); }
+  .note b { color: var(--texte); }
+</style>
+</head>
+<body>
+<h1>Le raisonnement de l'agent, intersection par intersection</h1>
+<p class="sous" id="sous"></p>
+
+<div class="plateau">
+  <div>
+    <div class="cadre">
+      <h2>Le labyrinthe à cet instant</h2>
+      <svg id="plan" viewBox="0 0 100 100" role="img" aria-label="Labyrinthe"></svg>
+    </div>
+    <div class="commandes">
+      <button id="debut">⏮</button>
+      <button id="prec">◀ précédent</button>
+      <button id="lecture">▶ lecture</button>
+      <button id="suiv">suivant ▶</button>
+      <input type="range" id="curseur" min="0" value="0">
+      <span class="compteur" id="compteur"></span>
+    </div>
+    <div class="chiffres" id="chiffres"></div>
+  </div>
+
+  <div class="cadre">
+    <h2>Ce que vaut chaque direction</h2>
+    <div id="actions"></div>
+    <p class="note" id="note"></p>
+  </div>
+</div>
+
+<script>
+const PARTIE = /*DONNEES*/null;
+
+const FLECHES = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
+const plan = PARTIE.plan;
+const svg = document.getElementById('plan');
+svg.setAttribute('viewBox', `-0.5 -0.5 ${plan.largeur} ${plan.hauteur}`);
+
+let index = 0;
+let minuteur = null;
+
+function elem(nom, attrs) {
+  const e = document.createElementNS('http://www.w3.org/2000/svg', nom);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  return e;
+}
+
+function dessiner(d) {
+  svg.textContent = '';
+
+  for (const [x, y] of plan.murs) {
+    svg.appendChild(elem('rect', {x: x - .5, y: y - .5, width: 1, height: 1, fill: '#1b2440', rx: .12}));
+  }
+  for (const [x, y] of plan.portes) {
+    svg.appendChild(elem('rect', {x: x - .5, y: y - .12, width: 1, height: .24, fill: '#5b6478'}));
+  }
+
+  const supers = new Set(d.super_pastilles.map(p => p.join(',')));
+  for (const [x, y] of d.pastilles) {
+    const grosse = supers.has(`${x},${y}`);
+    svg.appendChild(elem('circle', {cx: x, cy: y, r: grosse ? .34 : .13, fill: grosse ? '#ffd9a0' : '#7d8496'}));
+  }
+  if (d.fruit) {
+    svg.appendChild(elem('circle', {cx: d.fruit[0], cy: d.fruit[1], r: .38, fill: '#ff5f56'}));
+  }
+
+  // Les directions envisagees, epaisseur et couleur selon leur valeur.
+  const valeurs = d.actions.map(a => a.valeur).filter(v => v !== null);
+  const haut = Math.max(...valeurs), bas = Math.min(...valeurs);
+  for (const action of d.actions) {
+    const [dx, dy] = FLECHES[action.direction];
+    const retenue = action.direction === d.choix;
+    let force = .5;
+    if (action.valeur !== null && haut !== bas) force = (action.valeur - bas) / (haut - bas);
+    if (force !== force) force = .5;
+    svg.appendChild(elem('line', {
+      x1: d.x, y1: d.y, x2: d.x + dx * 1.5, y2: d.y + dy * 1.5,
+      stroke: retenue ? '#ffcc00' : '#4da3ff',
+      'stroke-width': .12 + force * .3,
+      'stroke-opacity': retenue ? 1 : .3 + force * .4,
+      'stroke-linecap': 'round',
+    }));
+  }
+
+  for (const f of d.fantomes) {
+    if (!f.actif) continue;
+    svg.appendChild(elem('circle', {
+      cx: f.x, cy: f.y, r: .45,
+      fill: f.effraye ? '#2b4fd8' : {blinky: '#ff0000', pinky: '#ffb8ff', inky: '#00ffff', clyde: '#ffb852'}[f.nom] || '#ffffff',
+    }));
+  }
+
+  svg.appendChild(elem('circle', {cx: d.x, cy: d.y, r: .48, fill: '#ffcc00'}));
+}
+
+function afficher(d) {
+  const cible = document.getElementById('actions');
+  cible.textContent = '';
+  // L'echelle des barres se prend sur les seuls termes qui departagent :
+  // sinon le biais, constant et enorme, ecrase visuellement tout le reste.
+  const ampleur = Math.max(...d.actions.flatMap(a =>
+    (a.contributions || []).filter(c => c.discrimine).map(c => Math.abs(c.apport))), 1);
+
+  for (const action of [...d.actions].sort((a, b) =>
+       (b.valeur_discriminante ?? b.valeur ?? 0) - (a.valeur_discriminante ?? a.valeur ?? 0))) {
+    const bloc = document.createElement('div');
+    bloc.className = 'action ' + (action.direction === d.choix ? 'retenue' : 'rejetee');
+
+    const entete = document.createElement('div');
+    entete.className = 'entete';
+    entete.innerHTML = `<span class="nom">${action.direction}</span>` +
+      `<span class="valeur">${action.valeur_discriminante === undefined ? '—' :
+        (action.valeur_discriminante > 0 ? '+' : '') + action.valeur_discriminante.toFixed(0)}</span>`;
+    bloc.appendChild(entete);
+
+    const constants = (action.contributions || []).filter(c => !c.discrimine);
+    const fixe = constants.reduce((s, c) => s + c.apport, 0);
+
+    for (const terme of (action.contributions || []).filter(c => c.discrimine).slice(0, 5)) {
+      const ligne = document.createElement('div');
+      ligne.className = 'terme';
+      const part = Math.abs(terme.apport) / ampleur * 50;
+      ligne.innerHTML =
+        `<code>${terme.nom}</code><span class="apport">${terme.apport > 0 ? '+' : ''}${terme.apport.toFixed(0)}</span>` +
+        `<span class="barre"><i class="${terme.apport >= 0 ? 'pos' : 'neg'}" style="width:${part}%"></i></span>`;
+      bloc.appendChild(ligne);
+    }
+
+    if (constants.length) {
+      const pied = document.createElement('div');
+      pied.className = 'fixe';
+      pied.style.marginTop = '.5rem';
+      pied.textContent = `+ ${fixe.toFixed(0)} de termes identiques pour toutes les directions ` +
+        `(${constants.map(c => c.nom).join(', ')}) — ils ne départagent rien.`;
+      bloc.appendChild(pied);
+    }
+    cible.appendChild(bloc);
+  }
+
+  const chiffres = document.getElementById('chiffres');
+  chiffres.innerHTML =
+    `<span>décision <b>${d.numero}</b> / ${PARTIE.decisions.length}</span>` +
+    `<span>score <b>${d.score}</b></span>` +
+    `<span>tick <b>${d.tick}</b></span>` +
+    `<span>pastilles restantes <b>${d.pastilles.length}</b></span>`;
+
+  document.getElementById('compteur').textContent = `${index + 1} / ${PARTIE.decisions.length}`;
+  document.getElementById('curseur').value = index;
+  document.getElementById('debut').disabled = index === 0;
+  document.getElementById('prec').disabled = index === 0;
+  document.getElementById('suiv').disabled = index === PARTIE.decisions.length - 1;
+}
+
+function montrer(n) {
+  index = Math.max(0, Math.min(PARTIE.decisions.length - 1, n));
+  const d = PARTIE.decisions[index];
+  dessiner(d);
+  afficher(d);
+}
+
+document.getElementById('curseur').max = PARTIE.decisions.length - 1;
+document.getElementById('debut').onclick = () => montrer(0);
+document.getElementById('prec').onclick = () => montrer(index - 1);
+document.getElementById('suiv').onclick = () => montrer(index + 1);
+document.getElementById('curseur').oninput = e => montrer(+e.target.value);
+document.getElementById('lecture').onclick = e => {
+  if (minuteur) { clearInterval(minuteur); minuteur = null; e.target.textContent = '▶ lecture'; return; }
+  e.target.textContent = '⏸ pause';
+  minuteur = setInterval(() => {
+    if (index >= PARTIE.decisions.length - 1) { clearInterval(minuteur); minuteur = null; e.target.textContent = '▶ lecture'; return; }
+    montrer(index + 1);
+  }, 600);
+};
+addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight') montrer(index + 1);
+  if (e.key === 'ArrowLeft') montrer(index - 1);
+});
+
+const f = PARTIE.final;
+document.getElementById('sous').innerHTML =
+  `Agent <b>${PARTIE.agent}</b> · graine <b>${PARTIE.graine}</b> (jamais vue à l'entraînement) · ` +
+  `${PARTIE.fantomes} fantômes · issue : <b>${f.gagne ? 'niveau terminé' : f.mort ? 'mort' : 'inachevé'}</b>, ` +
+  `score final <b>${f.score}</b>`;
+
+document.getElementById('note').innerHTML =
+  `La valeur d'une direction est <b>Q(s,a) = w · f(s,a)</b> : une somme de produits ` +
+  `« poids appris × descripteur ». Le chiffre affiché ne retient que les termes qui ` +
+  `<b>varient d'une direction à l'autre</b> — un descripteur identique partout (le biais, ` +
+  `ou l'avancement dans le niveau) peut peser très lourd sans jamais rien choisir. ` +
+  `<b>Vert</b> : ce qui pousse à y aller. <b>Rouge</b> : ce qui retient. ` +
+  `C'est ce qu'un réseau de neurones n'aurait pas permis de montrer — ici chaque ` +
+  `décision se lit terme à terme.`;
+
+montrer(0);
+</script>
+</body>
+</html>

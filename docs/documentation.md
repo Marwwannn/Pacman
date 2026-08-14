@@ -420,7 +420,32 @@ ces informations entre elles.
 
 
 
-### 5.7 Apprendre ou recalculer
+### 5.7 Voir l'agent décider
+
+Les poids du §5.4 disent ce que l'agent a appris *en moyenne*. Ils ne disent
+pas pourquoi il a tourné à gauche à la trente-deuxième intersection.
+
+```bash
+python scripts/exporter_decisions.py     # puis ouvrir docs/decisions.html
+```
+
+La page produite rejoue une partie et rend **chaque décision lisible** : le
+labyrinthe à cet instant, les directions envisagées, ce que chacune valait, et
+la décomposition terme à terme qui a tranché — en vert ce qui pousse à y
+aller, en rouge ce qui retient.
+
+Elle met aussi en évidence quelque chose qu'aucun tableau de poids ne montre :
+un descripteur **identique pour toutes les directions** ne choisit rien, quel
+que soit son poids. Le biais est dans ce cas par construction, et
+`avancement` aussi — il décrit l'état, pas le coup. Sur les douze
+descripteurs, deux ne participent donc jamais à un arbitrage. Ils sont sortis
+du chiffre affiché.
+
+C'est le seul des quatre agents dont on puisse ouvrir la décision de cette
+façon, et c'est exactement ce qui a été acheté en refusant le réseau de
+neurones (§3.4).
+
+### 5.8 Apprendre ou recalculer
 
 L'agent de recherche ne sait rien, n'a rien appris, n'a aucun poids — et il
 gagne largement (§5.2). Le résultat n'est pas décevant pour l'apprentissage :

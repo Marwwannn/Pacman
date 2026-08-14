@@ -124,6 +124,7 @@
 
 pacman-rl baselines --ghosts 1     # le plancher et le plafond
 pacman-rl compare --ghosts 4 --weights results/poids_4fantomes.json
+python scripts/exporter_decisions.py   # docs/decisions.html : le raisonnement, coup par coup
 
 python scripts/campagne_rl.py     # toute la campagne, graines fixées</pre>
   <p>Trois choses à montrer : <b>on joue</b> (le terrain est réel), <b>l'agent joue</b> (on le voit hésiter aux intersections), <b>les chiffres tombent</b> (100 parties sur graines jamais vues).</p>
@@ -268,6 +269,18 @@ python scripts/campagne_rl.py     # toute la campagne, graines fixées</pre>
   </table>
   <p style="margin-top:1.5rem">La recherche gagne ici <b>parce qu'elle a un simulateur exact et gratuit</b>. Un robot, un marché, un patient n'en ont pas : simuler y est impossible ou plus cher qu'agir.</p>
   <p class="fort">Ce comparatif ne dit pas « la recherche gagne ». Il dit : <b>sur un terrain où l'on peut tout simuler, il ne faut pas apprendre</b> — et la vraie question devient de savoir si on dispose d'un tel terrain.</p>
+</section>
+
+<!-- 14 quater -->
+<section>
+  <div class="etape">Démonstration</div>
+  <h2>On peut <em>ouvrir</em><br>chaque décision</h2>
+  <p>Les poids disent ce que l'agent a appris en moyenne. Ils ne disent pas pourquoi il a tourné à gauche à la 32<sup>e</sup> intersection. <code>docs/decisions.html</code> le montre, coup par coup.</p>
+  <div class="grille">
+    <div class="carte"><h3>Ce qu'on voit</h3><p>Le labyrinthe à cet instant, les directions envisagées, la valeur de chacune, et la décomposition <b>poids × descripteur</b> qui a tranché.</p></div>
+    <div class="carte"><h3>Ce que ça révèle</h3><p>Un descripteur <b>identique pour toutes les directions</b> ne choisit rien, même énorme. Le biais et l'avancement sont dans ce cas : <b>2 des 12</b> ne participent jamais à un arbitrage.</p></div>
+    <div class="carte"><h3>Pourquoi c'est possible</h3><p>Parce qu'on a refusé le réseau de neurones. C'est précisément ce que douze poids lisibles ont acheté.</p></div>
+  </div>
 </section>
 
 <!-- 15 -->
