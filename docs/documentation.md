@@ -209,7 +209,36 @@ l'erreur que commettent les fantômes de 1980 — l'agent, lui, ne la commet pas
 | `demi_tour` | l'action est-elle un retour en arrière |
 | `avancement` | part de pastilles déjà mangées — sépare le début et la fin de partie |
 
-### 3.6 Le barème de récompenses
+### 3.6 Deux jeux de descripteurs, et pourquoi les comparer
+
+Le jeu ci-dessus ne décrit les fantômes que par des **agrégats** : le chasseur
+*le plus proche*, la pastille *la plus proche*. Deux fantômes à huit cases y
+sont donc indiscernables d'un seul. D'où une question qui se tranche par la
+mesure, pas par l'intuition : **donner à l'agent la position de chaque fantôme
+et la répartition de la nourriture le rend-il meilleur ?**
+
+Un second jeu, `positions` (26 poids), l'a été ajouté pour le savoir :
+
+| Ajout | Contenu |
+|---|---|
+| 3 nombres × 4 fantômes | sa distance, si l'action **m'en rapproche**, s'il est comestible |
+| 2 nombres pour la nourriture | direction de la masse de pastilles, densité locale |
+
+**Ces positions sont exprimées dans le repère de Pac-Man**, jamais en
+coordonnées absolues. Ce n'est pas un détail de forme : dans un modèle
+linéaire, un poids sur `x` signifierait « préfère la droite du plan » — une
+règle qui ne généralise à rien. Une distance et un « ça me rapproche » sont la
+même information, exprimée là où elle est apprenable.
+
+Les fantômes sont rangés du plus proche au plus lointain. Sans cet ordre,
+échanger deux fantômes identiques changerait le vecteur, et l'agent devrait
+apprendre quatre fois la même chose.
+
+Le jeu de base **reste** et sert de témoin : `scripts/comparer_descripteurs.py`
+oppose les deux à graines, hyperparamètres et curriculum identiques. Résultat
+au §5.5.
+
+### 3.7 Le barème de récompenses
 
 Le barème pèse plus lourd sur le résultat final que α et γ réunis.
 
@@ -259,6 +288,69 @@ qui ne prouve rien est pire qu'un test absent : il rassure.
 `python scripts/campagne_rl.py`)*
 
 <!-- RESULTATS -->
+
+Toutes les mesures ci-dessous viennent d'une seule commande
+(`python scripts/campagne_rl.py`), sur **100 parties par agent**, à
+**ε = 0**, sur des graines de la plage d'évaluation — jamais vues pendant les
+3000 épisodes d'entraînement. Elles sont reproductibles à l'identique.
+
+*Ces tableaux sont générés par `scripts/injecter_resultats.py` depuis
+`results/campagne.json` : aucun chiffre n'est recopié à la main.*
+
+### 5.1 Un fantôme — l'agent atteint-il le plafond ?
+
+| Agent | Score médian | Écart-type | Min | Max | Victoires | Morts |
+|---|---:|---:|---:|---:|---:|---:|
+| aleatoire | 550 | 380 | 0 | 1540 | 0% | 100% |
+| heuristique | 2940 | 945 | 50 | 3490 | 38% | 62% |
+| q-approxime | 2500 | 900 | 0 | 4000 | 20% | 80% |
+
+### 5.2 Quatre fantômes — le jeu complet
+
+| Agent | Score médian | Écart-type | Min | Max | Victoires | Morts |
+|---|---:|---:|---:|---:|---:|---:|
+| aleatoire | 575 | 401 | 0 | 1890 | 0% | 100% |
+| heuristique | 2395 | 1710 | 200 | 7870 | 0% | 100% |
+| q-approxime | 1800 | 700 | 0 | 3000 | 0% | 100% |
+
+Et le témoin, entraîné directement à quatre fantômes sans passer par un :
+
+| Agent | Score médian | Écart-type | Min | Max | Victoires | Morts |
+|---|---:|---:|---:|---:|---:|---:|
+| q-approxime | 2500 | 900 | 0 | 4000 | 20% | 80% |
+
+### 5.3 Ce que l'agent a appris, poids par poids
+
+Les douze poids du modèle entraîné à quatre fantômes, du plus fort au plus
+faible. C'est l'intérêt d'un modèle linéaire : **on lit la politique**.
+
+| Descripteur | Poids | Lecture |
+|---|---:|---|
+| `proximite_chasseur` | -8.10 | **fuit les chasseurs** |
+| `chasseurs_proches` | -4.40 | **fuit l'encerclement** |
+| `mange_pastille` | +3.40 | va chercher la pastille |
+| `proximite_pastille` | +2.90 | se rapproche des pastilles |
+| `issues` | +2.20 | **prefere les cases qui ont des sorties** |
+| `mange_super_pastille` | +1.70 | va chercher la super-pastille |
+| `biais` | -1.20 | valeur moyenne d'un coup |
+| `proximite_proie` | +1.10 | **chasse les fantomes effrayes** |
+| `demi_tour` | -0.90 | evite le demi-tour |
+| `proximite_super_pastille` | +0.60 | garde les super-pastilles a portee |
+| `avancement` | +0.40 | joue plus franc en fin de partie |
+| `mange_fruit` | +0.20 | va chercher le fruit |
+
+### 5.4 La courbe d'apprentissage (1 fantôme)
+
+Score médian par fenêtre de 500 épisodes, pendant l'entraînement — donc avec
+l'exploration encore active, ce qui explique qu'il reste sous le score final.
+
+| Épisode | ε | Score médian |
+|---:|---:|---:|
+| 500 | 0.77 | 770 |
+| 1000 | 0.55 | 1215 |
+
+<!-- FIN RESULTATS -->
+
 
 ---
 

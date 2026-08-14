@@ -17,6 +17,7 @@ from pathlib import Path
 
 RACINE = Path(__file__).resolve().parent.parent
 CAMPAGNE = RACINE / "results" / "campagne.json"
+COMPARATIF = RACINE / "results" / "descripteurs.json"
 DOCUMENTATION = RACINE / "docs" / "documentation.md"
 PRESENTATION = RACINE / "docs" / "presentation.html"
 
@@ -112,7 +113,72 @@ l'exploration encore active, ce qui explique qu'il reste sous le score final.
 |---:|---:|---:|
 {courbe}
 
+{descripteurs(campagne)}
 {FIN}"""
+
+
+def descripteurs(campagne: dict) -> str:
+    """Section 5.5 : le comparatif des deux jeux de descripteurs, s'il existe."""
+    if not COMPARATIF.exists():
+        return (
+            "### 5.5 Les positions aident-elles ?\n\n"
+            "*Mesure non encore produite : lancer "
+            "`python scripts/comparer_descripteurs.py`.*\n"
+        )
+
+    mesure = json.loads(COMPARATIF.read_text(encoding="utf-8"))
+    base = mesure["jeux"]["base"]
+    positions = mesure["jeux"]["positions"]
+
+    lignes = "\n".join(
+        f"| `{jeu['descripteurs']}` | {jeu['nombre_de_poids']} "
+        f"| {jeu['un_fantome']['score_median']:.0f} "
+        f"| {jeu['quatre_fantomes']['score_median']:.0f} "
+        f"| {jeu['quatre_fantomes']['score_ecart_type']:.0f} "
+        f"| {jeu['quatre_fantomes']['taux_victoire']:.0%} "
+        f"| {jeu['secondes']:.0f} s |"
+        for jeu in (base, positions)
+    )
+
+    ecart = positions["quatre_fantomes"]["score_median"] - base["quatre_fantomes"]["score_median"]
+    relatif = ecart / max(1, base["quatre_fantomes"]["score_median"])
+    cout = positions["secondes"] / max(1, base["secondes"])
+
+    if relatif > 0.05:
+        verdict = (
+            f"**Les positions apportent** : +{ecart:.0f} points de score médian "
+            f"({relatif:+.0%}) à quatre fantômes."
+        )
+    elif relatif < -0.05:
+        verdict = (
+            f"**Les positions n'apportent pas** : {ecart:.0f} points ({relatif:+.0%}). "
+            "Deux fois plus de poids à estimer sur le même budget d'épisodes, "
+            "pour une information que les agrégats portaient déjà en grande partie."
+        )
+    else:
+        verdict = (
+            f"**L'écart n'est pas concluant** : {ecart:+.0f} points ({relatif:+.0%}), "
+            "sous le bruit d'un écart-type qui se compte en milliers. Conclure "
+            "à un gain sur ce chiffre serait une erreur de lecture."
+        )
+
+    return f"""### 5.5 Les positions aident-elles ?
+
+Même curriculum, mêmes graines, mêmes hyperparamètres : seul le jeu de
+descripteurs change.
+
+| Descripteurs | Poids | Médiane 1F | Médiane 4F | Écart-type 4F | Victoires 4F | Entraînement |
+|---|---:|---:|---:|---:|---:|---:|
+{lignes}
+
+{verdict} Le coût d'entraînement, lui, est mesuré : ×{cout:.1f}.
+
+C'est le genre de résultat qu'un projet honnête doit publier tel quel. La
+question « faut-il donner plus d'information à l'agent ? » n'a pas de réponse
+évidente : plus de descripteurs, c'est plus de poids à estimer sur le même
+budget d'épisodes — et un modèle linéaire ne peut de toute façon pas composer
+ces informations entre elles.
+"""
 
 
 DEBIT_MESURES = """Toutes les mesures ci-dessous viennent d'une seule commande
@@ -165,8 +231,37 @@ def javascript(campagne: dict) -> str:
             f"{campagne['episodes']} épisodes. C'est ce qu'un réseau profond "
             "n'aurait pas permis de montrer."
         ),
+        "descripteurs": descripteurs_pour_le_support(),
     }
     return "const RESULTATS = " + json.dumps(donnees, ensure_ascii=False, indent=2) + ";"
+
+
+def descripteurs_pour_le_support() -> dict | None:
+    """Le comparatif des jeux de descripteurs, mis en forme pour une diapositive."""
+    if not COMPARATIF.exists():
+        return None
+    mesure = json.loads(COMPARATIF.read_text(encoding="utf-8"))
+    jeux = [mesure["jeux"]["base"], mesure["jeux"]["positions"]]
+    ecart = (
+        jeux[1]["quatre_fantomes"]["score_median"] - jeux[0]["quatre_fantomes"]["score_median"]
+    )
+    relatif = ecart / max(1, jeux[0]["quatre_fantomes"]["score_median"])
+    return {
+        "lignes": [
+            {
+                "nom": jeu["descripteurs"],
+                "poids": jeu["nombre_de_poids"],
+                "un": f"{jeu['un_fantome']['score_median']:.0f}",
+                "quatre": f"{jeu['quatre_fantomes']['score_median']:.0f}",
+                "ecart_type": f"{jeu['quatre_fantomes']['score_ecart_type']:.0f}",
+                "secondes": f"{jeu['secondes']:.0f}",
+            }
+            for jeu in jeux
+        ],
+        "verdict": (
+            f"Écart : <b>{ecart:+.0f} points</b> ({relatif:+.0%}) à quatre fantômes."
+        ),
+    }
 
 
 def main() -> int:

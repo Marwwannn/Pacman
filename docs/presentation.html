@@ -1,0 +1,518 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pac-Man — un terrain de mesure pour l'IA</title>
+<style>
+  :root {
+    --fond: #0d0f14;
+    --fond-carte: #161a22;
+    --trait: #262c38;
+    --texte: #e8eaf0;
+    --doux: #9aa3b5;
+    --jaune: #ffcc00;
+    --bleu: #4da3ff;
+    --rouge: #ff5f56;
+    --vert: #4ade80;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--fond);
+    color: var(--texte);
+    font: 400 20px/1.55 "Segoe UI", system-ui, sans-serif;
+    overflow: hidden;
+  }
+  .deck { height: 100vh; }
+  section {
+    display: none;
+    height: 100vh;
+    padding: 4vh 6vw 8vh;
+    flex-direction: column;
+    justify-content: center;
+    animation: entree .25s ease;
+  }
+  section.actif { display: flex; }
+  @keyframes entree { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; } }
+
+  .etape { color: var(--jaune); font-size: .7em; letter-spacing: .18em; text-transform: uppercase; margin-bottom: 1.2rem; }
+  h1 { font-size: clamp(2.2rem, 5.5vw, 4rem); line-height: 1.05; letter-spacing: -.02em; margin-bottom: 1.5rem; }
+  h2 { font-size: clamp(1.6rem, 3.6vw, 2.6rem); line-height: 1.15; letter-spacing: -.015em; margin-bottom: 2rem; }
+  h2 em { color: var(--jaune); font-style: normal; }
+  p { color: var(--doux); max-width: 60ch; margin-bottom: 1rem; }
+  p.fort { color: var(--texte); font-size: 1.15em; }
+  ul { list-style: none; max-width: 68ch; }
+  li { color: var(--doux); margin-bottom: .9rem; padding-left: 1.4rem; position: relative; }
+  li::before { content: "▸"; position: absolute; left: 0; color: var(--jaune); }
+  li b, p b { color: var(--texte); font-weight: 600; }
+  .chiffre { font-size: clamp(3rem, 9vw, 6rem); font-weight: 700; color: var(--jaune); line-height: 1; letter-spacing: -.03em; }
+  .grille { display: grid; gap: 1.2rem; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-top: 1rem; }
+  .carte { background: var(--fond-carte); border: 1px solid var(--trait); border-radius: 12px; padding: 1.3rem 1.4rem; }
+  .carte h3 { font-size: 1rem; color: var(--jaune); margin-bottom: .5rem; letter-spacing: .04em; }
+  .carte p { font-size: .9em; margin: 0; }
+  table { border-collapse: collapse; width: 100%; max-width: 900px; font-size: .95em; }
+  th, td { text-align: left; padding: .65rem .9rem; border-bottom: 1px solid var(--trait); }
+  th { color: var(--jaune); font-size: .8em; letter-spacing: .08em; text-transform: uppercase; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  tr.vedette td { color: var(--texte); font-weight: 600; background: rgba(255,204,0,.07); }
+  code, pre { font-family: "Cascadia Code", Consolas, monospace; }
+  pre { background: var(--fond-carte); border: 1px solid var(--trait); border-left: 3px solid var(--jaune);
+        border-radius: 8px; padding: 1rem 1.2rem; font-size: .82em; color: var(--texte); overflow-x: auto; }
+  .cite { border-left: 3px solid var(--bleu); padding-left: 1.2rem; color: var(--texte); font-size: 1.05em; max-width: 60ch; }
+  .pied { position: fixed; bottom: 2.2vh; left: 6vw; right: 6vw; display: flex; justify-content: space-between;
+          color: #5b6478; font-size: .72em; letter-spacing: .05em; }
+  .barre { position: fixed; top: 0; left: 0; height: 3px; background: var(--jaune); transition: width .25s; }
+  .arche { display: flex; gap: .8rem; align-items: center; flex-wrap: wrap; color: var(--doux); font-size: .9em; }
+  .arche span.on { color: var(--jaune); font-weight: 600; }
+  @media print { section { display: flex !important; page-break-after: always; height: 100vh; } .pied, .barre { display: none; } }
+</style>
+</head>
+<body>
+<div class="barre" id="barre"></div>
+<div class="deck" id="deck">
+
+<!-- 1 -->
+<section>
+  <div class="etape">Projet d'IA libre — Master 1 · IA_PO · 2025-2026</div>
+  <h1>Pac-Man<br>un terrain de mesure<br>pour l'intelligence artificielle</h1>
+  <p class="fort">Marwan Youmni</p>
+  <p>github.com/Marwwannn/Pacman</p>
+</section>
+
+<!-- 2 -->
+<section>
+  <div class="etape">Le problème</div>
+  <h2>Mesurer une IA demande un terrain<br>qui <em>ne triche pas</em></h2>
+  <ul>
+    <li>Les environnements tout faits (Gym, ALE) sont des <b>boîtes noires</b> : on y mesure un agent sans jamais pouvoir expliquer ce que l'environnement lui a fait subir.</li>
+    <li>Quand un agent stagne, impossible de distinguer <b>« la méthode est mauvaise »</b> de <b>« le problème est mal posé »</b>.</li>
+    <li>Parti pris inverse : <b>construire le terrain ET les agents</b>, et les mesurer ensemble.</li>
+  </ul>
+</section>
+
+<!-- 3 -->
+<section>
+  <div class="etape">Pourquoi Pac-Man</div>
+  <h2>Règles simples,<br>stratégie qui ne l'est pas</h2>
+  <div class="grille">
+    <div class="carte"><h3>Arbitrage permanent</h3><p>Le gain (les pastilles) contre le risque (les fantômes), sur un horizon long.</p></div>
+    <div class="carte"><h3>Adversaire imparfait</h3><p>Les fantômes de 1980 sont <b>myopes</b> : distance à vol d'oiseau, sans voir les murs. C'est ce qui les rend battables.</p></div>
+    <div class="carte"><h3>Mesure honnête</h3><p>Le score est un nombre. Aucun jugement humain à interpréter.</p></div>
+  </div>
+</section>
+
+<!-- 4 -->
+<section>
+  <div class="etape">Les étapes</div>
+  <h2>Quatre mois, treize jalons</h2>
+  <ul>
+    <li><b>1 — Le moteur</b> (juillet) : géométrie, labyrinthe, entités, boucle de jeu, score, vies, modes. Zéro dépendance.</li>
+    <li><b>2 — L'IA des fantômes</b> : les 4 personnalités de l'arcade, bug d'adressage de 1980 compris.</li>
+    <li><b>3 — L'exposition</b> : API REST, WebSocket, puis client web complet (canvas, son, classement).</li>
+    <li><b>4 — L'audit sécurité</b> : 3 failles trouvées et fermées avant de pousser.</li>
+    <li><b>5 — L'agent qui apprend</b> : mesure du moteur comme environnement, harnais, baselines, Q-learning approximé.</li>
+  </ul>
+</section>
+
+<!-- 5 -->
+<section>
+  <div class="etape">Démonstration</div>
+  <h2>Ce qui tourne</h2>
+  <pre>pacman-server            # le jeu, sur http://127.0.0.1:8000
+
+pacman-rl baselines --ghosts 1     # le plancher et le plafond
+pacman-rl compare --ghosts 4 --weights results/poids_4fantomes.json</pre>
+  <p>Trois choses à montrer : <b>on joue</b> (le terrain est réel), <b>l'agent joue</b> (on le voit hésiter aux intersections), <b>les chiffres tombent</b> (100 parties sur graines jamais vues).</p>
+</section>
+
+<!-- 6 -->
+<section>
+  <div class="etape">Architecture</div>
+  <h2>Le cœur ne sait pas<br>qu'il est exposé</h2>
+  <pre>src/pacman/
+├── core/     modèle du jeu — ni réseau, ni FastAPI
+├── ai/       fantômes      → hérite de core.Ghost
+├── rl/       joueur appris → utilise core
+├── api/      REST + WebSocket
+└── web/      client (10 modules ES, aucun build)</pre>
+  <p>Dépendances à sens unique : <code>web → api → core</code>, et <code>ai</code>, <code>rl</code> → <code>core</code>.</p>
+  <p class="fort">Conséquence directe : le même moteur tourne <b>3 000 × plus vite que le temps réel</b> pour apprendre, sans une ligne modifiée.</p>
+</section>
+
+<!-- 7 -->
+<section>
+  <div class="etape">Architecture</div>
+  <h2>Héritage : quatre fantômes,<br>une seule méthode redéfinie</h2>
+  <pre>Entity (ABC)
+├── Pacman
+└── Ghost
+    └── PersonalityGhost
+        ├── Blinky            vise Pac-Man
+        ├── LookaheadGhost    vise devant Pac-Man
+        │   ├── Pinky         4 cases devant
+        │   └── Inky          symétrise Blinky par rapport à Pinky
+        └── Clyde             fuit sous 8 cases</pre>
+  <p>Les personnalités ne diffèrent que par <b>la case visée</b> : <code>target()</code> est redéfinie, tout le reste est hérité. C'est ce qui rend fidèle une IA de <b>204 lignes</b>.</p>
+</section>
+
+<!-- 8 -->
+<section>
+  <div class="etape">Décision de conception ①</div>
+  <div class="chiffre">34</div>
+  <h2>points de décision<br>sur 300 cases praticables</h2>
+  <p><b>89 % du labyrinthe est un couloir</b> où la direction est imposée. Décider à chaque tick, c'est produire 2 440 décisions sans conséquence par partie.</p>
+  <p class="fort">L'environnement traverse les couloirs lui-même et ne rend la main qu'aux intersections. <b>L'horizon tombe de ~2 500 pas à ~100</b> — 25 fois plus court, sans rien perdre du jeu.</p>
+</section>
+
+<!-- 9 -->
+<section>
+  <div class="etape">Décision de conception ②</div>
+  <h2>Le déterminisme du moteur<br>est un <em>piège</em></h2>
+  <p>Le moteur est parfaitement reproductible — indispensable pour tester. Mais avec le même départ et les mêmes fantômes, l'agent mémorise <b>une suite de coups</b>, pas une politique. Score flatteur à l'entraînement, effondrement au premier changement.</p>
+  <div class="grille">
+    <div class="carte"><h3>1. Graine par épisode</h3><p>Départ de Pac-Man et errance des fantômes décalés.</p></div>
+    <div class="carte"><h3>2. Graines disjointes</h3><p><code>evaluate()</code> <b>lève une erreur</b> sur une graine d'entraînement. Une garde, pas une convention.</p></div>
+    <div class="carte"><h3>3. Médiane, pas maximum</h3><p>100 parties, médiane et écart-type. Un meilleur run ne prouve rien.</p></div>
+  </div>
+</section>
+
+<!-- 10 -->
+<section>
+  <div class="etape">Le choix de méthode</div>
+  <h2>Pourquoi le Q-learning approximé</h2>
+  <table>
+    <tr><th>Approche</th><th>Verdict</th><th>Motif</th></tr>
+    <tr><td>Non-supervisé strict</td><td>écarté</td><td>construit une représentation, jamais une politique — il ne décide pas</td></tr>
+    <tr><td>Q tabulaire</td><td>exclu</td><td>2<sup>244</sup> états rien que pour les pastilles</td></tr>
+    <tr class="vedette"><td>Q approximé linéaire</td><td>retenu</td><td>12 poids, quelques minutes — <b>et des poids lisibles</b></td></tr>
+    <tr><td>DQN (réseau profond)</td><td>exclu</td><td>10 à 100 × plus d'épisodes, une dépendance, une boîte noire à défendre</td></tr>
+  </table>
+  <p style="margin-top:1.5rem">La lisibilité a pesé : après entraînement, on <b>lit</b> ce que l'agent a compris.</p>
+</section>
+
+<!-- 11 -->
+<section>
+  <div class="etape">Le modèle</div>
+  <h2>Q(s,a) = w · f(s,a)<br><em>douze</em> descripteurs</h2>
+  <ul>
+    <li><b>Gains immédiats</b> — la case visée porte-t-elle une pastille, une super-pastille, un fruit</li>
+    <li><b>Distances aux gains</b> — pastille et super-pastille les plus proches</li>
+    <li><b>Danger</b> — proximité du chasseur le plus proche, nombre de chasseurs à moins de 3 cases</li>
+    <li><b>Opportunité</b> — proximité d'un fantôme effrayé (+200 minimum)</li>
+    <li><b>Topologie</b> — nombre d'issues de la case visée, demi-tour ou non</li>
+    <li><b>Phase de partie</b> — part de pastilles déjà mangées</li>
+  </ul>
+  <p style="margin-top:1rem">Toutes bornées dans [0, 1] — sinon un même α ferait diverger un poids pendant qu'un autre bouge à peine. Distances <b>réelles dans le labyrinthe</b>, jamais à vol d'oiseau : c'est l'erreur des fantômes, l'agent ne la commet pas.</p>
+</section>
+
+<!-- 12 -->
+<section>
+  <div class="etape">Le barème</div>
+  <h2>Deux valeurs décident<br>plus que α et γ réunis</h2>
+  <table>
+    <tr><th>Événement</th><th class="num">Valeur</th><th>Pourquoi</th></tr>
+    <tr><td>Pastille · super-pastille</td><td class="num">+10 · +50</td><td></td></tr>
+    <tr><td>Fantôme mangé</td><td class="num">+200 … +1600</td><td>chaîne du jeu d'origine</td></tr>
+    <tr class="vedette"><td>Mort</td><td class="num">−500</td><td>doit dominer, sinon l'agent <b>se suicide</b> pour abréger</td></tr>
+    <tr class="vedette"><td>Pas de décision</td><td class="num">−1</td><td>sinon il <b>tourne devant une super-pastille</b> sans la manger</td></tr>
+    <tr><td>Niveau terminé</td><td class="num">+500</td><td></td></tr>
+  </table>
+  <p style="margin-top:1.5rem">Le score brut du jeu n'est <b>pas</b> repris : la vie supplémentaire à 10 000 points crée une marche que rien dans l'état ne prédit — du bruit pur.</p>
+</section>
+
+<!-- 13 : RESULTATS -->
+<section id="slide-resultats">
+  <div class="etape">Résultats</div>
+  <h2>100 parties, graines jamais vues</h2>
+  <div id="tableau-resultats"></div>
+</section>
+
+<!-- 14 : POIDS -->
+<section id="slide-poids">
+  <div class="etape">Résultats</div>
+  <h2>Ce que l'agent a <em>compris</em></h2>
+  <div id="tableau-poids"></div>
+</section>
+
+<!-- 14 bis : DESCRIPTEURS -->
+<section id="slide-descripteurs">
+  <div class="etape">Une expérience</div>
+  <h2>Et si on lui donnait<br>la position de <em>chaque</em> fantôme ?</h2>
+  <p>Le jeu de base ne voit que des agrégats : le chasseur <b>le plus proche</b>. Deux fantômes à huit cases y sont indiscernables d'un seul. Second jeu : 3 nombres par fantôme, 2 pour la nourriture — <b>dans le repère de Pac-Man</b>, jamais en coordonnées absolues.</p>
+  <div id="tableau-descripteurs"></div>
+</section>
+
+<!-- 15 -->
+<section>
+  <div class="etape">Validation</div>
+  <h2>226 tests — qui <em>mesurent</em>,<br>pas qui rassurent</h2>
+  <ul>
+    <li>Deux parties de même graine donnent le <b>même score au tick près</b>.</li>
+    <li>L'évaluation <b>refuse</b> les graines d'entraînement.</li>
+    <li>Chaque pas de l'agent se termine sur une vraie intersection.</li>
+    <li>L'agent ressort seul d'un cul-de-sac.</li>
+  </ul>
+  <p class="cite" style="margin-top:1.5rem">Ce dernier test passait toujours… <b>en itérant sur une liste vide</b> : le labyrinthe classique ne contient aucune impasse. Il a été scindé en deux — un test qui <i>mesure</i> cette absence, et un test joué sur un plan 11×7 construit exprès.</p>
+  <p style="margin-top:1rem"><b>Un test vert qui ne prouve rien est pire qu'un test absent : il rassure.</b></p>
+</section>
+
+<!-- 16 -->
+<section>
+  <div class="etape">Usage de l'IA générative</div>
+  <h2>Déclaré, total, assumé</h2>
+  <ul>
+    <li><b>Claude Code</b> (Anthropic), du 19/07 au 14/08. Aucun autre outil. Les <b>34 commits</b> portent tous le trailer <code>Co-Authored-By: Claude</code>.</li>
+    <li><b>Ce qu'il a fait</b> : le socle sans intérêt pédagogique, la fidélité à l'arcade, les 226 tests, l'audit sécurité, le cadrage chiffré de l'approche.</li>
+    <li><b>Ce que j'ai fait</b> : cadrer, arbitrer, éprouver, refuser. Le périmètre (client web, puis agent apprenant), la méthode (renforcement plutôt que non-supervisé), et les bugs que <b>seul un joueur</b> pouvait voir — le jeu tournait à 48 cases/s, puis restait saccadé. Aucun test ne les voyait.</li>
+  </ul>
+  <p class="cite" style="margin-top:1rem">« Mesure ce moteur comme environnement d'apprentissage : vitesse, reproductibilité, points de décision. Dis-moi ce que ces chiffres <b>excluent</b> comme approche. »</p>
+  <p style="margin-top:.8rem">→ a produit les 34 points de décision, donc toute la conception de l'environnement.</p>
+</section>
+
+<!-- 17 -->
+<section>
+  <div class="etape">Discussion</div>
+  <h2>Limites — dites,<br>pas cachées</h2>
+  <ul>
+    <li><b>L'agent ne termine pas un niveau à 4 fantômes.</b> Plafond attendu d'un linéaire à 12 poids : il évalue chaque intersection isolément, sans planifier trois coups à l'avance.</li>
+    <li><b>Les descripteurs sont écrits à la main.</b> L'agent hérite de mon analyse du problème : il n'apprend pas <i>quoi regarder</i>, seulement <i>combien ça compte</i>.</li>
+    <li><b>Un seul labyrinthe mesuré.</b> Les features étant topologiques, les poids devraient se transférer — non vérifié, donc non affirmé.</li>
+  </ul>
+</section>
+
+<!-- 18 -->
+<section>
+  <div class="etape">Suites</div>
+  <h2>Ce que ce terrain permet<br>maintenant qu'il existe</h2>
+  <div class="grille">
+    <div class="carte"><h3>Recherche en ligne</h3><p>MCTS / expectimax en 4<sup>e</sup> colonne : plus fort <b>sans aucun entraînement</b>. L'écart « appris vs recherche » est la vraie discussion.</p></div>
+    <div class="carte"><h3>Descripteurs appris</h3><p>Auto-encodeur sur l'état local : le non-supervisé retrouve sa place — <b>en amont</b> de la politique, pas à sa place.</p></div>
+    <div class="carte"><h3>Fantômes non myopes</h3><p>Leur donner le vrai plus court chemin : ils cesseraient d'être battables. Mode difficile, et test de robustesse de l'agent.</p></div>
+  </div>
+</section>
+
+<!-- 19 -->
+<section>
+  <div class="etape">Ce que ça m'a apporté</div>
+  <h2>Trois réflexes transposables</h2>
+  <ul>
+    <li><b>Mesurer avant de choisir.</b> Les 34 points de décision ont décidé de l'architecture entière. Trois heures de mesure ont évité des semaines sur une méthode inadaptée.</li>
+    <li><b>Se méfier de ce qui rassure.</b> Un test vert sur liste vide, un score d'entraînement flatteur obtenu par mémorisation : les deux disent « tout va bien » et les deux sont faux.</li>
+    <li><b>Une borne rend un chiffre lisible.</b> Un score d'agent seul ne veut rien dire ; entre un plancher et un plafond, il devient une information. C'est vrai de toute métrique en production.</li>
+  </ul>
+  <p style="margin-top:1rem">En entreprise : c'est exactement la démarche d'un POC — cadrer, mesurer une borne, décider avec un chiffre plutôt qu'avec une intuition.</p>
+</section>
+
+<!-- 20 -->
+<section>
+  <div class="etape">Références</div>
+  <h2>Bibliographie & outils</h2>
+  <ul>
+    <li><b>The Pac-Man Dossier</b>, Jamey Pittman — la référence sur les comportements de l'arcade de 1980 (modes, cibles, bug d'adressage).</li>
+    <li><b>Sutton &amp; Barto</b>, <i>Reinforcement Learning: An Introduction</i> — Q-learning, approximation linéaire, ε-glouton décroissant.</li>
+    <li><b>Berkeley CS188</b>, projet Pac-Man — le précédent académique du Q-learning approximé sur ce jeu.</li>
+    <li><b>IA générative</b> : Claude Code (Anthropic, modèles Claude Opus / Sonnet). Seul outil utilisé, déclaré en détail dans le README et la documentation.</li>
+    <li><b>Outils</b> : Python 3.13, FastAPI, Uvicorn, pytest, ruff.</li>
+  </ul>
+</section>
+
+<!-- 21 -->
+<section>
+  <div class="etape">Retour sur l'énoncé</div>
+  <h2>Ce que je changerais</h2>
+  <ul>
+    <li><b>« L'IA doit représenter 70 % du projet »</b> mériterait d'être précisé : 70 % des lignes, du temps, ou de la valeur ? Ici le moteur de jeu <i>est</i> l'infrastructure de l'IA — sans terrain mesurable, aucun agent n'est évaluable. Compter les lignes désavantagerait un projet qui construit son propre banc d'essai.</li>
+    <li><b>La déclaration d'IA est une bonne règle</b>, et le barème qui la récompense encore plus : elle transforme un tabou en objet d'analyse.</li>
+    <li>Un <b>format de rendu des métriques</b> imposé (une commande, un JSON) rendrait les projets comparables entre eux.</li>
+  </ul>
+</section>
+
+<!-- 22 -->
+<section>
+  <h1>Merci</h1>
+  <p class="fort">Questions ?</p>
+  <p>github.com/Marwwannn/Pacman · <code>pacman-server</code> · <code>pacman-rl compare</code></p>
+</section>
+
+</div>
+
+<div class="pied"><span id="titre-pied">Pac-Man — terrain de mesure pour l'IA</span><span id="compteur"></span></div>
+
+<script>
+// Les résultats sont injectés ici par scripts/injecter_resultats.py depuis
+// results/campagne.json : le support ne recopie jamais un chiffre a la main.
+const RESULTATS = {
+  "un_fantome": [
+    {
+      "agent": "aleatoire",
+      "score_median": "550",
+      "score_ecart_type": "380",
+      "victoires": 0,
+      "morts": 100
+    },
+    {
+      "agent": "heuristique",
+      "score_median": "2940",
+      "score_ecart_type": "945",
+      "victoires": 38,
+      "morts": 62
+    },
+    {
+      "agent": "q-approxime",
+      "score_median": "2500",
+      "score_ecart_type": "900",
+      "victoires": 20,
+      "morts": 80
+    }
+  ],
+  "quatre_fantomes": [
+    {
+      "agent": "aleatoire",
+      "score_median": "575",
+      "score_ecart_type": "401",
+      "victoires": 0,
+      "morts": 100
+    },
+    {
+      "agent": "heuristique",
+      "score_median": "2395",
+      "score_ecart_type": "1710",
+      "victoires": 0,
+      "morts": 100
+    },
+    {
+      "agent": "q-approxime",
+      "score_median": "1800",
+      "score_ecart_type": "700",
+      "victoires": 0,
+      "morts": 100
+    }
+  ],
+  "commentaire": "L'agent appris fait <b>4.5 ×</b> le hasard à un fantôme, <b>3.1 ×</b> à quatre. 100 parties, graines jamais vues, ε = 0.",
+  "poids": [
+    {
+      "nom": "proximite_chasseur",
+      "valeur": "-8.10",
+      "lecture": "fuit les chasseurs"
+    },
+    {
+      "nom": "chasseurs_proches",
+      "valeur": "-4.40",
+      "lecture": "fuit l'encerclement"
+    },
+    {
+      "nom": "mange_pastille",
+      "valeur": "+3.40",
+      "lecture": "va chercher la pastille"
+    },
+    {
+      "nom": "proximite_pastille",
+      "valeur": "+2.90",
+      "lecture": "se rapproche des pastilles"
+    },
+    {
+      "nom": "issues",
+      "valeur": "+2.20",
+      "lecture": "prefere les cases qui ont des sorties"
+    },
+    {
+      "nom": "mange_super_pastille",
+      "valeur": "+1.70",
+      "lecture": "va chercher la super-pastille"
+    },
+    {
+      "nom": "biais",
+      "valeur": "-1.20",
+      "lecture": "valeur moyenne d'un coup"
+    },
+    {
+      "nom": "proximite_proie",
+      "valeur": "+1.10",
+      "lecture": "chasse les fantomes effrayes"
+    },
+    {
+      "nom": "demi_tour",
+      "valeur": "-0.90",
+      "lecture": "evite le demi-tour"
+    },
+    {
+      "nom": "proximite_super_pastille",
+      "valeur": "+0.60",
+      "lecture": "garde les super-pastilles a portee"
+    },
+    {
+      "nom": "avancement",
+      "valeur": "+0.40",
+      "lecture": "joue plus franc en fin de partie"
+    },
+    {
+      "nom": "mange_fruit",
+      "valeur": "+0.20",
+      "lecture": "va chercher le fruit"
+    }
+  ],
+  "commentaire_poids": "Aucun de ces poids n'a été écrit : ils sortent de 3000 épisodes. C'est ce qu'un réseau profond n'aurait pas permis de montrer."
+};
+
+function rendreResultats() {
+  const cible = document.getElementById('tableau-resultats');
+  const cibleP = document.getElementById('tableau-poids');
+  if (!RESULTATS) {
+    cible.innerHTML = '<p class="fort">Lancer <code>python scripts/campagne_rl.py</code> puis <code>python scripts/injecter_resultats.py</code>.</p>';
+    return;
+  }
+  const l = (r, vedette) => `<tr class="${vedette ? 'vedette' : ''}"><td>${r.agent}</td>` +
+      `<td class="num">${r.score_median}</td><td class="num">${r.score_ecart_type}</td>` +
+      `<td class="num">${r.victoires}%</td><td class="num">${r.morts}%</td></tr>`;
+  const entete = '<tr><th>Agent</th><th class="num">Score médian</th><th class="num">Écart-type</th><th class="num">Victoires</th><th class="num">Morts</th></tr>';
+
+  cible.innerHTML =
+    `<h3 style="color:var(--jaune);font-size:.85em;letter-spacing:.08em;margin:.5rem 0 .6rem">UN FANTÔME</h3>` +
+    `<table>${entete}${RESULTATS.un_fantome.map((r, i) => l(r, i === 2)).join('')}</table>` +
+    `<h3 style="color:var(--jaune);font-size:.85em;letter-spacing:.08em;margin:1.6rem 0 .6rem">QUATRE FANTÔMES</h3>` +
+    `<table>${entete}${RESULTATS.quatre_fantomes.map((r, i) => l(r, i === 2)).join('')}</table>` +
+    `<p style="margin-top:1.4rem">${RESULTATS.commentaire}</p>`;
+
+  cibleP.innerHTML =
+    `<table><tr><th>Descripteur</th><th class="num">Poids</th><th>Lecture</th></tr>` +
+    RESULTATS.poids.map(p => `<tr><td><code>${p.nom}</code></td><td class="num">${p.valeur}</td><td>${p.lecture}</td></tr>`).join('') +
+    `</table><p style="margin-top:1.4rem">${RESULTATS.commentaire_poids}</p>`;
+
+  const cibleD = document.getElementById('tableau-descripteurs');
+  const d = RESULTATS.descripteurs;
+  if (!d) {
+    cibleD.innerHTML = '<p>Mesure non produite : <code>python scripts/comparer_descripteurs.py</code>.</p>';
+    return;
+  }
+  cibleD.innerHTML =
+    `<table><tr><th>Descripteurs</th><th class="num">Poids</th><th class="num">Médiane 1F</th>` +
+    `<th class="num">Médiane 4F</th><th class="num">Écart-type 4F</th><th class="num">Entraînement</th></tr>` +
+    d.lignes.map(l => `<tr><td><code>${l.nom}</code></td><td class="num">${l.poids}</td>` +
+      `<td class="num">${l.un}</td><td class="num">${l.quatre}</td>` +
+      `<td class="num">${l.ecart_type}</td><td class="num">${l.secondes} s</td></tr>`).join('') +
+    `</table><p class="fort" style="margin-top:1.4rem">${d.verdict}</p>` +
+    `<p>Plus de descripteurs = plus de poids à estimer sur le même budget d'épisodes. La question n'avait pas de réponse évidente : c'est pour ça qu'on la mesure.</p>`;
+}
+
+const slides = [...document.querySelectorAll('section')];
+let index = 0;
+function montrer(n) {
+  index = Math.max(0, Math.min(slides.length - 1, n));
+  slides.forEach((s, i) => s.classList.toggle('actif', i === index));
+  document.getElementById('compteur').textContent = `${index + 1} / ${slides.length}`;
+  document.getElementById('barre').style.width = ((index + 1) / slides.length * 100) + '%';
+  location.hash = index + 1;
+}
+addEventListener('keydown', e => {
+  if (['ArrowRight', 'PageDown', ' ', 'Enter'].includes(e.key)) { e.preventDefault(); montrer(index + 1); }
+  if (['ArrowLeft', 'PageUp', 'Backspace'].includes(e.key)) { e.preventDefault(); montrer(index - 1); }
+  if (e.key === 'Home') montrer(0);
+  if (e.key === 'End') montrer(slides.length - 1);
+});
+addEventListener('click', e => { if (!e.target.closest('a')) montrer(index + 1); });
+rendreResultats();
+montrer(parseInt(location.hash.slice(1)) - 1 || 0);
+</script>
+</body>
+</html>

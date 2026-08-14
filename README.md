@@ -260,11 +260,37 @@ plafond raisonnable, mesurés dans les mêmes conditions :
 - **aléatoire** — tire une direction au sort à chaque intersection ;
 - **heuristique** — règles écrites à la main : fuir, chasser les fantômes
   effrayés, sinon aller à la pastille la plus proche ;
-- **Q approximé** — `Q(s,a) = w · f(s,a)` sur 12 descripteurs bornés dans
-  [0, 1]. Le tabulaire est exclu (2^244 configurations de pastilles pour les
-  seules pastilles), le réseau profond aussi (dix à cent fois plus d'épisodes
-  pour une boîte noire). Douze poids s'entraînent en quelques minutes **et se
-  lisent** : on voit ce que l'agent a retenu.
+- **Q approximé** — `Q(s,a) = w · f(s,a)` sur des descripteurs bornés dans
+  [0, 1]. Le tabulaire est exclu (2^244 configurations pour les seules
+  pastilles), le réseau profond aussi (dix à cent fois plus d'épisodes pour une
+  boîte noire). Douze poids s'entraînent en quelques minutes **et se lisent** :
+  on voit ce que l'agent a retenu.
+
+### Deux jeux de descripteurs
+
+L'agent peut regarder l'état de deux façons, et le choix se tranche par la
+mesure :
+
+| `--features` | Poids | Ce que l'agent voit |
+|---|---:|---|
+| `base` | 12 | des **agrégats** : le chasseur le plus proche, la pastille la plus proche |
+| `positions` | 26 | **chaque fantôme** (distance, « ça m'en rapproche », comestible) et la **répartition de la nourriture** (direction de la masse, densité locale) |
+
+Les positions sont exprimées **dans le repère de Pac-Man**, jamais en
+coordonnées absolues : dans un modèle linéaire, un poids sur `x` voudrait dire
+« préfère la droite du plan », ce qui ne généralise à rien. Les fantômes sont
+rangés du plus proche au plus lointain — sans cet ordre, échanger deux
+fantômes changerait le vecteur et l'agent apprendrait quatre fois la même
+chose.
+
+Le nom du jeu voyage avec les poids sauvegardés : recharger des poids
+`positions` dans un agent `base` lève une erreur au lieu de produire, en
+silence, un agent amputé de quatorze poids.
+
+```bash
+pacman-rl train --episodes 3000 --features positions --out poids_positions.json
+python scripts/comparer_descripteurs.py    # les deux, à conditions identiques
+```
 
 ### Utilisation
 

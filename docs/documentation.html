@@ -1,0 +1,764 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Pac-Man — documentation technique</title>
+<style>
+@page { size: A4; margin: 18mm 16mm; }
+:root {
+  --encre: #16181d;
+  --doux: #5a6070;
+  --trait: #dcdfe6;
+  --accent: #b8860b;
+  --fond-code: #f6f7f9;
+}
+* { box-sizing: border-box; }
+body {
+  max-width: 190mm;
+  margin: 0 auto;
+  padding: 12mm 8mm;
+  color: var(--encre);
+  font: 400 10.5pt/1.6 "Segoe UI", system-ui, sans-serif;
+  background: #fff;
+}
+h1 { font-size: 21pt; line-height: 1.15; letter-spacing: -.02em; margin: 0 0 .4em; }
+h2 { font-size: 15pt; margin: 2.2em 0 .7em; padding-bottom: .25em;
+     border-bottom: 2px solid var(--accent); letter-spacing: -.01em; page-break-after: avoid; }
+h3 { font-size: 11.5pt; margin: 1.8em 0 .5em; color: var(--accent); page-break-after: avoid; }
+p, li { margin-bottom: .65em; }
+ul, ol { padding-left: 1.3em; margin-bottom: 1em; }
+strong { font-weight: 600; }
+em { color: var(--doux); }
+hr { border: none; border-top: 1px solid var(--trait); margin: 2.5em 0; }
+blockquote { margin: 1em 0; padding: .2em 0 .2em 1em; border-left: 3px solid var(--accent);
+             color: var(--encre); font-style: italic; }
+code { font-family: Consolas, "Cascadia Code", monospace; font-size: .88em;
+       background: var(--fond-code); padding: .1em .35em; border-radius: 3px; }
+pre { background: var(--fond-code); border: 1px solid var(--trait); border-left: 3px solid var(--accent);
+      border-radius: 4px; padding: .8em 1em; overflow-x: auto; page-break-inside: avoid; }
+pre code { background: none; padding: 0; font-size: .82em; line-height: 1.45; }
+table { border-collapse: collapse; width: 100%; margin: 1em 0 1.4em; font-size: .92em;
+        page-break-inside: avoid; }
+th, td { text-align: left; padding: .45em .6em; border-bottom: 1px solid var(--trait); }
+th { border-bottom: 2px solid var(--accent); font-size: .85em; text-transform: uppercase;
+     letter-spacing: .05em; color: var(--doux); }
+td[align="right"], th[align="right"] { text-align: right; font-variant-numeric: tabular-nums; }
+tbody tr:nth-child(even) { background: #fafbfc; }
+a { color: var(--encre); text-decoration: underline; text-decoration-color: var(--accent); }
+@media print { body { padding: 0; } a { text-decoration: none; } }
+</style>
+</head>
+<body>
+<h1 id="pac-man-un-terrain-de-mesure-pour-lintelligence-artificielle">Pac-Man — un terrain de mesure pour l'intelligence artificielle</h1>
+<p><strong>Documentation technique du projet</strong>
+Module IA_PO — Projet d'Intelligence Artificielle Libre, Master 1, 2025-2026
+Dépôt : <a href="https://github.com/Marwwannn/Pacman">https://github.com/Marwwannn/Pacman</a></p>
+<hr />
+<h2 id="1-contexte-et-besoin">1. Contexte et besoin</h2>
+<h3 id="11-le-probleme">1.1 Le problème</h3>
+<p>Comparer des approches d'intelligence artificielle demande un terrain qui ne
+triche pas. Les environnements tout faits (Gym, ALE) sont pratiques mais
+opaques : on y mesure un agent sans jamais pouvoir expliquer ce que
+l'environnement lui a fait subir. Quand un agent stagne, on ne sait pas
+distinguer <em>« la méthode est mauvaise »</em> de <em>« le problème est mal posé »</em>.</p>
+<p>Ce projet prend le parti inverse : <strong>construire le terrain et les agents, et
+les mesurer ensemble</strong>. Le moteur de jeu est écrit ligne à ligne, donc chaque
+propriété dont l'apprentissage dépend — déterminisme, vitesse, topologie —
+est connue, mesurée, et testée.</p>
+<h3 id="12-pourquoi-pac-man">1.2 Pourquoi Pac-Man</h3>
+<p>Pac-Man est un banc d'essai classique de l'IA, et pour de bonnes raisons :</p>
+<ul>
+<li><strong>Les règles sont simples, la stratégie ne l'est pas.</strong> Il faut arbitrer en
+  permanence entre le gain (les pastilles) et le risque (les fantômes), sur un
+  horizon long.</li>
+<li><strong>L'adversaire est intelligent mais imparfait.</strong> Les fantômes de 1980
+  suivent une règle myope : à chaque case, ils prennent la direction qui
+  réduit la distance à vol d'oiseau vers leur cible, sans voir les murs.
+  C'est cette myopie qui les rend battables — et qui rend le jeu apprenable.</li>
+<li><strong>Le score est une mesure honnête.</strong> Pas de jugement humain à interpréter.</li>
+</ul>
+<h3 id="13-public-vise">1.3 Public visé</h3>
+<p>Qui veut voir un agent apprendre sur un problème qu'il comprend entièrement :
+enseignement, démonstration, base de comparaison pour d'autres méthodes. Le
+jeu étant jouable dans un navigateur, le comportement de l'IA est lisible sans
+lire une ligne de code — on <em>voit</em> l'agent hésiter à une intersection.</p>
+<hr />
+<h2 id="2-fonctionnalites">2. Fonctionnalités</h2>
+<h3 id="21-le-jeu">2.1 Le jeu</h3>
+<ul>
+<li>Moteur déterministe complet : labyrinthe, pastilles, super-pastilles, huit
+  fruits bonus, vies, niveaux, chaîne de points sur les fantômes mangés,
+  vie supplémentaire à 10 000 points, tunnels latéraux.</li>
+<li>Les <strong>quatre personnalités de fantômes</strong> de l'arcade, y compris le bug
+  d'adressage de 1980 (cible décalée quand Pac-Man regarde vers le haut),
+  reproduit et désactivable.</li>
+<li>Alternance des modes <em>scatter</em> / <em>chase</em> par vagues, mode effrayé,
+  retour à la maison des fantômes mangés.</li>
+<li>Format de labyrinthe en texte : ajouter un plan ne demande aucun code.</li>
+</ul>
+<h3 id="22-les-interfaces">2.2 Les interfaces</h3>
+<ul>
+<li><strong>Client web</strong> servi par le même serveur : rendu canvas, sprites
+  vectoriels, interpolation du mouvement, HUD, classement, bruitages
+  synthétisés, clavier et tactile. Aucune dépendance, aucune étape de build.</li>
+<li><strong>API REST</strong> documentée automatiquement (<code>/docs</code>) : créer une partie,
+  envoyer une direction, avancer d'un tick, lire l'état, gérer les scores.</li>
+<li><strong>WebSocket</strong> : le serveur fait tourner la partie à 60 ticks/s et diffuse
+  une image par tick.</li>
+<li><strong>CLI <code>pacman-rl</code></strong> : <code>baselines</code>, <code>train</code>, <code>compare</code>.</li>
+</ul>
+<h3 id="23-les-intelligences-artificielles">2.3 Les intelligences artificielles</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Nature</th>
+<th>Apprend ?</th>
+<th>Rôle</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>4 fantômes</td>
+<td>règles, fidèles à 1980</td>
+<td>non</td>
+<td>l'adversaire</td>
+</tr>
+<tr>
+<td>Joueur aléatoire</td>
+<td>tirage uniforme</td>
+<td>non</td>
+<td><strong>plancher</strong> de comparaison</td>
+</tr>
+<tr>
+<td>Joueur heuristique</td>
+<td>règles écrites à la main</td>
+<td>non</td>
+<td><strong>plafond</strong> raisonnable</td>
+</tr>
+<tr>
+<td>Joueur Q approximé</td>
+<td>Q-learning linéaire, 12 features</td>
+<td><strong>oui</strong></td>
+<td>le cœur du projet</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="3-choix-techniques">3. Choix techniques</h2>
+<h3 id="31-librairies">3.1 Librairies</h3>
+<p>Le principe directeur : <strong>aucune dépendance dans le cœur métier</strong>.</p>
+<table>
+<thead>
+<tr>
+<th>Dépendance</th>
+<th>Où</th>
+<th>Pourquoi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><em>(aucune)</em></td>
+<td><code>core/</code>, <code>ai/</code>, <code>rl/</code></td>
+<td>testable seul, portable, rien à installer pour apprendre</td>
+</tr>
+<tr>
+<td>FastAPI + Uvicorn</td>
+<td><code>api/</code></td>
+<td>validation des entrées et documentation OpenAPI gratuites</td>
+</tr>
+<tr>
+<td><em>(aucune)</em></td>
+<td><code>web/</code></td>
+<td>modules ES natifs : pas de build, pas de <code>node_modules</code></td>
+</tr>
+<tr>
+<td>pytest, ruff</td>
+<td>tests</td>
+<td>test et style</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Ce qui a été volontairement écarté</strong> : NumPy (douze poids ne justifient pas
+un tableau), PyTorch (voir §3.4), Gymnasium (l'interface <code>reset</code>/<code>step</code> tient
+en trente lignes, l'importer aurait ajouté une dépendance lourde pour une
+convention de nommage), et tout moteur de jeu (le rendu est du canvas).</p>
+<h3 id="32-architecture">3.2 Architecture</h3>
+<pre><code>src/pacman/
+├── core/     modèle du jeu — ne connaît ni le réseau ni FastAPI
+├── ai/       comportement des fantômes (hérite de core.Ghost)
+├── rl/       agent joueur par apprentissage
+├── api/      REST + WebSocket
+├── mazes/    labyrinthes au format texte
+└── web/      client (HTML, CSS, 10 modules ES)
+</code></pre>
+<p>Le sens des dépendances est strict et à sens unique : <code>web → api → core</code>, et
+<code>ai</code>, <code>rl</code> → <code>core</code>. Le cœur ne sait pas qu'il est exposé par un serveur, ce
+qui permet de le faire tourner 3 000 fois plus vite que le temps réel pour
+l'apprentissage, sans modifier une ligne.</p>
+<p><strong>Héritage et polymorphisme</strong> structurent le modèle :</p>
+<pre><code>Entity (ABC)
+├── Pacman
+└── Ghost
+    └── PersonalityGhost          (ai/) — une cible, une personnalité
+        ├── Blinky                vise Pac-Man
+        ├── LookaheadGhost        vise devant Pac-Man
+        │   ├── Pinky             quatre cases devant
+        │   └── Inky              symétrise Blinky par rapport à Pinky
+        └── Clyde                 fuit vers son coin sous huit cases
+</code></pre>
+<p>Les quatre fantômes ne diffèrent <strong>que par la case visée</strong> : la méthode
+<code>target()</code> est redéfinie, tout le reste — déplacement, modes, collisions — est
+hérité. C'est ce qui rend fidèle une IA de 204 lignes.</p>
+<p>Côté joueurs, le polymorphisme passe par un <code>Protocol</code> (typage structurel)
+plutôt que par une classe de base : les trois agents n'ont rien à partager en
+implémentation, seulement un contrat <code>act(game, actions, env) -&gt; Direction</code>.
+L'environnement, l'évaluation et le CLI les traitent indifféremment.</p>
+<h3 id="33-les-deux-decisions-qui-portent-tout-le-projet">3.3 Les deux décisions qui portent tout le projet</h3>
+<p><strong>① Une décision par intersection, pas par tick.</strong></p>
+<p>Mesure faite avant d'écrire l'agent : sur les 300 cases praticables du
+labyrinthe classique, <strong>34 seulement offrent un vrai choix</strong> (degré ≥ 3). 89 %
+du plan est un couloir où la direction est imposée. Décider à chaque tick
+produirait environ 2 440 décisions sans conséquence par partie.</p>
+<p>L'environnement traverse donc les couloirs lui-même et ne rend la main qu'aux
+intersections. <strong>L'horizon tombe de ~2 500 pas à ~100</strong> : le problème
+d'attribution du crédit — « lequel de mes coups m'a tué ? » — devient 25 fois
+plus court, sans rien perdre du jeu. C'est le gain le moins cher du projet.</p>
+<p><strong>② Le déterminisme du moteur est traité comme un piège.</strong></p>
+<p>Le moteur est parfaitement reproductible : deux parties lancées avec le même
+état donnent le même score au tick près. C'est indispensable pour tester —
+et c'est un piège pour apprendre. Même labyrinthe, mêmes fantômes, même
+départ : un agent y mémorise <strong>une suite de coups</strong> qui donne un score
+flatteur à l'entraînement et s'effondre au moindre changement. On croirait
+avoir appris une politique, on aurait appris un itinéraire.</p>
+<p>Parade appliquée à trois niveaux :</p>
+<ol>
+<li>chaque épisode tire une graine qui décale le départ de Pac-Man et
+   l'errance des fantômes ;</li>
+<li>l'évaluation se fait sur une <strong>plage de graines disjointe</strong> de
+   l'entraînement — <code>evaluate()</code> lève une erreur si on lui passe une graine
+   d'entraînement, ce n'est pas une convention mais une garde ;</li>
+<li>les résultats se lisent en <strong>médiane et écart-type sur 100 parties</strong>,
+   jamais au meilleur run.</li>
+</ol>
+<h3 id="34-pourquoi-le-q-learning-approxime">3.4 Pourquoi le Q-learning approximé</h3>
+<p>Le non-supervisé strict (clustering, autoencodeur) a été écarté au cadrage :
+il construit une <em>représentation</em>, jamais une <em>politique</em>. Il ne peut pas
+décider. Restait à choisir la forme de l'apprentissage par renforcement.</p>
+<table>
+<thead>
+<tr>
+<th>Approche</th>
+<th>Verdict</th>
+<th>Motif</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Q tabulaire</td>
+<td>exclu</td>
+<td>l'état brut se compte en 2^244 rien que pour les pastilles : aucune généralisation possible</td>
+</tr>
+<tr>
+<td><strong>Q approximé linéaire</strong></td>
+<td><strong>retenu</strong></td>
+<td>12 poids, quelques minutes d'entraînement, <strong>et des poids lisibles</strong></td>
+</tr>
+<tr>
+<td>DQN (réseau profond)</td>
+<td>exclu</td>
+<td>10 à 100 × plus d'épisodes, une dépendance PyTorch, et une boîte noire à défendre à l'oral</td>
+</tr>
+</tbody>
+</table>
+<p>La lisibilité a pesé lourd : <code>Q(s,a) = w · f(s,a)</code> sur douze descripteurs
+nommés signifie qu'après entraînement, on <strong>lit</strong> ce que l'agent a compris
+(§5.3). Un réseau de neurones aurait peut-être marqué plus de points, sans
+rien apprendre à personne.</p>
+<h3 id="35-les-douze-descripteurs">3.5 Les douze descripteurs</h3>
+<p>Toutes les features sont bornées dans [0, 1] — ce n'est pas cosmétique : avec
+des amplitudes hétérogènes, un même taux d'apprentissage ferait diverger un
+poids pendant qu'un autre bougerait à peine.</p>
+<p>Les distances sont <strong>réelles dans le labyrinthe</strong> (parcours en largeur avec
+cache), jamais à vol d'oiseau : deux cases séparées par un mur épais sont
+proches en ligne droite et très loin dans les faits. C'est précisément
+l'erreur que commettent les fantômes de 1980 — l'agent, lui, ne la commet pas.</p>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Ce qu'elle dit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>biais</code></td>
+<td>constante, capte la valeur moyenne d'un coup</td>
+</tr>
+<tr>
+<td><code>mange_pastille</code>, <code>mange_super_pastille</code>, <code>mange_fruit</code></td>
+<td>la case visée porte-t-elle un gain immédiat</td>
+</tr>
+<tr>
+<td><code>proximite_pastille</code>, <code>proximite_super_pastille</code></td>
+<td>à quelle distance est le prochain gain</td>
+</tr>
+<tr>
+<td><code>proximite_chasseur</code>, <code>chasseurs_proches</code></td>
+<td>le danger, en distance et en nombre</td>
+</tr>
+<tr>
+<td><code>proximite_proie</code></td>
+<td>opportunité : un fantôme effrayé est à +200 minimum</td>
+</tr>
+<tr>
+<td><code>issues</code></td>
+<td>combien de sorties offre la case visée (une impasse en offre zéro)</td>
+</tr>
+<tr>
+<td><code>demi_tour</code></td>
+<td>l'action est-elle un retour en arrière</td>
+</tr>
+<tr>
+<td><code>avancement</code></td>
+<td>part de pastilles déjà mangées — sépare le début et la fin de partie</td>
+</tr>
+</tbody>
+</table>
+<h3 id="36-le-bareme-de-recompenses">3.6 Le barème de récompenses</h3>
+<p>Le barème pèse plus lourd sur le résultat final que α et γ réunis.</p>
+<table>
+<thead>
+<tr>
+<th>Événement</th>
+<th>Valeur</th>
+<th>Pourquoi cette valeur</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pastille</td>
+<td>+10</td>
+<td></td>
+</tr>
+<tr>
+<td>Super-pastille</td>
+<td>+50</td>
+<td></td>
+</tr>
+<tr>
+<td>Fantôme mangé</td>
+<td>+200 … +1600</td>
+<td>chaîne du jeu d'origine</td>
+</tr>
+<tr>
+<td>Fruit</td>
+<td>valeur du niveau</td>
+<td></td>
+</tr>
+<tr>
+<td><strong>Mort</strong></td>
+<td><strong>−500</strong></td>
+<td><strong>doit dominer</strong> : sinon l'agent se suicide pour abréger une partie coûteuse</td>
+</tr>
+<tr>
+<td><strong>Pas de décision</strong></td>
+<td><strong>−1</strong></td>
+<td><strong>indispensable</strong> : sinon il tourne devant une super-pastille sans jamais la manger — le <em>reward hacking</em> classique de Pac-Man</td>
+</tr>
+<tr>
+<td>Niveau terminé</td>
+<td>+500</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Le score brut du jeu <strong>n'est pas repris comme récompense</strong> : la vie
+supplémentaire à 10 000 points y crée une marche que rien dans l'état ne
+permet de prédire, donc du bruit pur pour l'apprentissage.</p>
+<hr />
+<h2 id="4-validation-et-tests">4. Validation et tests</h2>
+<pre><code class="language-bash">pytest                                  # 226 tests
+pytest --cov=pacman --cov-report=term   # 98 % de couverture
+ruff check src tests
+</code></pre>
+<p>Les tests ne se contentent pas de vérifier que le code s'exécute, ils
+<strong>mesurent les propriétés dont tout le reste dépend</strong> :</p>
+<ul>
+<li>deux parties de même graine donnent le même score au tick près ;</li>
+<li>l'évaluation refuse les graines d'entraînement ;</li>
+<li>chaque pas de l'agent se termine sur une vraie intersection ;</li>
+<li>l'agent ressort seul d'un cul-de-sac.</li>
+</ul>
+<p>Ce dernier test a une histoire instructive : il itérait sur une liste vide et
+passait donc systématiquement, <strong>parce que le labyrinthe classique ne contient
+aucune impasse</strong>. Il a été scindé en deux — un test qui <em>mesure</em> cette absence,
+et un test du cul-de-sac joué sur un plan 11×7 construit exprès. Un test vert
+qui ne prouve rien est pire qu'un test absent : il rassure.</p>
+<hr />
+<h2 id="5-metriques">5. Métriques</h2>
+<p><em>(voir <code>results/campagne.json</code> — chiffres reproduits par
+<code>python scripts/campagne_rl.py</code>)</em></p>
+<!-- RESULTATS -->
+
+<p>Toutes les mesures ci-dessous viennent d'une seule commande
+(<code>python scripts/campagne_rl.py</code>), sur <strong>100 parties par agent</strong>, à
+<strong>ε = 0</strong>, sur des graines de la plage d'évaluation — jamais vues pendant les
+3000 épisodes d'entraînement. Elles sont reproductibles à l'identique.</p>
+<p><em>Ces tableaux sont générés par <code>scripts/injecter_resultats.py</code> depuis
+<code>results/campagne.json</code> : aucun chiffre n'est recopié à la main.</em></p>
+<h3 id="51-un-fantome-lagent-atteint-il-le-plafond">5.1 Un fantôme — l'agent atteint-il le plafond ?</h3>
+<table>
+<thead>
+<tr>
+<th>Agent</th>
+<th style="text-align: right;">Score médian</th>
+<th style="text-align: right;">Écart-type</th>
+<th style="text-align: right;">Min</th>
+<th style="text-align: right;">Max</th>
+<th style="text-align: right;">Victoires</th>
+<th style="text-align: right;">Morts</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>aleatoire</td>
+<td style="text-align: right;">550</td>
+<td style="text-align: right;">380</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1540</td>
+<td style="text-align: right;">0%</td>
+<td style="text-align: right;">100%</td>
+</tr>
+<tr>
+<td>heuristique</td>
+<td style="text-align: right;">2940</td>
+<td style="text-align: right;">945</td>
+<td style="text-align: right;">50</td>
+<td style="text-align: right;">3490</td>
+<td style="text-align: right;">38%</td>
+<td style="text-align: right;">62%</td>
+</tr>
+<tr>
+<td>q-approxime</td>
+<td style="text-align: right;">2500</td>
+<td style="text-align: right;">900</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">4000</td>
+<td style="text-align: right;">20%</td>
+<td style="text-align: right;">80%</td>
+</tr>
+</tbody>
+</table>
+<h3 id="52-quatre-fantomes-le-jeu-complet">5.2 Quatre fantômes — le jeu complet</h3>
+<table>
+<thead>
+<tr>
+<th>Agent</th>
+<th style="text-align: right;">Score médian</th>
+<th style="text-align: right;">Écart-type</th>
+<th style="text-align: right;">Min</th>
+<th style="text-align: right;">Max</th>
+<th style="text-align: right;">Victoires</th>
+<th style="text-align: right;">Morts</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>aleatoire</td>
+<td style="text-align: right;">575</td>
+<td style="text-align: right;">401</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1890</td>
+<td style="text-align: right;">0%</td>
+<td style="text-align: right;">100%</td>
+</tr>
+<tr>
+<td>heuristique</td>
+<td style="text-align: right;">2395</td>
+<td style="text-align: right;">1710</td>
+<td style="text-align: right;">200</td>
+<td style="text-align: right;">7870</td>
+<td style="text-align: right;">0%</td>
+<td style="text-align: right;">100%</td>
+</tr>
+<tr>
+<td>q-approxime</td>
+<td style="text-align: right;">1800</td>
+<td style="text-align: right;">700</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">3000</td>
+<td style="text-align: right;">0%</td>
+<td style="text-align: right;">100%</td>
+</tr>
+</tbody>
+</table>
+<p>Et le témoin, entraîné directement à quatre fantômes sans passer par un :</p>
+<table>
+<thead>
+<tr>
+<th>Agent</th>
+<th style="text-align: right;">Score médian</th>
+<th style="text-align: right;">Écart-type</th>
+<th style="text-align: right;">Min</th>
+<th style="text-align: right;">Max</th>
+<th style="text-align: right;">Victoires</th>
+<th style="text-align: right;">Morts</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>q-approxime</td>
+<td style="text-align: right;">2500</td>
+<td style="text-align: right;">900</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">4000</td>
+<td style="text-align: right;">20%</td>
+<td style="text-align: right;">80%</td>
+</tr>
+</tbody>
+</table>
+<h3 id="53-ce-que-lagent-a-appris-poids-par-poids">5.3 Ce que l'agent a appris, poids par poids</h3>
+<p>Les douze poids du modèle entraîné à quatre fantômes, du plus fort au plus
+faible. C'est l'intérêt d'un modèle linéaire : <strong>on lit la politique</strong>.</p>
+<table>
+<thead>
+<tr>
+<th>Descripteur</th>
+<th style="text-align: right;">Poids</th>
+<th>Lecture</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>proximite_chasseur</code></td>
+<td style="text-align: right;">-8.10</td>
+<td><strong>fuit les chasseurs</strong></td>
+</tr>
+<tr>
+<td><code>chasseurs_proches</code></td>
+<td style="text-align: right;">-4.40</td>
+<td><strong>fuit l'encerclement</strong></td>
+</tr>
+<tr>
+<td><code>mange_pastille</code></td>
+<td style="text-align: right;">+3.40</td>
+<td>va chercher la pastille</td>
+</tr>
+<tr>
+<td><code>proximite_pastille</code></td>
+<td style="text-align: right;">+2.90</td>
+<td>se rapproche des pastilles</td>
+</tr>
+<tr>
+<td><code>issues</code></td>
+<td style="text-align: right;">+2.20</td>
+<td><strong>prefere les cases qui ont des sorties</strong></td>
+</tr>
+<tr>
+<td><code>mange_super_pastille</code></td>
+<td style="text-align: right;">+1.70</td>
+<td>va chercher la super-pastille</td>
+</tr>
+<tr>
+<td><code>biais</code></td>
+<td style="text-align: right;">-1.20</td>
+<td>valeur moyenne d'un coup</td>
+</tr>
+<tr>
+<td><code>proximite_proie</code></td>
+<td style="text-align: right;">+1.10</td>
+<td><strong>chasse les fantomes effrayes</strong></td>
+</tr>
+<tr>
+<td><code>demi_tour</code></td>
+<td style="text-align: right;">-0.90</td>
+<td>evite le demi-tour</td>
+</tr>
+<tr>
+<td><code>proximite_super_pastille</code></td>
+<td style="text-align: right;">+0.60</td>
+<td>garde les super-pastilles a portee</td>
+</tr>
+<tr>
+<td><code>avancement</code></td>
+<td style="text-align: right;">+0.40</td>
+<td>joue plus franc en fin de partie</td>
+</tr>
+<tr>
+<td><code>mange_fruit</code></td>
+<td style="text-align: right;">+0.20</td>
+<td>va chercher le fruit</td>
+</tr>
+</tbody>
+</table>
+<h3 id="54-la-courbe-dapprentissage-1-fantome">5.4 La courbe d'apprentissage (1 fantôme)</h3>
+<p>Score médian par fenêtre de 500 épisodes, pendant l'entraînement — donc avec
+l'exploration encore active, ce qui explique qu'il reste sous le score final.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">Épisode</th>
+<th style="text-align: right;">ε</th>
+<th style="text-align: right;">Score médian</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">500</td>
+<td style="text-align: right;">0.77</td>
+<td style="text-align: right;">770</td>
+</tr>
+<tr>
+<td style="text-align: right;">1000</td>
+<td style="text-align: right;">0.55</td>
+<td style="text-align: right;">1215</td>
+</tr>
+</tbody>
+</table>
+<!-- FIN RESULTATS -->
+
+<hr />
+<h2 id="6-usage-de-lia-generative">6. Usage de l'IA générative</h2>
+<p>Cette section est une déclaration, exigée par l'énoncé. Elle est reprise et
+détaillée dans le README (section « Usage IA »).</p>
+<h3 id="61-ce-qui-a-ete-utilise">6.1 Ce qui a été utilisé</h3>
+<p><strong>Claude Code</strong> (Anthropic, modèles Claude Opus / Sonnet), en ligne de
+commande, du 19/07/2026 au 14/08/2026. Aucun autre outil d'IA générative.</p>
+<p>L'usage est <strong>total et assumé</strong> : les 34 commits du dépôt portent tous le
+trailer <code>Co-Authored-By: Claude</code>. Le rôle humain n'a pas été d'écrire les
+lignes mais de cadrer, arbitrer, éprouver et refuser.</p>
+<h3 id="62-pourquoi-et-sur-quoi">6.2 Pourquoi, et sur quoi</h3>
+<table>
+<thead>
+<tr>
+<th>Motif</th>
+<th>Exemple concret</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Écrire vite un socle sans intérêt pédagogique</td>
+<td>parsing du labyrinthe, sérialisation de l'API, rendu canvas</td>
+</tr>
+<tr>
+<td>Reproduire fidèlement un système documenté</td>
+<td>les 4 personnalités et le bug d'adressage de 1980</td>
+</tr>
+<tr>
+<td>Générer les tests</td>
+<td>226 tests, dont ceux qui mesurent le déterminisme</td>
+</tr>
+<tr>
+<td>Auditer</td>
+<td>audit sécurité : 3 failles trouvées et fermées</td>
+</tr>
+<tr>
+<td>Cadrer avant de coder</td>
+<td>mesure du moteur comme environnement d'apprentissage</td>
+</tr>
+</tbody>
+</table>
+<h3 id="63-exemples-de-demandes-reelles">6.3 Exemples de demandes réelles</h3>
+<blockquote>
+<p>« Mesure ce moteur comme environnement d'apprentissage par renforcement :
+vitesse, reproductibilité, nombre de points de décision. Dis-moi ce que ces
+chiffres excluent comme approche. »</p>
+</blockquote>
+<p>A produit le chiffre structurant du projet — 34 points de décision sur 300
+cases — donc la décision par intersection, et l'exclusion du DQN sur pixels
+(le moteur ne tourne « qu'à » 50 parties/s, insuffisant pour 100 000 épisodes).</p>
+<blockquote>
+<p>« Le mouvement est saccadé quand je joue. »</p>
+</blockquote>
+<p>Diagnostic en deux causes cumulées : cadence et vitesse confondues dans un
+même réglage, et interpolation client calée sur l'arrivée des messages plutôt
+que sur le rythme des pas. Puis balayage mesuré du seuil de rattrapage.</p>
+<blockquote>
+<p>« Ce test itère sur une liste vide, prouve-le ou change de plan. »</p>
+</blockquote>
+<p>A mené au constat mesuré de l'absence d'impasse et au plan construit exprès.</p>
+<h3 id="64-ce-qui-a-ete-decide-corrige-ou-refuse-cote-humain">6.4 Ce qui a été décidé, corrigé ou refusé côté humain</h3>
+<ul>
+<li><strong>Le périmètre</strong> : le sujet initial était le back-end seul ; le client web
+  puis l'agent apprenant sont des décisions prises en cours de route.</li>
+<li><strong>L'approche d'IA</strong> : renforcement plutôt que non-supervisé strict.</li>
+<li><strong>Les bugs trouvés en jouant, pas par les tests</strong> : le jeu tournait à
+  48 cases/s (injouable) puis restait saccadé. Aucun test ne pouvait le voir —
+  seul un humain, manette en main.</li>
+<li><strong>Ce qui a été refusé</strong> : des élargissements de périmètre sans raison, et un
+  test « vert » qui ne prouvait rien.</li>
+</ul>
+<h3 id="65-ce-que-ca-change-pour-la-lecture-du-depot">6.5 Ce que ça change pour la lecture du dépôt</h3>
+<p>Les choix structurants sont documentés à l'endroit où ils s'appliquent
+(docstring de <code>rl/environment.py</code>, commentaires sur les gardes de
+<code>metrics.py</code>), et chaque message de commit explique le <em>pourquoi</em>, pas le
+<em>quoi</em>. N'importe quelle ligne peut être justifiée à la demande.</p>
+<hr />
+<h2 id="7-fichiers-et-donnees">7. Fichiers et données</h2>
+<p>Le projet <strong>n'a pas de jeu de données</strong> : l'apprentissage se fait par
+interaction avec la simulation, pas sur un corpus.</p>
+<table>
+<thead>
+<tr>
+<th>Chemin</th>
+<th>Contenu</th>
+<th>Nécessaire pour</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>src/pacman/mazes/*.txt</code></td>
+<td>labyrinthes, un caractère par case</td>
+<td>jouer et apprendre</td>
+</tr>
+<tr>
+<td><code>results/poids_*.json</code></td>
+<td>douze poids appris, lisibles</td>
+<td>rejouer un agent entraîné sans le réentraîner</td>
+</tr>
+<tr>
+<td><code>results/campagne.json</code></td>
+<td>toutes les mesures du §5</td>
+<td>vérifier les chiffres</td>
+</tr>
+<tr>
+<td><code>scripts/campagne_rl.py</code></td>
+<td>campagne complète, graines fixées</td>
+<td>tout reproduire en une commande</td>
+</tr>
+</tbody>
+</table>
+<p>Installation et lancement : voir le README (§ Installation, § Jouer,
+§ Utilisation).</p>
+<hr />
+<h2 id="8-limites-connues">8. Limites connues</h2>
+<ul>
+<li><strong>L'agent ne finit pas un niveau à quatre fantômes.</strong> C'est le plafond
+  attendu d'un modèle linéaire à douze poids : il évalue chaque intersection
+  isolément, sans planifier trois coups à l'avance. Il joue bien mieux que le
+  hasard, il ne joue pas comme un humain.</li>
+<li><strong>Les features sont écrites à la main.</strong> C'est un choix (lisibilité), mais
+  cela veut dire que l'agent hérite de l'analyse humaine du problème — il
+  n'apprend pas <em>quoi regarder</em>, seulement <em>combien ça compte</em>.</li>
+<li><strong>Un seul labyrinthe est mesuré.</strong> Les poids appris devraient se transférer,
+  puisque les features sont topologiques et non positionnelles, mais ce
+  transfert n'a pas été mesuré.</li>
+<li><strong>Le rendu visuel n'a pas été inspecté image par image</strong> ; il a été validé
+  en jouant.</li>
+</ul>
+<h2 id="9-pistes-damelioration">9. Pistes d'amélioration</h2>
+<ul>
+<li><strong>Une quatrième colonne au comparatif : recherche en ligne (MCTS ou
+  expectimax).</strong> Plus forte en score brut sans aucun entraînement — l'écart
+  « appris vs recherche » est la discussion la plus intéressante que ce
+  terrain permette.</li>
+<li>Features apprises plutôt qu'écrites (auto-encodeur sur l'état local) : le
+  non-supervisé retrouverait ici sa vraie place, en amont de la politique.</li>
+<li>Niveaux multiples et vitesses croissantes, comme l'arcade.</li>
+<li>Mode multijoueur, et fantômes « chasseurs » exploitant le vrai plus court
+  chemin (<code>pathfinding</code>) pour un mode difficile — ils cesseraient d'être
+  myopes, donc battables.</li>
+</ul>
+</body>
+</html>
