@@ -67,12 +67,6 @@ class MazeMetrics:
                 queue.append((neighbor, depth + 1))
         return inf
 
-    def normalized(self, distance: float) -> float:
-        """Ramene une distance dans [0, 1]. Une cible absente vaut 1 (le plus loin)."""
-        if distance == inf:
-            return 1.0
-        return min(1.0, distance / self.max_distance)
-
     @staticmethod
     def proximity(distance: float) -> float:
         """Proximite dans [0, 1] : 1 sur la case meme, 0 pour une cible absente.

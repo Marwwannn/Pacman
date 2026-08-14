@@ -25,6 +25,19 @@ from pacman.rl.rewards import RewardConfig
 from pacman.rl.training import Hyper, train
 
 
+#: Plan construit expres : le labyrinthe classique n'a aucune impasse, donc il
+#: ne permet pas d'eprouver le pilotage automatique des culs-de-sac.
+MAZE_IMPASSE = """\
+###########
+#....#....#
+#.##.#.##.#
+#.#B Y#..P#
+#.##-##.#.#
+#.........#
+###########
+"""
+
+
 @pytest.fixture
 def metrics(classic_maze: Maze):
     return metrics_for(classic_maze)
@@ -81,8 +94,15 @@ class TestPointsDeDecision:
             direction = metrics.maze.neighbors(tile)[0][0]
             assert not metrics.is_decision(tile, direction.opposite)
 
-    def test_une_impasse_ne_laisse_que_le_demi_tour(self, metrics):
+    def test_le_labyrinthe_classique_n_a_aucune_impasse(self, metrics):
+        # Constat mesure, pas hypothese : c'est pour cela que le cas de
+        # l'impasse s'eprouve sur un plan construit expres, juste en dessous.
+        assert not [tile for tile in metrics.walkable if metrics.exits(tile) == 1]
+
+    def test_une_impasse_ne_laisse_que_le_demi_tour(self):
+        metrics = metrics_for(Maze.from_text(MAZE_IMPASSE))
         impasses = [tile for tile in metrics.walkable if metrics.exits(tile) == 1]
+        assert impasses  # sinon le test ne prouverait rien
         for tile in impasses:
             entree = metrics.maze.neighbors(tile)[0][0]
             # Arrive au fond, la seule direction restante est celle d'ou l'on
@@ -90,6 +110,20 @@ class TestPointsDeDecision:
             # de l'agent.
             assert metrics.options(tile, entree.opposite) == []
             assert not metrics.is_decision(tile, entree.opposite)
+
+    def test_l_environnement_ressort_seul_d_une_impasse(self):
+        env = PacmanEnv(EnvConfig(ghosts=1, lives=1), maze=Maze.from_text(MAZE_IMPASSE))
+        env.reset(EVALUATION_SEEDS)
+        visitees = {env.position}
+        for _ in range(12):
+            if env.finished:
+                break
+            env.step(env.legal_actions()[0])
+            visitees.add(env.position)
+            # Aucun pas ne se termine dans une impasse : l'agent n'a jamais a
+            # jouer le seul coup possible.
+            assert env.metrics.exits(env.position) >= 2
+        assert len(visitees) > 1
 
     def test_chaque_pas_s_arrete_sur_un_vrai_choix(self, env):
         env.reset(EVALUATION_SEEDS)

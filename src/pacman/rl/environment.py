@@ -69,10 +69,15 @@ class PacmanEnv:
         self,
         config: EnvConfig | None = None,
         rewards: RewardConfig | None = None,
+        *,
+        maze: Maze | None = None,
     ) -> None:
         self.config = config or EnvConfig()
         self.rewards = rewards or RewardConfig()
-        self._maze: Maze = Maze.load(self.config.maze)
+        # `maze` prend le pas sur le nom : il sert aux plans construits en
+        # memoire, notamment pour eprouver des topologies que le labyrinthe
+        # classique n'a pas (il ne contient aucune impasse).
+        self._maze: Maze = maze or Maze.load(self.config.maze)
         self.metrics: MazeMetrics = metrics_for(self._maze)
 
         self.game: Game = self._new_game()
