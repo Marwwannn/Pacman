@@ -15,6 +15,7 @@ import time
 from .agents import ApproximateQAgent, HeuristicAgent, RandomAgent
 from .environment import EnvConfig
 from .evaluation import EvalReport, evaluate
+from .features import FEATURE_SETS, feature_set
 from .rewards import RewardConfig
 from .training import Hyper, train
 
@@ -82,7 +83,9 @@ def cmd_train(args: argparse.Namespace) -> int:
     )
 
     # Curriculum : on reprend les poids appris a un fantome pour continuer a
-    # quatre, plutot que de repartir de zero sur un probleme plus dur.
+    # quatre, plutot que de repartir de zero sur un probleme plus dur. Le jeu
+    # de descripteurs vient alors du fichier, jamais de --features : des poids
+    # n'ont de sens que dans le jeu qui les a produits.
     resumed = ApproximateQAgent.load(args.resume, seed=args.seed) if args.resume else None
 
     started = time.perf_counter()
@@ -92,6 +95,7 @@ def cmd_train(args: argparse.Namespace) -> int:
         rewards=RewardConfig(),
         hyper=hyper,
         agent=resumed,
+        features=feature_set(args.features),
         seed=args.seed,
         log_every=args.log_every,
         on_window=None if args.json else _print_window,
@@ -168,6 +172,15 @@ def build_parser() -> argparse.ArgumentParser:
         type=float,
         default=None,
         help="exploration de depart (defaut : 1,0, ou 0,3 avec --resume)",
+    )
+    trainer.add_argument(
+        "--features",
+        choices=sorted(FEATURE_SETS),
+        default="base",
+        help=(
+            "jeu de descripteurs : 'base' (12, agreges) ou 'positions' "
+            "(26, chaque fantome et la nourriture). Ignore avec --resume."
+        ),
     )
     trainer.add_argument("--seed", type=int, default=0)
     trainer.add_argument("--log-every", type=int, default=100)

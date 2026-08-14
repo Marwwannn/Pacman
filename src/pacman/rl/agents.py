@@ -17,7 +17,7 @@ from typing import Protocol
 from ..core.entities import GhostMode
 from ..core.game import Game
 from ..core.geometry import Direction
-from .features import FEATURE_NAMES, extract
+from .features import BASE, FeatureSet, feature_set
 from .metrics import MazeMetrics, metrics_for
 
 
@@ -124,11 +124,21 @@ class ApproximateQAgent:
         *,
         metrics: MazeMetrics | None = None,
         seed: int = 0,
+        features: FeatureSet | None = None,
     ) -> None:
-        self.name = "q-approxime"
-        self.weights = {name: 0.0 for name in FEATURE_NAMES}
+        self.features = features or BASE
+        self.name = "q-approxime" if self.features is BASE else f"q-{self.features.name}"
+        self.weights = {name: 0.0 for name in self.features.names}
         if weights:
-            self.weights.update({k: float(v) for k, v in weights.items() if k in self.weights})
+            inconnus = set(weights) - set(self.weights)
+            if inconnus:
+                raise ValueError(
+                    f"poids etrangers au jeu '{self.features.name}' : "
+                    f"{', '.join(sorted(inconnus))}. Charger des poids dans le "
+                    "mauvais jeu de descripteurs donnerait un agent amnesique "
+                    "sans le moindre message d'erreur."
+                )
+            self.weights.update({k: float(v) for k, v in weights.items()})
         self._metrics = metrics
         self._rng = random.Random(seed)
 
@@ -138,10 +148,14 @@ class ApproximateQAgent:
         return self._metrics or (env.metrics if env is not None else metrics_for(game.maze))
 
     def q_from(self, values: tuple[float, ...]) -> float:
-        return sum(self.weights[name] * value for name, value in zip(FEATURE_NAMES, values))
+        return sum(self.weights[name] * value for name, value in zip(self.features.names, values))
+
+    def values(self, game: Game, action: Direction, metrics: MazeMetrics) -> tuple[float, ...]:
+        """Descripteurs du couple (etat, action), dans le jeu porte par l'agent."""
+        return self.features.extract(game, action, metrics)
 
     def q(self, game: Game, action: Direction, metrics: MazeMetrics) -> float:
-        return self.q_from(extract(game, action, metrics))
+        return self.q_from(self.values(game, action, metrics))
 
     def best_value(self, game: Game, actions: list[Direction], metrics: MazeMetrics) -> float:
         if not actions:
@@ -194,7 +208,7 @@ class ApproximateQAgent:
         """
         error = reward + gamma * next_value - self.q_from(values)
         error = max(-clip, min(clip, error))
-        for name, value in zip(FEATURE_NAMES, values):
+        for name, value in zip(self.features.names, values):
             self.weights[name] += alpha * error * value
         return error
 
@@ -202,11 +216,21 @@ class ApproximateQAgent:
 
     def save(self, path: str | Path) -> None:
         Path(path).write_text(
-            json.dumps({"weights": self.weights}, indent=2, ensure_ascii=False),
+            json.dumps(
+                {"features": self.features.name, "weights": self.weights},
+                indent=2,
+                ensure_ascii=False,
+            ),
             encoding="utf-8",
         )
 
     @classmethod
     def load(cls, path: str | Path, **kwargs) -> ApproximateQAgent:
+        """Recharge un agent. Le jeu de descripteurs vient du fichier.
+
+        Un fichier ecrit avant l'existence des jeux nommes n'a pas la cle
+        `features` : c'est du `base`, par definition.
+        """
         data = json.loads(Path(path).read_text(encoding="utf-8"))
+        kwargs.setdefault("features", feature_set(data.get("features")))
         return cls(data.get("weights", data), **kwargs)

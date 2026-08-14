@@ -14,7 +14,7 @@ from statistics import median
 from .agents import ApproximateQAgent
 from .environment import EnvConfig, PacmanEnv
 from .evaluation import TRAINING_SEEDS, seeds_for
-from .features import extract
+from .features import FeatureSet
 from .rewards import RewardConfig
 
 
@@ -70,14 +70,20 @@ def train(
     rewards: RewardConfig | None = None,
     hyper: Hyper | None = None,
     agent: ApproximateQAgent | None = None,
+    features: FeatureSet | None = None,
     seed: int = 0,
     log_every: int = 0,
     on_window=None,
 ) -> tuple[ApproximateQAgent, TrainReport]:
-    """Entraine un agent et renvoie ses poids avec la trace de l'apprentissage."""
+    """Entraine un agent et renvoie ses poids avec la trace de l'apprentissage.
+
+    `features` ne sert qu'a creer un agent neuf : un agent repris garde le jeu
+    de descripteurs avec lequel il a ete entraine, sinon ses poids ne
+    voudraient plus rien dire.
+    """
     hyper = hyper or Hyper()
     env = PacmanEnv(config or EnvConfig(), rewards)
-    agent = agent or ApproximateQAgent(metrics=env.metrics, seed=seed)
+    agent = agent or ApproximateQAgent(metrics=env.metrics, seed=seed, features=features)
     report = TrainReport()
 
     seeds = seeds_for(episodes, offset=TRAINING_SEEDS + seed * episodes)
@@ -129,7 +135,7 @@ def _run_training_episode(
             break
 
         action = agent.explore(game, actions, env.metrics, epsilon)
-        values = extract(game, action, env.metrics)
+        values = agent.values(game, action, env.metrics)
         result = env.step(action)
         total += result.reward
 

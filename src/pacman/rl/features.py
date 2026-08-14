@@ -1,4 +1,4 @@
-"""Description d'un couple (etat, action) par douze nombres.
+"""Description d'un couple (etat, action) par une poignee de nombres.
 
 L'etat brut du jeu est hors de portee d'une table : rien que la configuration
 des pastilles vaut 2^244 possibilites. On decrit donc l'etat par quelques
@@ -12,11 +12,23 @@ poids pendant qu'un autre bouge a peine.
 Les distances sont des distances reelles dans le labyrinthe, jamais a vol
 d'oiseau : deux cases separees par un mur epais sont proches en ligne droite
 et tres loin dans les faits.
+
+**Deux jeux de descripteurs** cohabitent, et se comparent (voir `FEATURE_SETS`) :
+
+- `base` — douze quantites agregees : le chasseur le PLUS proche, la pastille
+  la PLUS proche. Compact, mais l'agent ne distingue pas deux fantomes a huit
+  cases d'un seul.
+- `positions` — ajoute la position de CHAQUE fantome et la repartition de la
+  nourriture. Exprimees dans le repere de Pac-Man (distance + « cette action
+  m'en rapproche-t-elle »), jamais en coordonnees absolues : un poids sur `x`
+  signifierait « prefere la droite du plan », ce qui ne generalise a rien.
 """
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from math import inf
+from typing import Callable
 
 from ..core.entities import GhostMode
 from ..core.game import Game
@@ -86,3 +98,123 @@ def extract(game: Game, action: Direction, metrics: MazeMetrics) -> tuple[float,
 def named(values: tuple[float, ...]) -> dict[str, float]:
     """Associe les features a leur nom. Pour l'inspection et les tests."""
     return dict(zip(FEATURE_NAMES, values, strict=True))
+
+
+# ===================================================================== positions
+
+#: Nombre de fantomes decrits un par un. Les emplacements sans fantome valent
+#: zero, ce qui permet au meme vecteur de servir a un fantome comme a quatre —
+#: c'est ce qui rend le curriculum possible sans changer de modele.
+GHOST_SLOTS = 4
+
+#: Rayon du comptage local de nourriture, en cases.
+FOOD_RADIUS = 4
+
+#: Au-dela de ce nombre de pastilles dans le rayon, la case est « dense ».
+FOOD_DENSE = 8
+
+POSITION_FEATURE_NAMES: tuple[str, ...] = (
+    FEATURE_NAMES
+    + tuple(
+        f"fantome{index}_{aspect}"
+        for index in range(GHOST_SLOTS)
+        for aspect in ("proximite", "approche", "effraye")
+    )
+    + ("nourriture_devant", "nourriture_amas")
+)
+
+
+def extract_with_positions(
+    game: Game,
+    action: Direction,
+    metrics: MazeMetrics,
+) -> tuple[float, ...]:
+    """Les douze features de base, plus la position des fantomes et de la nourriture.
+
+    Chaque fantome est decrit par trois nombres : a quelle distance il est, si
+    l'action m'en rapproche, et s'il est comestible. Les fantomes sont ranges
+    du plus proche au plus lointain — sans cet ordre, echanger deux fantomes
+    identiques changerait le vecteur, et l'agent devrait apprendre quatre fois
+    la meme chose.
+    """
+    maze = game.maze
+    ici = game.pacman.position
+    tile = maze.step(ici, action)
+
+    depuis_case = metrics.distances.get(tile, {})
+    depuis_ici = metrics.distances.get(ici, {})
+
+    actifs = [ghost for ghost in game.ghosts if ghost.is_active]
+    actifs.sort(key=lambda ghost: depuis_case.get(ghost.position, inf))
+
+    fantomes: list[float] = []
+    for index in range(GHOST_SLOTS):
+        if index >= len(actifs):
+            fantomes += [0.0, 0.0, 0.0]  # emplacement vide : ne pese rien
+            continue
+        ghost = actifs[index]
+        vers_case = depuis_case.get(ghost.position, inf)
+        vers_ici = depuis_ici.get(ghost.position, inf)
+        fantomes += [
+            metrics.proximity(vers_case),
+            1.0 if vers_case < vers_ici else 0.0,
+            1.0 if ghost.mode is GhostMode.FRIGHTENED else 0.0,
+        ]
+
+    # Une seule passe sur les pastilles pour les deux mesures : la direction de
+    # la masse de nourriture, et sa densite autour de la case visee.
+    devant = 0
+    amas = 0
+    pastilles = game.pellets
+    for pastille in pastilles:
+        vers_case = depuis_case.get(pastille, inf)
+        if vers_case < depuis_ici.get(pastille, inf):
+            devant += 1
+        if vers_case <= FOOD_RADIUS:
+            amas += 1
+
+    total = len(pastilles)
+    return extract(game, action, metrics) + tuple(fantomes) + (
+        devant / total if total else 0.0,
+        min(1.0, amas / FOOD_DENSE),
+    )
+
+
+# ================================================================== jeux nommes
+
+
+@dataclass(frozen=True, slots=True)
+class FeatureSet:
+    """Un jeu de descripteurs : son nom, ses noms de poids, son extracteur.
+
+    Le nom voyage avec les poids sauvegardes : recharger douze poids dans un
+    modele qui en attend vingt-six doit echouer bruyamment, jamais donner un
+    agent silencieusement amnesique.
+    """
+
+    name: str
+    names: tuple[str, ...]
+    extractor: Callable[[Game, Direction, MazeMetrics], tuple[float, ...]]
+
+    def extract(self, game: Game, action: Direction, metrics: MazeMetrics) -> tuple[float, ...]:
+        return self.extractor(game, action, metrics)
+
+    def named(self, values: tuple[float, ...]) -> dict[str, float]:
+        return dict(zip(self.names, values, strict=True))
+
+
+BASE = FeatureSet("base", FEATURE_NAMES, extract)
+POSITIONS = FeatureSet("positions", POSITION_FEATURE_NAMES, extract_with_positions)
+
+FEATURE_SETS: dict[str, FeatureSet] = {jeu.name: jeu for jeu in (BASE, POSITIONS)}
+
+
+def feature_set(name: str | None) -> FeatureSet:
+    """Jeu de descripteurs designe par son nom. `base` par defaut."""
+    if not name:
+        return BASE
+    try:
+        return FEATURE_SETS[name]
+    except KeyError:
+        connus = ", ".join(sorted(FEATURE_SETS))
+        raise ValueError(f"jeu de descripteurs inconnu : {name!r} (connus : {connus})") from None

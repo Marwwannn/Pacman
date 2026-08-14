@@ -19,7 +19,15 @@ from pacman.core.maze import Maze
 from pacman.rl.agents import ApproximateQAgent, HeuristicAgent, RandomAgent
 from pacman.rl.environment import EnvConfig, PacmanEnv
 from pacman.rl.evaluation import EVALUATION_SEEDS, evaluate
-from pacman.rl.features import FEATURE_NAMES, extract, named
+from pacman.rl.features import (
+    BASE,
+    FEATURE_NAMES,
+    GHOST_SLOTS,
+    POSITION_FEATURE_NAMES,
+    POSITIONS,
+    extract,
+    named,
+)
 from pacman.rl.metrics import metrics_for
 from pacman.rl.rewards import RewardConfig
 from pacman.rl.training import Hyper, train
@@ -404,10 +412,128 @@ class TestAgents:
         assert relu.weights == agent.weights
         assert json.loads(chemin.read_text(encoding="utf-8"))["weights"]["biais"] == 1.5
 
-    def test_un_poids_inconnu_est_ignore(self, env):
-        agent = ApproximateQAgent({"inexistant": 3.0, "biais": 1.0})
-        assert "inexistant" not in agent.weights
-        assert agent.weights["biais"] == 1.0
+    def test_un_poids_inconnu_est_refuse_bruyamment(self, env):
+        # Ignorer en silence un poids etranger, c'est rendre un agent amnesique
+        # sans le dire : c'est exactement ce qui arrive en rechargeant des poids
+        # « base » dans un agent « positions ».
+        with pytest.raises(ValueError, match="etrangers"):
+            ApproximateQAgent({"inexistant": 3.0, "biais": 1.0})
+
+
+class TestDescripteursDePosition:
+    """Le jeu `positions` : chaque fantome et la nourriture, dans le repere de Pac-Man."""
+
+    def test_le_jeu_etend_le_jeu_de_base_sans_le_modifier(self, env):
+        env.reset(EVALUATION_SEEDS)
+        action = env.legal_actions()[0]
+        base = extract(env.game, action, env.metrics)
+        etendu = POSITIONS.extract(env.game, action, env.metrics)
+        # Les douze premieres valeurs sont les memes : le nouveau jeu ajoute,
+        # il ne remplace pas. C'est ce qui rend la comparaison honnete.
+        assert etendu[: len(base)] == base
+        assert len(etendu) == len(POSITION_FEATURE_NAMES) > len(FEATURE_NAMES)
+
+    def test_toutes_les_valeurs_restent_entre_zero_et_un(self, env):
+        env.reset(EVALUATION_SEEDS)
+        for _ in range(10):
+            if env.finished:
+                break
+            for action in env.legal_actions():
+                valeurs = POSITIONS.extract(env.game, action, env.metrics)
+                assert all(0.0 <= valeur <= 1.0 for valeur in valeurs)
+            env.step(env.legal_actions()[0])
+
+    def test_les_fantomes_sont_ranges_du_plus_proche_au_plus_lointain(self, env):
+        game = env.reset(EVALUATION_SEEDS)
+        game.run(200)  # les faire sortir de la maison
+        valeurs = POSITIONS.named(POSITIONS.extract(game, env.legal_actions()[0], env.metrics))
+        proximites = [valeurs[f"fantome{index}_proximite"] for index in range(GHOST_SLOTS)]
+        # Ranges par proximite decroissante : sans cet ordre, echanger deux
+        # fantomes changerait le vecteur et l'agent apprendrait quatre fois la
+        # meme chose.
+        assert proximites == sorted(proximites, reverse=True)
+
+    def test_un_emplacement_sans_fantome_ne_pese_rien(self):
+        env = PacmanEnv(EnvConfig(ghosts=1, lives=1))
+        game = env.reset(EVALUATION_SEEDS)
+        game.run(200)
+        valeurs = POSITIONS.named(POSITIONS.extract(game, env.legal_actions()[0], env.metrics))
+        for index in range(1, GHOST_SLOTS):
+            assert valeurs[f"fantome{index}_proximite"] == 0.0
+            assert valeurs[f"fantome{index}_approche"] == 0.0
+            assert valeurs[f"fantome{index}_effraye"] == 0.0
+
+    def test_l_etat_d_un_fantome_effraye_est_visible_par_emplacement(self, env):
+        game = env.reset(EVALUATION_SEEDS)
+        game.run(200)
+        action = env.legal_actions()[0]
+        for ghost in game.ghosts:
+            ghost.set_mode(GhostMode.FRIGHTENED, reverse=False)
+        valeurs = POSITIONS.named(POSITIONS.extract(game, action, env.metrics))
+        actifs = sum(1 for ghost in game.ghosts if ghost.is_active)
+        assert sum(valeurs[f"fantome{i}_effraye"] for i in range(GHOST_SLOTS)) == actifs
+
+    def test_la_nourriture_devant_designe_la_direction_de_la_masse(self, env):
+        game = env.reset(EVALUATION_SEEDS)
+        parts = {
+            action: POSITIONS.named(POSITIONS.extract(game, action, env.metrics))[
+                "nourriture_devant"
+            ]
+            for action in env.legal_actions()
+        }
+        # Toutes les directions ne peuvent pas rapprocher de toute la nourriture :
+        # sinon la feature ne discriminerait rien.
+        assert min(parts.values()) < max(parts.values())
+
+    def test_des_poids_positions_dans_un_agent_de_base_sont_refuses(self, tmp_path):
+        # Le sens dangereux : quatorze poids appris seraient jetes en silence,
+        # et l'agent jouerait une politique amputee sans que rien ne le dise.
+        chemin = tmp_path / "positions.json"
+        ApproximateQAgent(features=POSITIONS).save(chemin)
+        poids = json.loads(chemin.read_text(encoding="utf-8"))["weights"]
+        with pytest.raises(ValueError, match="etrangers"):
+            ApproximateQAgent(poids, features=BASE)
+
+    def test_des_poids_de_base_amorcent_un_agent_positions(self, tmp_path):
+        # L'autre sens est legitime : les douze descripteurs communs veulent
+        # dire la meme chose, les quatorze nouveaux partent de zero. C'est un
+        # demarrage tiede, pas une perte.
+        agent = ApproximateQAgent(features=BASE)
+        agent.weights["biais"] = 1.5
+        amorce = ApproximateQAgent(agent.weights, features=POSITIONS)
+        assert amorce.weights["biais"] == 1.5
+        assert amorce.weights["nourriture_amas"] == 0.0
+
+    def test_le_jeu_voyage_avec_les_poids_sauvegardes(self, tmp_path):
+        chemin = tmp_path / "positions.json"
+        agent = ApproximateQAgent(features=POSITIONS)
+        agent.weights["nourriture_amas"] = 2.0
+        agent.save(chemin)
+
+        relu = ApproximateQAgent.load(chemin)
+        assert relu.features is POSITIONS
+        assert relu.weights == agent.weights
+
+    def test_un_fichier_sans_jeu_declare_est_du_base(self, tmp_path):
+        # Les poids ecrits avant l'existence des jeux nommes doivent rester
+        # lisibles : leur absence de cle `features` vaut « base ».
+        chemin = tmp_path / "ancien.json"
+        chemin.write_text(json.dumps({"weights": {"biais": 1.0}}), encoding="utf-8")
+        assert ApproximateQAgent.load(chemin).features is BASE
+
+    def test_un_agent_positions_apprend(self):
+        agent, rapport = train(
+            60,
+            config=EnvConfig(ghosts=1, lives=1),
+            features=POSITIONS,
+            seed=5,
+        )
+        assert agent.features is POSITIONS
+        assert set(agent.weights) == set(POSITION_FEATURE_NAMES)
+        # Un poids de position au moins a bouge : sinon les nouvelles features
+        # ne participeraient pas a l'apprentissage.
+        nouveaux = set(POSITION_FEATURE_NAMES) - set(FEATURE_NAMES)
+        assert any(rapport.weights[nom] != 0.0 for nom in nouveaux)
 
 
 class TestProtocoleEvaluation:
