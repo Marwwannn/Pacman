@@ -1,6 +1,6 @@
 """Protocole d'evaluation : le meme pour les trois agents, sans exception.
 
-Trois regles, toutes destinees a empecher un chiffre flatteur mais faux :
+Quatre regles, toutes destinees a empecher un chiffre flatteur mais faux :
 
 1. **Graines jamais vues.** Les parties d'evaluation sont tirees d'une plage
    disjointe de celle de l'entrainement. Le moteur etant deterministe, rejouer
@@ -10,6 +10,12 @@ Trois regles, toutes destinees a empecher un chiffre flatteur mais faux :
 3. **La mediane, jamais le meilleur run.** Cent parties, mediane et ecart-type.
    Le meilleur score d'un agent aleatoire peut depasser la mediane d'un agent
    entraine — le publier serait mentir par selection.
+4. **Le tirage de l'agent est remis a zero.** Les ex aequo entre actions sont
+   departages au hasard ; sans cette remise a zero, le meme agent evalue avant
+   et apres un entrainement rend deux chiffres differents — mesure : 2895 puis
+   2900 pour des poids identiques. Un ecart minuscule, mais qui ruine la seule
+   promesse que ce projet fait vraiment : les memes conditions donnent le meme
+   resultat.
 """
 
 from __future__ import annotations
@@ -25,6 +31,10 @@ TRAINING_SEEDS = 0
 #: Debut de la plage reservee a l'evaluation. L'ecart est volontairement enorme :
 #: aucune session d'entrainement realiste ne peut l'atteindre.
 EVALUATION_SEEDS = 1_000_000
+
+#: Graine donnee au tirage de l'agent au debut de chaque evaluation, pour que
+#: son historique n'influence pas la mesure (regle 4).
+RESET_RNG = 20_260_814
 
 
 def seeds_for(count: int, offset: int) -> list[int]:
@@ -88,6 +98,13 @@ def evaluate(
             f"(>= {EVALUATION_SEEDS}) : un agent evalue sur ses graines "
             "d'entrainement mesure sa memoire, pas sa politique"
         )
+
+    # Un agent qui vient d'etre entraine et le meme agent recharge depuis un
+    # fichier doivent rendre le meme chiffre : c'est le cas seulement si leur
+    # tirage repart du meme etat.
+    remise_a_zero = getattr(agent, "reset_rng", None)
+    if callable(remise_a_zero):
+        remise_a_zero(RESET_RNG)
 
     env = PacmanEnv(config or EnvConfig(), rewards)
     results = [env.run_episode(agent, seed) for seed in seeds_for(games, offset)]

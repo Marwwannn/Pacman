@@ -536,6 +536,37 @@ class TestDescripteursDePosition:
         assert any(rapport.weights[nom] != 0.0 for nom in nouveaux)
 
 
+class TestReproductibiliteDeLEvaluation:
+    """Le meme agent, les memes graines : le meme chiffre, quoi qu'il ait vecu avant."""
+
+    def test_l_historique_de_l_agent_ne_change_pas_la_mesure(self):
+        config = EnvConfig(ghosts=1, lives=1)
+        agent = HeuristicAgent(seed=1)
+
+        premiere = evaluate(agent, games=8, config=config)
+        # On use son tirage : sans remise a zero, les ex aequo seraient
+        # departages autrement et le score changerait.
+        for _ in range(50):
+            agent.act(PacmanEnv(config).reset(EVALUATION_SEEDS), list(Direction)[:2], None)
+        seconde = evaluate(agent, games=8, config=config)
+
+        assert premiere.score_median == seconde.score_median
+        assert premiere.score_mean == seconde.score_mean
+
+    def test_un_agent_recharge_mesure_comme_l_original(self, tmp_path):
+        config = EnvConfig(ghosts=1, lives=1)
+        agent, _ = train(40, config=config, seed=3)
+        chemin = tmp_path / "poids.json"
+        agent.save(chemin)
+
+        original = evaluate(agent, games=8, config=config)
+        # Graine de rechargement volontairement differente : elle ne sert qu'aux
+        # ex aequo, que l'evaluation remet a zero. Les poids etant les memes, la
+        # mesure doit l'etre aussi — c'est ce qui rend `results/` verifiable.
+        recharge = evaluate(ApproximateQAgent.load(chemin, seed=99), games=8, config=config)
+        assert original.as_dict() == recharge.as_dict()
+
+
 class TestProtocoleEvaluation:
     """Les trois regles qui empechent un chiffre flatteur mais faux."""
 

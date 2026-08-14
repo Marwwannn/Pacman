@@ -28,12 +28,18 @@ class Agent(Protocol):
 
     def act(self, game: Game, actions: list[Direction], env) -> Direction: ...
 
+    def reset_rng(self, seed: int) -> None: ...
+
 
 class RandomAgent:
     """Plancher : tire une direction au sort a chaque intersection."""
 
     def __init__(self, seed: int = 0) -> None:
         self.name = "aleatoire"
+        self._rng = random.Random(seed)
+
+    def reset_rng(self, seed: int) -> None:
+        """Remet le tirage a un etat connu. Voir `RESET_RNG` dans `evaluation`."""
         self._rng = random.Random(seed)
 
     def act(self, game: Game, actions: list[Direction], env) -> Direction:
@@ -57,6 +63,9 @@ class HeuristicAgent:
     def __init__(self, metrics: MazeMetrics | None = None, seed: int = 0) -> None:
         self.name = "heuristique"
         self._metrics = metrics
+        self._rng = random.Random(seed)
+
+    def reset_rng(self, seed: int) -> None:
         self._rng = random.Random(seed)
 
     def act(self, game: Game, actions: list[Direction], env) -> Direction:
@@ -140,6 +149,9 @@ class ApproximateQAgent:
                 )
             self.weights.update({k: float(v) for k, v in weights.items()})
         self._metrics = metrics
+        self._rng = random.Random(seed)
+
+    def reset_rng(self, seed: int) -> None:
         self._rng = random.Random(seed)
 
     # ---------------------------------------------------------------- valeurs
