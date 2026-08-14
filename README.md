@@ -1,11 +1,33 @@
-# Pac-Man
+# Pac-Man — un terrain de mesure pour l'intelligence artificielle
 
-Moteur de jeu Pac-Man écrit en Python (POO), exposé via une API REST +
-WebSocket, avec un client web servi par le même serveur.
+Projet libre d'Intelligence Artificielle, Master 1 (module IA_PO, 2025-2026).
+
+**Le problème.** Comparer des approches d'IA demande un terrain qui ne triche
+pas : reproductible, rapide, et dont on connaît les règles exactes. Les
+environnements tout faits sont des boîtes noires — on y mesure un agent sans
+jamais pouvoir expliquer ce que l'environnement lui a fait. Ce projet
+construit donc le terrain **et** les agents, et les mesure ensemble.
+
+**Ce que ça donne.** Un Pac-Man complet et jouable, et trois familles d'IA qui
+s'y affrontent sur les mêmes graines :
+
+| | Approche | Où |
+|---|---|---|
+| Les 4 fantômes | règles écrites à la main, fidèles à l'arcade de 1980 | `ai/` |
+| Le joueur heuristique | règles écrites à la main, sert de plafond | `rl/agents.py` |
+| Le joueur apprenant | **Q-learning approximé** sur 12 descripteurs | `rl/` |
+
+**Public visé.** Qui veut voir un agent apprendre sur un problème qu'il
+comprend entièrement : enseignement, démonstration, base de comparaison. Le
+jeu est jouable par n'importe qui dans un navigateur, ce qui rend le
+comportement de l'IA lisible sans lire une ligne de code.
 
 Le partage est net : le back-end simule, le front affiche. Le client ne
 contient aucune règle du jeu — il envoie des intentions et dessine l'état
 que le serveur lui diffuse.
+
+> **Usage de l'IA générative** : ce projet a été développé avec Claude Code.
+> Le détail complet est en fin de README, section [Usage IA](#usage-ia).
 
 ## Architecture
 
@@ -74,10 +96,18 @@ Documentation interactive de l'API : http://127.0.0.1:8000/docs
 ## Tests
 
 ```bash
-pytest                                  # 175 tests
+pytest                                  # 226 tests
 pytest --cov=pacman --cov-report=term   # 98 % de couverture
 ruff check src tests
 ```
+
+Les tests ne vérifient pas seulement que le code s'exécute : ils **mesurent
+les propriétés dont tout le reste dépend**. Deux parties lancées avec la même
+graine donnent le même score au tick près (déterminisme), l'évaluation refuse
+les graines vues à l'entraînement, et chaque pas de l'agent se termine sur une
+vraie intersection. Quand une propriété n'est pas éprouvable sur le
+labyrinthe classique — il ne contient aucune impasse — le test construit son
+propre plan plutôt que d'itérer sur une liste vide.
 
 ## API
 
@@ -253,6 +283,95 @@ La commande `pacman-rl` vient de `pyproject.toml` : sans installation du
 paquet, `python -m pacman.rl.cli …` (avec `src` dans le `PYTHONPATH`) fait
 exactement la même chose.
 
+### Exemple de sortie
+
+```
+$ pacman-rl baselines --ghosts 1 --games 100
+aleatoire      mediane     550  ecart-type     380  min      0  max   1540  victoires    0%  morts  100%
+heuristique    mediane    2940  ecart-type     945  min     50  max   3490  victoires   38%  morts   62%
+```
+
+La lecture se fait sur la **médiane et l'écart-type**, jamais sur le meilleur
+run : un maximum flatteur ne dit rien d'une politique. Les 100 parties sont
+jouées sur des graines que l'agent n'a jamais vues à l'entraînement.
+
+### Rejouer toute la campagne de mesure
+
+```bash
+python scripts/campagne_rl.py     # quelques minutes
+```
+
+Une seule commande enchaîne les bornes, l'apprentissage à 1 fantôme, la
+reprise à 4 (curriculum), un témoin entraîné directement à 4, et le
+comparatif final. Elle écrit dans `results/` les poids appris (rejouables) et
+`campagne.json` (toutes les mesures). Les graines étant fixées, deux
+exécutions donnent les mêmes chiffres.
+
+## Usage IA
+
+Cette section est une **déclaration**, exigée par l'énoncé. Elle est écrite au
+plus près de ce qui s'est réellement passé.
+
+### Ce qui a été utilisé
+
+**Claude Code** (Anthropic, modèles Claude Opus/Sonnet), en ligne de commande,
+du 19/07/2026 au 14/08/2026. Aucun autre outil d'IA générative.
+
+L'usage est **total et assumé** : les 33 commits du dépôt portent tous le
+trailer `Co-Authored-By: Claude`, et il n'y a pas de fichier écrit sans
+l'outil. Le rôle humain n'a pas été d'écrire les lignes mais de **cadrer,
+arbitrer, éprouver et refuser** — ce qui, sur un projet de cette taille, est
+la partie qui décide du résultat.
+
+### Pourquoi
+
+| Motif | Exemple concret dans ce dépôt |
+|---|---|
+| Écrire vite un socle sans intérêt pédagogique | parsing du labyrinthe, sérialisation de l'API, client canvas |
+| Reproduire fidèlement un système documenté | les 4 personnalités de fantômes et le bug d'adressage de 1980 |
+| Générer les tests | 226 tests, dont ceux qui mesurent le déterminisme |
+| Auditer | audit sécurité du 23/07 : 3 failles trouvées et fermées |
+| Cadrer une approche avant de coder | mesure du moteur comme environnement d'apprentissage |
+
+### Exemples de demandes réelles
+
+- « Mesure ce moteur comme environnement d'apprentissage par renforcement :
+  vitesse, reproductibilité, nombre de points de décision. Dis-moi ce que ces
+  chiffres excluent comme approche. » → a produit le chiffre structurant du
+  projet : **34 points de décision sur 300 cases**, donc une décision par
+  intersection et non par tick, et l'exclusion du DQN sur pixels.
+- « Le mouvement est saccadé quand je joue. » → diagnostic en deux causes
+  cumulées (cadence et vitesse confondues dans un même réglage ; interpolation
+  client calée sur l'arrivée des messages plutôt que sur le rythme des pas),
+  puis balayage mesuré du seuil de rattrapage.
+- « Audite la sécurité du serveur avant de pousser. »
+- « Ce test itère sur une liste vide, prouve-le ou change de plan. » → a mené
+  au constat mesuré que le labyrinthe classique n'a **aucune** impasse, et au
+  plan 11×7 construit exprès pour éprouver le cas.
+- « On part sur de l'apprentissage par renforcement. »
+
+### Ce qui a été décidé, corrigé ou refusé côté humain
+
+- **Le périmètre** : le sujet initial était le back-end seul ; l'ajout du
+  client web, puis de l'agent apprenant, sont des décisions prises en cours de
+  route.
+- **L'approche d'IA** : renforcement plutôt que non-supervisé strict, après
+  cadrage — un clustering ne produit pas de politique.
+- **Les bugs trouvés en jouant**, pas par les tests : le jeu tournait à
+  48 cases/s (injouable) puis restait saccadé. Aucun test ne pouvait le voir,
+  seul un humain manette en main.
+- **Ce qui a été refusé** : des propositions de l'outil ont été écartées quand
+  elles élargissaient le périmètre sans raison, et un test « vert » a été
+  rejeté parce qu'il ne prouvait rien.
+
+### Ce que ça change pour la lecture du dépôt
+
+Rien n'est copié d'un tutoriel : les choix structurants sont documentés à
+l'endroit où ils s'appliquent (docstrings de `rl/environment.py`, commentaires
+sur les gardes de `metrics.py`), et chaque message de commit explique le
+*pourquoi* et pas le *quoi*. C'est ce qui rend le dépôt défendable à l'oral :
+on peut demander la justification de n'importe quelle ligne.
+
 ## Sécurité
 
 Le serveur est prévu pour tourner en local, mais les entrées venant du réseau
@@ -282,9 +401,32 @@ sont traitées comme telles :
 - [x] 12 — audit sécurité et durcissement des entrées
 - [x] 13 — agent joueur par renforcement : harnais, baselines, Q approximé
 
-Jeu complet et jouable. Pistes si le projet continue : niveaux
-supplémentaires, mode multijoueur, fantômes « chasseurs » exploitant
-`pathfinding` pour un mode difficile, ou une quatrième colonne au comparatif
-avec une recherche en ligne (MCTS / expectimax) — plus forte en score brut
-sans aucun entraînement, ce qui rend l'écart « appris vs recherche »
-intéressant à discuter.
+## Limites connues
+
+- **L'agent appris ne termine pas un niveau à quatre fantômes.** C'est le
+  plafond attendu d'un modèle linéaire à douze poids : il évalue chaque
+  intersection isolément, sans planifier trois coups à l'avance.
+- **Les descripteurs sont écrits à la main.** L'agent hérite donc de l'analyse
+  humaine du problème : il n'apprend pas *quoi regarder*, seulement *combien
+  ça compte*.
+- **Un seul labyrinthe est mesuré.** Les features étant topologiques et non
+  positionnelles, les poids devraient se transférer — ce n'est pas vérifié.
+- **Le rendu visuel n'a pas été inspecté image par image**, seulement validé
+  en jouant.
+
+## Pistes d'amélioration
+
+- **Une quatrième colonne au comparatif : recherche en ligne (MCTS ou
+  expectimax)**, plus forte en score brut sans aucun entraînement. L'écart
+  « appris vs recherche » est la discussion la plus intéressante que ce
+  terrain permette.
+- Descripteurs *appris* plutôt qu'écrits : le non-supervisé retrouverait ici
+  sa vraie place, en amont de la politique et non à sa place.
+- Niveaux multiples et vitesses croissantes, mode multijoueur, et fantômes
+  « chasseurs » exploitant `pathfinding` — ils cesseraient d'être myopes,
+  donc battables.
+
+## Documentation
+
+Documentation technique complète (contexte, architecture, choix, métriques,
+usage de l'IA) : [`docs/documentation.md`](docs/documentation.md).
