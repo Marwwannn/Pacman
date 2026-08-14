@@ -12,6 +12,7 @@ graines d'entrainement comme d'evaluation sont fixees.
 
 from __future__ import annotations
 
+import argparse
 import json
 import sys
 import time
@@ -23,11 +24,18 @@ sys.path.insert(0, str(RACINE / "src"))
 from pacman.rl.agents import ApproximateQAgent, HeuristicAgent, RandomAgent  # noqa: E402
 from pacman.rl.environment import EnvConfig  # noqa: E402
 from pacman.rl.evaluation import evaluate  # noqa: E402
+from pacman.rl.search import SearchAgent  # noqa: E402
 from pacman.rl.training import Hyper, train  # noqa: E402
 
 RESULTATS = RACINE / "results"
 PARTIES = 100
 EPISODES = 3_000
+#: Profondeurs balayees pour la recherche en ligne. Elle n'apprend rien : son
+#: seul reglage est « jusqu'ou je regarde », et son cout suit.
+PROFONDEURS = (1, 2, 3)
+#: Profondeur du comparatif final. Choisie sur la mediane et l'ecart-type, pas
+#: sur le taux de victoire seul.
+PROFONDEUR_RETENUE = 2
 
 
 def mesurer(agent, config: EnvConfig) -> dict:
@@ -72,39 +80,62 @@ def entrainer(ghosts: int, reprise: str | None, sortie: Path) -> dict:
     }
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--sans-entrainement",
+        action="store_true",
+        help="reutilise les poids de results/ et ne refait que les mesures",
+    )
+    args = parser.parse_args(argv)
+
     RESULTATS.mkdir(exist_ok=True)
-    campagne: dict = {"episodes": EPISODES, "parties_evaluation": PARTIES, "etapes": {}}
-
-    for ghosts in (1, 4):
-        print(f"\n== Baselines a {ghosts} fantome(s) ==", flush=True)
-        config = EnvConfig(ghosts=ghosts)
-        campagne["etapes"][f"baselines_{ghosts}f"] = [
-            mesurer(RandomAgent(seed=1), config),
-            mesurer(HeuristicAgent(seed=1), config),
-        ]
-
-    print("\n== Apprentissage a 1 fantome ==", flush=True)
+    destination = RESULTATS / "campagne.json"
     poids_1f = RESULTATS / "poids_1fantome.json"
-    campagne["etapes"]["train_1f"] = entrainer(1, None, poids_1f)
-
-    print("\n== Curriculum : reprise a 4 fantomes ==", flush=True)
     poids_4f = RESULTATS / "poids_4fantomes.json"
-    campagne["etapes"]["train_4f_curriculum"] = entrainer(4, str(poids_1f), poids_4f)
 
-    print("\n== Temoin : 4 fantomes sans curriculum ==", flush=True)
-    poids_direct = RESULTATS / "poids_4fantomes_sans_curriculum.json"
-    campagne["etapes"]["train_4f_direct"] = entrainer(4, None, poids_direct)
+    if args.sans_entrainement:
+        # Remesurer sans reapprendre : c'est ce qui rend l'ajout d'un agent
+        # bon marche, et c'est aussi le controle que les poids ecrits sur
+        # disque rendent bien le chiffre publie.
+        campagne = json.loads(destination.read_text(encoding="utf-8"))
+    else:
+        campagne = {"episodes": EPISODES, "parties_evaluation": PARTIES, "etapes": {}}
+
+        for ghosts in (1, 4):
+            print(f"\n== Baselines a {ghosts} fantome(s) ==", flush=True)
+            config = EnvConfig(ghosts=ghosts)
+            campagne["etapes"][f"baselines_{ghosts}f"] = [
+                mesurer(RandomAgent(seed=1), config),
+                mesurer(HeuristicAgent(seed=1), config),
+            ]
+
+        print("\n== Apprentissage a 1 fantome ==", flush=True)
+        campagne["etapes"]["train_1f"] = entrainer(1, None, poids_1f)
+
+        print("\n== Curriculum : reprise a 4 fantomes ==", flush=True)
+        campagne["etapes"]["train_4f_curriculum"] = entrainer(4, str(poids_1f), poids_4f)
+
+        print("\n== Temoin : 4 fantomes sans curriculum ==", flush=True)
+        poids_direct = RESULTATS / "poids_4fantomes_sans_curriculum.json"
+        campagne["etapes"]["train_4f_direct"] = entrainer(4, None, poids_direct)
+
+    config = EnvConfig(ghosts=4)
+
+    print("\n== Profondeur de recherche (4 fantomes) ==", flush=True)
+    campagne["etapes"]["profondeurs_recherche"] = [
+        mesurer(SearchAgent(depth=profondeur), config) | {"profondeur": profondeur}
+        for profondeur in PROFONDEURS
+    ]
 
     print("\n== Comparatif final a 4 fantomes ==", flush=True)
-    config = EnvConfig(ghosts=4)
     campagne["etapes"]["comparatif_4f"] = [
         mesurer(RandomAgent(seed=1), config),
         mesurer(HeuristicAgent(seed=1), config),
         mesurer(ApproximateQAgent.load(str(poids_4f), seed=1), config),
+        mesurer(SearchAgent(depth=PROFONDEUR_RETENUE), config),
     ]
 
-    destination = RESULTATS / "campagne.json"
     destination.write_text(json.dumps(campagne, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"\nMesures ecrites dans {destination}", flush=True)
     return 0

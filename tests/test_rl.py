@@ -30,6 +30,7 @@ from pacman.rl.features import (
 )
 from pacman.rl.metrics import metrics_for
 from pacman.rl.rewards import RewardConfig
+from pacman.rl.search import SearchAgent
 from pacman.rl.training import Hyper, train
 
 
@@ -534,6 +535,91 @@ class TestDescripteursDePosition:
         # ne participeraient pas a l'apprentissage.
         nouveaux = set(POSITION_FEATURE_NAMES) - set(FEATURE_NAMES)
         assert any(rapport.weights[nom] != 0.0 for nom in nouveaux)
+
+
+class TestClonageDUnePartie:
+    """Sans copie independante, aucune recherche en avant n'est possible."""
+
+    def test_la_copie_avance_sans_toucher_a_l_original(self, env):
+        game = env.reset(EVALUATION_SEEDS)
+        avant = (game.pacman.position, game.score, len(game.pellets), game.tick_count)
+
+        copie = game.clone()
+        copie.run(60)
+
+        assert (game.pacman.position, game.score, len(game.pellets), game.tick_count) == avant
+        assert copie.tick_count > game.tick_count
+
+    def test_la_copie_partage_le_labyrinthe(self, env):
+        # Le plan ne change jamais : le copier a chaque noeud de recherche
+        # couterait plus cher que la recherche elle-meme.
+        game = env.reset(EVALUATION_SEEDS)
+        assert game.clone().maze is game.maze
+
+    def test_deux_copies_du_meme_etat_vivent_la_meme_chose(self, env):
+        game = env.reset(EVALUATION_SEEDS)
+        premiere, seconde = game.clone(), game.clone()
+        premiere.run(150)
+        seconde.run(150)
+        # C'est la propriete qui rend la simulation EXACTE : pas d'esperance a
+        # estimer, la copie vit ce que la partie vivrait.
+        assert premiere.score == seconde.score
+        assert premiere.pacman.position == seconde.pacman.position
+
+    def test_les_fantomes_de_la_copie_sont_indpendants(self, env):
+        game = env.reset(EVALUATION_SEEDS)
+        copie = game.clone()
+        assert copie.ghosts[0] is not game.ghosts[0]
+        assert copie.ghost(game.ghosts[0].name) is copie.ghosts[0]
+
+
+class TestAgentDeRecherche:
+    """Il ne sait rien : il simule. Le moteur etant exact, sa simulation l'est."""
+
+    def test_il_joue_toujours_un_coup_legal(self, env):
+        agent = SearchAgent(depth=2)
+        env.reset(EVALUATION_SEEDS)
+        for _ in range(6):
+            if env.finished:
+                break
+            actions = env.legal_actions()
+            choix = agent.act(env.game, actions, env)
+            assert choix in actions
+            env.step(choix)
+
+    def test_il_ne_modifie_pas_la_partie_en_reflechissant(self, env):
+        agent = SearchAgent(depth=3)
+        game = env.reset(EVALUATION_SEEDS)
+        avant = (game.pacman.position, game.score, len(game.pellets), game.tick_count)
+        agent.act(game, env.legal_actions(), env)
+        assert (game.pacman.position, game.score, len(game.pellets), game.tick_count) == avant
+
+    def test_il_refuse_le_coup_qui_le_fait_manger(self):
+        # Un fantome colle a une sortie : la simulation voit la mort a un pas,
+        # l'agent doit prendre n'importe quelle autre direction.
+        env = PacmanEnv(EnvConfig(ghosts=1, lives=1))
+        game = env.reset(EVALUATION_SEEDS)
+        game.run(200)
+
+        actions = env.legal_actions()
+        if len(actions) < 2:
+            pytest.skip("il faut un vrai choix pour que le refus veuille dire quelque chose")
+
+        piege = actions[0]
+        ghost = game.ghosts[0]
+        ghost.set_mode(GhostMode.CHASE, reverse=False)
+        ghost.position = game.maze.step(game.pacman.position, piege)
+        ghost.previous_position = ghost.position
+
+        assert SearchAgent(depth=2).act(game, actions, env) is not piege
+
+    def test_la_profondeur_change_la_decision(self):
+        # Non pas « la profondeur 3 gagne », mais « la profondeur change la
+        # decision » : sinon la recherche ne servirait a rien.
+        config = EnvConfig(ghosts=4, lives=1)
+        courte = evaluate(SearchAgent(depth=1), games=6, config=config)
+        longue = evaluate(SearchAgent(depth=2), games=6, config=config)
+        assert longue.score_median != courte.score_median
 
 
 class TestReproductibiliteDeLEvaluation:

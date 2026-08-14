@@ -7,6 +7,7 @@ aucune dependance reseau — c'est ce qui rend le moteur testable et rejouable.
 
 from __future__ import annotations
 
+import copy
 from dataclasses import dataclass, field
 from enum import Enum
 
@@ -134,6 +135,26 @@ class Game:
             return
         self.ghosts = self.ghosts[: max(0, count)]
         self._by_name = {ghost.name: ghost for ghost in self.ghosts}
+
+    def clone(self) -> Game:
+        """Copie independante de la partie, qu'on peut faire avancer sans risque.
+
+        C'est ce qui permet a un agent de **simuler** la suite au lieu de
+        l'apprendre : le moteur etant deterministe, ce que la copie vit est
+        exactement ce que la partie vivrait.
+
+        Le labyrinthe n'est pas copie — il ne change jamais en cours de partie,
+        et le dupliquer a chaque noeud de recherche couterait plus cher que la
+        recherche elle-meme.
+        """
+        twin = copy.copy(self)
+        twin.pacman = copy.deepcopy(self.pacman)
+        twin.ghosts = [copy.deepcopy(ghost) for ghost in self.ghosts]
+        twin._by_name = {ghost.name: ghost for ghost in twin.ghosts}
+        twin.pellets = set(self.pellets)
+        twin.power_pellets = set(self.power_pellets)
+        twin.events = list(self.events)
+        return twin
 
     # ================================================================ entrees
 
