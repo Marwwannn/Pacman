@@ -221,6 +221,15 @@ pacman-rl compare --ghosts 4 --weights results/poids_4fantomes.json</pre>
   <p style="margin-top:1.5rem">Le score brut du jeu n'est <b>pas</b> repris : la vie supplémentaire à 10 000 points crée une marche que rien dans l'état ne prédit — du bruit pur.</p>
 </section>
 
+<!-- 12 bis -->
+<section>
+  <div class="etape">Un quatrième joueur</div>
+  <h2>Celui qui ne sait rien<br>et qui <em>simule</em></h2>
+  <p>Les trois premiers décident à partir de ce qu'ils <b>voient</b>. Celui-ci décide à partir de ce qui <b>arriverait</b> : à chaque intersection il clone la partie, joue chaque coup, laisse le moteur dérouler, et garde la meilleure issue.</p>
+  <p class="fort">Le moteur étant déterministe, cette recherche est <b>exacte</b> : ni nœud de hasard, ni espérance à estimer. C'est ce qui la distingue d'un expectimax ou d'un MCTS — et c'est une propriété du terrain, pas de l'agent.</p>
+  <p>Zéro entraînement. Zéro poids. Zéro généralisation.</p>
+</section>
+
 <!-- 13 : RESULTATS -->
 <section id="slide-resultats">
   <div class="etape">Résultats</div>
@@ -243,10 +252,25 @@ pacman-rl compare --ghosts 4 --weights results/poids_4fantomes.json</pre>
   <div id="tableau-descripteurs"></div>
 </section>
 
+<!-- 14 ter -->
+<section>
+  <div class="etape">La vraie discussion</div>
+  <h2>Apprendre,<br>ou <em>recalculer</em> ?</h2>
+  <table>
+    <tr><th></th><th>Q approximé</th><th>Recherche</th></tr>
+    <tr><td>Coût <b>avant</b> de jouer</td><td>3 000 épisodes, ~8 min</td><td>zéro</td></tr>
+    <tr><td>Coût <b>pendant</b> le jeu</td><td>12 multiplications par coup</td><td>des dizaines de parties simulées</td></tr>
+    <tr><td>Ce qu'il reste après</td><td><b>12 nombres</b>, transférables</td><td>rien</td></tr>
+    <tr class="vedette"><td>Sans simulateur exact</td><td>fonctionne toujours</td><td><b>s'effondre</b></td></tr>
+  </table>
+  <p style="margin-top:1.5rem">La recherche gagne ici <b>parce qu'elle a un simulateur exact et gratuit</b>. Un robot, un marché, un patient n'en ont pas : simuler y est impossible ou plus cher qu'agir.</p>
+  <p class="fort">Ce comparatif ne dit pas « la recherche gagne ». Il dit : <b>sur un terrain où l'on peut tout simuler, il ne faut pas apprendre</b> — et la vraie question devient de savoir si on dispose d'un tel terrain.</p>
+</section>
+
 <!-- 15 -->
 <section>
   <div class="etape">Validation</div>
-  <h2>226 tests — qui <em>mesurent</em>,<br>pas qui rassurent</h2>
+  <h2>247 tests — qui <em>mesurent</em>,<br>pas qui rassurent</h2>
   <ul>
     <li>Deux parties de même graine donnent le <b>même score au tick près</b>.</li>
     <li>L'évaluation <b>refuse</b> les graines d'entraînement.</li>
@@ -263,7 +287,7 @@ pacman-rl compare --ghosts 4 --weights results/poids_4fantomes.json</pre>
   <h2>Déclaré, total, assumé</h2>
   <ul>
     <li><b>Claude Code</b> (Anthropic), du 19/07 au 14/08. Aucun autre outil. Les <b>34 commits</b> portent tous le trailer <code>Co-Authored-By: Claude</code>.</li>
-    <li><b>Ce qu'il a fait</b> : le socle sans intérêt pédagogique, la fidélité à l'arcade, les 226 tests, l'audit sécurité, le cadrage chiffré de l'approche.</li>
+    <li><b>Ce qu'il a fait</b> : le socle sans intérêt pédagogique, la fidélité à l'arcade, les 247 tests, l'audit sécurité, le cadrage chiffré de l'approche.</li>
     <li><b>Ce que j'ai fait</b> : cadrer, arbitrer, éprouver, refuser. Le périmètre (client web, puis agent apprenant), la méthode (renforcement plutôt que non-supervisé), et les bugs que <b>seul un joueur</b> pouvait voir — le jeu tournait à 48 cases/s, puis restait saccadé. Aucun test ne les voyait.</li>
   </ul>
   <p class="cite" style="margin-top:1rem">« Mesure ce moteur comme environnement d'apprentissage : vitesse, reproductibilité, points de décision. Dis-moi ce que ces chiffres <b>excluent</b> comme approche. »</p>

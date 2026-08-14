@@ -75,7 +75,17 @@ lire une ligne de code — on *voit* l'agent hésiter à une intersection.
 | 4 fantômes | règles, fidèles à 1980 | non | l'adversaire |
 | Joueur aléatoire | tirage uniforme | non | **plancher** de comparaison |
 | Joueur heuristique | règles écrites à la main | non | **plafond** raisonnable |
-| Joueur Q approximé | Q-learning linéaire, 12 features | **oui** | le cœur du projet |
+| Joueur Q approximé | Q-learning linéaire | **oui** | le cœur du projet |
+| Joueur de recherche | simulation en avant | non | **ce que coûte de ne pas apprendre** |
+
+Le dernier mérite un mot. Les trois premiers décident à partir de ce qu'ils
+**voient** ; celui-ci décide à partir de ce qui **arriverait** : à chaque
+intersection il clone la partie, joue chaque coup possible, laisse le moteur
+dérouler la suite, et garde la meilleure issue.
+
+Le moteur étant déterministe, cette recherche est **exacte** — il n'y a ni
+nœud de hasard ni espérance à estimer, ce qui la distingue d'un expectimax ou
+d'un MCTS classiques. C'est une propriété du terrain, pas de l'agent.
 
 ---
 
@@ -261,7 +271,7 @@ permet de prédire, donc du bruit pur pour l'apprentissage.
 ## 4. Validation et tests
 
 ```bash
-pytest                                  # 226 tests
+pytest                                  # 247 tests
 pytest --cov=pacman --cov-report=term   # 98 % de couverture
 ruff check src tests
 ```
@@ -354,6 +364,31 @@ l'exploration encore active, ce qui explique qu'il reste sous le score final.
 
 ---
 
+## 5.6 Apprendre ou recalculer
+
+L'agent de recherche ne sait rien, n'a rien appris, n'a aucun poids — et il
+gagne largement (§5.2). Le résultat n'est pas décevant pour l'apprentissage :
+il est **la mesure de ce que l'apprentissage achète**.
+
+| | Q approximé | Recherche |
+|---|---|---|
+| Coût **avant** de jouer | 3 000 épisodes, ~8 min | zéro |
+| Coût **pendant** le jeu | 12 multiplications par coup | des dizaines de parties simulées par coup |
+| Ce qu'il reste après | **12 nombres**, transférables | rien |
+| Si le moteur devient indisponible ou coûteux | fonctionne toujours | **s'effondre** |
+| Si les règles changent | à réentraîner | s'adapte seul |
+
+La recherche est meilleure ici **parce qu'elle a accès à un simulateur exact
+et gratuit**. C'est un luxe : dans presque toutes les applications réelles —
+un robot, un marché, un patient — simuler l'avenir est soit impossible, soit
+plus cher que d'agir. L'apprentissage existe précisément pour ces cas-là.
+
+Autrement dit, ce comparatif ne dit pas « la recherche gagne », il dit **« sur
+un terrain où l'on peut tout simuler, il ne faut pas apprendre »** — et la
+vraie question devient : dispose-t-on d'un tel terrain ?
+
+---
+
 ## 6. Usage de l'IA générative
 
 Cette section est une déclaration, exigée par l'énoncé. Elle est reprise et
@@ -374,7 +409,7 @@ lignes mais de cadrer, arbitrer, éprouver et refuser.
 |---|---|
 | Écrire vite un socle sans intérêt pédagogique | parsing du labyrinthe, sérialisation de l'API, rendu canvas |
 | Reproduire fidèlement un système documenté | les 4 personnalités et le bug d'adressage de 1980 |
-| Générer les tests | 226 tests, dont ceux qui mesurent le déterminisme |
+| Générer les tests | 247 tests, dont ceux qui mesurent le déterminisme |
 | Auditer | audit sécurité : 3 failles trouvées et fermées |
 | Cadrer avant de coder | mesure du moteur comme environnement d'apprentissage |
 

@@ -8,14 +8,15 @@ environnements tout faits sont des boîtes noires — on y mesure un agent sans
 jamais pouvoir expliquer ce que l'environnement lui a fait. Ce projet
 construit donc le terrain **et** les agents, et les mesure ensemble.
 
-**Ce que ça donne.** Un Pac-Man complet et jouable, et trois familles d'IA qui
+**Ce que ça donne.** Un Pac-Man complet et jouable, et quatre familles d'IA qui
 s'y affrontent sur les mêmes graines :
 
 | | Approche | Où |
 |---|---|---|
 | Les 4 fantômes | règles écrites à la main, fidèles à l'arcade de 1980 | `ai/` |
 | Le joueur heuristique | règles écrites à la main, sert de plafond | `rl/agents.py` |
-| Le joueur apprenant | **Q-learning approximé** sur 12 descripteurs | `rl/` |
+| Le joueur apprenant | **Q-learning approximé** sur des descripteurs bornés | `rl/` |
+| Le joueur chercheur | **simulation en avant**, aucun entraînement | `rl/search.py` |
 
 **Public visé.** Qui veut voir un agent apprendre sur un problème qu'il
 comprend entièrement : enseignement, démonstration, base de comparaison. Le
@@ -45,8 +46,9 @@ src/pacman/
 │   ├── metrics.py     distances réelles et topologie du labyrinthe
 │   ├── environment.py une décision par intersection, épisodes tirés d'une graine
 │   ├── rewards.py     barème d'apprentissage
-│   ├── features.py    12 descripteurs bornés d'un couple (état, action)
+│   ├── features.py    descripteurs bornés d'un couple (état, action)
 │   ├── agents.py      aléatoire, heuristique, Q-learning approximé
+│   ├── search.py      recherche en ligne : simule au lieu d'apprendre
 │   ├── training.py    boucle d'entraînement, ε et α décroissants
 │   ├── evaluation.py  protocole de mesure sur graines jamais vues
 │   └── cli.py         `pacman-rl`
@@ -96,7 +98,7 @@ Documentation interactive de l'API : http://127.0.0.1:8000/docs
 ## Tests
 
 ```bash
-pytest                                  # 226 tests
+pytest                                  # 247 tests
 pytest --cov=pacman --cov-report=term   # 98 % de couverture
 ruff check src tests
 ```
@@ -252,7 +254,7 @@ Le barème pèse plus lourd sur le résultat que α et γ réunis :
 Le score brut du jeu n'est pas repris : la vie supplémentaire à 10 000 points
 y crée une marche que rien dans l'état ne permet de prédire.
 
-### Les trois agents
+### Les quatre agents
 
 Un score d'agent entraîné ne veut rien dire seul. Il faut un plancher et un
 plafond raisonnable, mesurés dans les mêmes conditions :
@@ -260,6 +262,13 @@ plafond raisonnable, mesurés dans les mêmes conditions :
 - **aléatoire** — tire une direction au sort à chaque intersection ;
 - **heuristique** — règles écrites à la main : fuir, chasser les fantômes
   effrayés, sinon aller à la pastille la plus proche ;
+- **recherche** — n'apprend rien : à chaque intersection il **clone la
+  partie**, joue chaque coup, laisse le moteur dérouler la suite, et garde la
+  meilleure issue. Le moteur étant déterministe, cette simulation est
+  **exacte** — ni nœud de hasard, ni espérance à estimer, ce qui la distingue
+  d'un expectimax ou d'un MCTS. Il gagne largement, et c'est justement la
+  discussion : il paie à *chaque* coup ce que l'agent entraîné a payé une fois
+  pour toutes, et il s'effondre sans simulateur gratuit ;
 - **Q approximé** — `Q(s,a) = w · f(s,a)` sur des descripteurs bornés dans
   [0, 1]. Le tabulaire est exclu (2^244 configurations pour les seules
   pastilles), le réseau profond aussi (dix à cent fois plus d'épisodes pour une
@@ -355,7 +364,7 @@ la partie qui décide du résultat.
 |---|---|
 | Écrire vite un socle sans intérêt pédagogique | parsing du labyrinthe, sérialisation de l'API, client canvas |
 | Reproduire fidèlement un système documenté | les 4 personnalités de fantômes et le bug d'adressage de 1980 |
-| Générer les tests | 226 tests, dont ceux qui mesurent le déterminisme |
+| Générer les tests | 247 tests, dont ceux qui mesurent le déterminisme |
 | Auditer | audit sécurité du 23/07 : 3 failles trouvées et fermées |
 | Cadrer une approche avant de coder | mesure du moteur comme environnement d'apprentissage |
 
