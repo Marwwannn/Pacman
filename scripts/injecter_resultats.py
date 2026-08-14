@@ -20,6 +20,7 @@ CAMPAGNE = RACINE / "results" / "campagne.json"
 COMPARATIF = RACINE / "results" / "descripteurs.json"
 DOCUMENTATION = RACINE / "docs" / "documentation.md"
 PRESENTATION = RACINE / "docs" / "presentation.html"
+LISEZMOI = RACINE / "README.md"
 
 DEBUT = "<!-- RESULTATS -->"
 FIN = "<!-- FIN RESULTATS -->"
@@ -27,19 +28,48 @@ FIN = "<!-- FIN RESULTATS -->"
 #: Ce que chaque poids veut dire, une fois son signe connu. Le texte est fixe,
 #: la valeur vient du run : c'est la lecture qui est humaine, pas le chiffre.
 LECTURES = {
-    "biais": ("valeur moyenne d'un coup", "valeur moyenne d'un coup"),
-    "mange_pastille": ("va chercher la pastille", "evite la pastille (anormal)"),
+    "biais": (
+        "constante — **sans effet sur les decisions** (identique pour toutes les actions)",
+        "constante — **sans effet sur les decisions** (identique pour toutes les actions)",
+    ),
+    "mange_pastille": (
+        "va chercher la pastille",
+        "signe trompeur : colineaire avec `proximite_pastille`, qui vaut 1 sur la meme case",
+    ),
     "mange_super_pastille": ("va chercher la super-pastille", "se mefie de la super-pastille"),
     "mange_fruit": ("va chercher le fruit", "ignore le fruit"),
     "proximite_pastille": ("se rapproche des pastilles", "s'en eloigne (anormal)"),
     "proximite_chasseur": ("s'approche des chasseurs (anormal)", "**fuit les chasseurs**"),
     "chasseurs_proches": ("tolere l'encerclement (anormal)", "**fuit l'encerclement**"),
     "proximite_proie": ("**chasse les fantomes effrayes**", "fuit meme les proies"),
-    "proximite_super_pastille": ("garde les super-pastilles a portee", "s'eloigne des super-pastilles"),
-    "issues": ("**prefere les cases qui ont des sorties**", "prefere les impasses (anormal)"),
+    "proximite_super_pastille": (
+        "garde les super-pastilles a portee",
+        "s'eloigne des super-pastilles",
+    ),
+    "issues": ("**prefere les cases qui ont des sorties**", "quasi nul : n'a rien tranche"),
     "demi_tour": ("aime revenir en arriere", "evite le demi-tour"),
-    "avancement": ("joue plus franc en fin de partie", "se replie en fin de partie"),
+    "avancement": ("joue plus franc en fin de partie", "prudence croissante en fin de partie"),
 }
+
+#: Note de lecture des poids. Ecrite une fois, injectee avec le tableau : sans
+#: elle, deux signes se lisent de travers et la question tombe a l'oral.
+NOTE_POIDS = """
+**Comment lire ces signes.** Deux precautions, sans quoi deux lignes de ce
+tableau se lisent a l'envers :
+
+- Le **biais** est identique pour toutes les actions : il ne departage rien.
+  Sa valeur mesure le retour moyen d'une partie, pas une preference.
+- Deux descripteurs peuvent etre **colineaires**. Sur une case qui porte une
+  pastille, `mange_pastille` vaut 1 *et* `proximite_pastille` vaut 1 : les
+  deux poids se partagent le credit, et seule leur **somme** a un sens. Ici
+  elle reste positive — l'agent va bien manger.
+
+Ce que le tableau dit vraiment : l'agent a appris **la peur avant la
+gourmandise**. Fuir les chasseurs et l'encerclement pese plus lourd que
+n'importe quelle pastille, et chasser une proie effrayee pese plus encore. Ce
+sont exactement les trois priorites de l'heuristique ecrite a la main — sauf
+que personne ne les lui a dites.
+"""
 
 
 def ligne(mesure: dict) -> str:
@@ -101,14 +131,14 @@ méthode (elle sépare « l'agent n'apprend pas » de « le problème est trop
 dur ») ; elle ne l'était pas comme gain de performance, et c'est la mesure qui
 le dit.
 
-### 5.2 bis — jusqu'où faut-il chercher ?
+### 5.3 Jusqu'où faut-il chercher ?
 
 La recherche n'a qu'un réglage : la profondeur, en points de décision. Son
 coût suit, et il se paie à chaque coup joué.
 
 {profondeurs(etapes)}
 
-### 5.3 Ce que l'agent a appris, poids par poids
+### 5.4 Ce que l'agent a appris, poids par poids
 
 Les douze poids du modèle entraîné à quatre fantômes, du plus fort au plus
 faible. C'est l'intérêt d'un modèle linéaire : **on lit la politique**.
@@ -116,8 +146,9 @@ faible. C'est l'intérêt d'un modèle linéaire : **on lit la politique**.
 | Descripteur | Poids | Lecture |
 |---|---:|---|
 {chr(10).join(f"| `{nom}` | {valeur:+.2f} | {lecture_de(nom, valeur)} |" for nom, valeur in ordonnes)}
+{NOTE_POIDS}
 
-### 5.4 La courbe d'apprentissage (1 fantôme)
+### 5.5 La courbe d'apprentissage (1 fantôme)
 
 Score médian par fenêtre de 500 épisodes, pendant l'entraînement — donc avec
 l'exploration encore active, ce qui explique qu'il reste sous le score final.
@@ -149,7 +180,7 @@ def profondeurs(etapes: dict) -> str:
 
 
 def descripteurs(campagne: dict) -> str:
-    """Section 5.5 : le comparatif des deux jeux de descripteurs, s'il existe."""
+    """Section 5.6 : le comparatif des deux jeux de descripteurs, s'il existe."""
     if not COMPARATIF.exists():
         return (
             "### 5.5 Les positions aident-elles ?\n\n"
@@ -193,7 +224,7 @@ def descripteurs(campagne: dict) -> str:
             "à un gain sur ce chiffre serait une erreur de lecture."
         )
 
-    return f"""### 5.5 Les positions aident-elles ?
+    return f"""### 5.6 Les positions aident-elles ?
 
 Même curriculum, mêmes graines, mêmes hyperparamètres : seul le jeu de
 descripteurs change.
@@ -323,8 +354,37 @@ def main() -> int:
         return 1
     PRESENTATION.write_text(html, encoding="utf-8")
 
-    print(f"{DOCUMENTATION.name} et {PRESENTATION.name} mis a jour depuis {CAMPAGNE.name}")
+    lisezmoi = LISEZMOI.read_text(encoding="utf-8")
+    lisezmoi, nombre = re.subn(
+        re.escape(DEBUT) + r".*?" + re.escape(FIN),
+        lambda _: DEBUT + "\n\n" + resume(campagne) + "\n" + FIN,
+        lisezmoi,
+        count=1,
+        flags=re.S,
+    )
+    if not nombre:
+        print(f"marqueur {DEBUT} introuvable dans {LISEZMOI.name}")
+        return 1
+    LISEZMOI.write_text(lisezmoi, encoding="utf-8")
+
+    print(
+        f"{LISEZMOI.name}, {DOCUMENTATION.name} et {PRESENTATION.name} "
+        f"mis a jour depuis {CAMPAGNE.name}"
+    )
     return 0
+
+
+def resume(campagne: dict) -> str:
+    """Tableau court pour le README : le comparatif final, et rien d'autre."""
+    etapes = campagne["etapes"]
+    return (
+        f"Les quatre agents à quatre fantômes, sur "
+        f"{campagne['parties_evaluation']} parties de graines jamais vues, ε = 0 :\n\n"
+        + tableau(etapes["comparatif_4f"])
+        + "\n\nL'agent **appris** dépasse l'heuristique écrite à la main. L'agent de "
+        "**recherche** les dépasse tous les deux — sans avoir rien appris, mais en "
+        "payant à chaque coup ce que l'agent entraîné a payé une seule fois."
+    )
 
 
 if __name__ == "__main__":

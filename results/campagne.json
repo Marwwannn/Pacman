@@ -1,0 +1,394 @@
+{
+  "episodes": 3000,
+  "parties_evaluation": 100,
+  "etapes": {
+    "baselines_1f": [
+      {
+        "agent": "aleatoire",
+        "parties": 100,
+        "score_median": 605.0,
+        "score_moyen": 677.9,
+        "score_ecart_type": 374.2,
+        "score_min": 0,
+        "score_max": 1590,
+        "retour_median": 80.5,
+        "taux_victoire": 0.0,
+        "taux_mort": 1.0,
+        "decisions_moyennes": 26.0,
+        "pastilles_restantes_medianes": 186.5
+      },
+      {
+        "agent": "heuristique",
+        "parties": 100,
+        "score_median": 2870.0,
+        "score_moyen": 2549.1,
+        "score_ecart_type": 895.0,
+        "score_min": 50,
+        "score_max": 3500,
+        "retour_median": 2305.0,
+        "taux_victoire": 0.35,
+        "taux_mort": 0.65,
+        "decisions_moyennes": 54.9,
+        "pastilles_restantes_medianes": 38.5
+      }
+    ],
+    "baselines_4f": [
+      {
+        "agent": "aleatoire",
+        "parties": 100,
+        "score_median": 470.0,
+        "score_moyen": 495.2,
+        "score_ecart_type": 335.0,
+        "score_min": 0,
+        "score_max": 1700,
+        "retour_median": -50.0,
+        "taux_victoire": 0.0,
+        "taux_mort": 1.0,
+        "decisions_moyennes": 16.4,
+        "pastilles_restantes_medianes": 201.0
+      },
+      {
+        "agent": "heuristique",
+        "parties": 100,
+        "score_median": 2340.0,
+        "score_moyen": 2911.7,
+        "score_ecart_type": 1951.5,
+        "score_min": 50,
+        "score_max": 10330,
+        "retour_median": 1810.0,
+        "taux_victoire": 0.0,
+        "taux_mort": 1.0,
+        "decisions_moyennes": 36.3,
+        "pastilles_restantes_medianes": 122.5
+      }
+    ],
+    "train_1f": {
+      "entrainement": {
+        "episodes": 3000,
+        "score_median": 2030.0,
+        "score_median_dernier_dixieme": 2635.0
+      },
+      "fenetres": [
+        {
+          "episode": 500,
+          "epsilon": 0.774,
+          "alpha": 0.0157,
+          "score_median": 770.0
+        },
+        {
+          "episode": 1000,
+          "epsilon": 0.548,
+          "alpha": 0.0114,
+          "score_median": 1215.0
+        },
+        {
+          "episode": 1500,
+          "epsilon": 0.322,
+          "alpha": 0.0072,
+          "score_median": 1885.0
+        },
+        {
+          "episode": 2000,
+          "epsilon": 0.096,
+          "alpha": 0.0029,
+          "score_median": 2390.0
+        },
+        {
+          "episode": 2500,
+          "epsilon": 0.05,
+          "alpha": 0.002,
+          "score_median": 2650.0
+        },
+        {
+          "episode": 3000,
+          "epsilon": 0.05,
+          "alpha": 0.002,
+          "score_median": 2620.0
+        }
+      ],
+      "poids": {
+        "biais": 901.918534017312,
+        "mange_pastille": -109.73492021779302,
+        "mange_super_pastille": -28.89100177555033,
+        "mange_fruit": 0.0,
+        "proximite_pastille": 195.45456233518632,
+        "proximite_chasseur": -329.83933258220804,
+        "chasseurs_proches": -285.6760790695056,
+        "proximite_proie": 250.33949792315545,
+        "proximite_super_pastille": 256.1769051163921,
+        "issues": 84.21558018682268,
+        "demi_tour": -48.43034365117804,
+        "avancement": -758.3669291437574
+      },
+      "secondes": 485.0,
+      "evaluation": {
+        "agent": "q-approxime",
+        "parties": 100,
+        "score_median": 2730.0,
+        "score_moyen": 2590.9,
+        "score_ecart_type": 404.6,
+        "score_min": 1030,
+        "score_max": 3390,
+        "retour_median": 3022.5,
+        "taux_victoire": 0.51,
+        "taux_mort": 0.49,
+        "decisions_moyennes": 58.3,
+        "pastilles_restantes_medianes": 0.0
+      }
+    },
+    "train_4f_curriculum": {
+      "entrainement": {
+        "episodes": 3000,
+        "score_median": 2235.0,
+        "score_median_dernier_dixieme": 2420.0
+      },
+      "fenetres": [
+        {
+          "episode": 500,
+          "epsilon": 0.241,
+          "alpha": 0.0157,
+          "score_median": 1765.0
+        },
+        {
+          "episode": 1000,
+          "epsilon": 0.181,
+          "alpha": 0.0114,
+          "score_median": 1890.0
+        },
+        {
+          "episode": 1500,
+          "epsilon": 0.122,
+          "alpha": 0.0072,
+          "score_median": 2270.0
+        },
+        {
+          "episode": 2000,
+          "epsilon": 0.062,
+          "alpha": 0.0029,
+          "score_median": 2320.0
+        },
+        {
+          "episode": 2500,
+          "epsilon": 0.05,
+          "alpha": 0.002,
+          "score_median": 2585.0
+        },
+        {
+          "episode": 3000,
+          "epsilon": 0.05,
+          "alpha": 0.002,
+          "score_median": 2585.0
+        }
+      ],
+      "poids": {
+        "biais": 1071.7699377174033,
+        "mange_pastille": -111.86177341421755,
+        "mange_super_pastille": -90.61728748983612,
+        "mange_fruit": 0.0,
+        "proximite_pastille": 199.22033468221258,
+        "proximite_chasseur": -380.2713883072688,
+        "chasseurs_proches": -199.2029051590812,
+        "proximite_proie": 461.0761549223563,
+        "proximite_super_pastille": 299.3917203614995,
+        "issues": -1.017386508201642,
+        "demi_tour": -49.958616685318916,
+        "avancement": -910.8680899312627
+      },
+      "secondes": 498.1,
+      "evaluation": {
+        "agent": "q-approxime",
+        "parties": 100,
+        "score_median": 2895.0,
+        "score_moyen": 2923.8,
+        "score_ecart_type": 1170.9,
+        "score_min": 560,
+        "score_max": 5800,
+        "retour_median": 2353.0,
+        "taux_victoire": 0.04,
+        "taux_mort": 0.96,
+        "decisions_moyennes": 41.8,
+        "pastilles_restantes_medianes": 70.0
+      }
+    },
+    "train_4f_direct": {
+      "entrainement": {
+        "episodes": 3000,
+        "score_median": 1300.0,
+        "score_median_dernier_dixieme": 2450.0
+      },
+      "fenetres": [
+        {
+          "episode": 500,
+          "epsilon": 0.774,
+          "alpha": 0.0157,
+          "score_median": 580.0
+        },
+        {
+          "episode": 1000,
+          "epsilon": 0.548,
+          "alpha": 0.0114,
+          "score_median": 850.0
+        },
+        {
+          "episode": 1500,
+          "epsilon": 0.322,
+          "alpha": 0.0072,
+          "score_median": 1175.0
+        },
+        {
+          "episode": 2000,
+          "epsilon": 0.096,
+          "alpha": 0.0029,
+          "score_median": 1780.0
+        },
+        {
+          "episode": 2500,
+          "epsilon": 0.05,
+          "alpha": 0.002,
+          "score_median": 2455.0
+        },
+        {
+          "episode": 3000,
+          "epsilon": 0.05,
+          "alpha": 0.002,
+          "score_median": 2410.0
+        }
+      ],
+      "poids": {
+        "biais": 947.7867833734143,
+        "mange_pastille": -106.85116960092014,
+        "mange_super_pastille": -23.97969239431839,
+        "mange_fruit": 0.0,
+        "proximite_pastille": 208.2339167698965,
+        "proximite_chasseur": -336.7521625458769,
+        "chasseurs_proches": -127.89727933274365,
+        "proximite_proie": 364.883543507377,
+        "proximite_super_pastille": 297.80971784486127,
+        "issues": 98.90859374982985,
+        "demi_tour": -40.61316594682324,
+        "avancement": -527.1715427749763
+      },
+      "secondes": 377.2,
+      "evaluation": {
+        "agent": "q-approxime",
+        "parties": 100,
+        "score_median": 2915.0,
+        "score_moyen": 2858.4,
+        "score_ecart_type": 1136.4,
+        "score_min": 340,
+        "score_max": 5820,
+        "retour_median": 2372.5,
+        "taux_victoire": 0.0,
+        "taux_mort": 1.0,
+        "decisions_moyennes": 40.6,
+        "pastilles_restantes_medianes": 59.0
+      }
+    },
+    "comparatif_4f": [
+      {
+        "agent": "aleatoire",
+        "parties": 100,
+        "score_median": 470.0,
+        "score_moyen": 495.2,
+        "score_ecart_type": 335.0,
+        "score_min": 0,
+        "score_max": 1700,
+        "retour_median": -50.0,
+        "taux_victoire": 0.0,
+        "taux_mort": 1.0,
+        "decisions_moyennes": 16.4,
+        "pastilles_restantes_medianes": 201.0
+      },
+      {
+        "agent": "heuristique",
+        "parties": 100,
+        "score_median": 2340.0,
+        "score_moyen": 2911.7,
+        "score_ecart_type": 1951.5,
+        "score_min": 50,
+        "score_max": 10330,
+        "retour_median": 1810.0,
+        "taux_victoire": 0.0,
+        "taux_mort": 1.0,
+        "decisions_moyennes": 36.3,
+        "pastilles_restantes_medianes": 122.5
+      },
+      {
+        "agent": "q-approxime",
+        "parties": 100,
+        "score_median": 2895.0,
+        "score_moyen": 2923.8,
+        "score_ecart_type": 1170.9,
+        "score_min": 560,
+        "score_max": 5800,
+        "retour_median": 2353.0,
+        "taux_victoire": 0.04,
+        "taux_mort": 0.96,
+        "decisions_moyennes": 41.8,
+        "pastilles_restantes_medianes": 70.0
+      },
+      {
+        "agent": "recherche",
+        "parties": 100,
+        "score_median": 4990.0,
+        "score_moyen": 5015.2,
+        "score_ecart_type": 1814.9,
+        "score_min": 0,
+        "score_max": 10690,
+        "retour_median": 5399.0,
+        "taux_victoire": 0.94,
+        "taux_mort": 0.07,
+        "decisions_moyennes": 85.1,
+        "pastilles_restantes_medianes": 0.0,
+        "profondeur": 3
+      }
+    ],
+    "profondeurs_recherche": [
+      {
+        "agent": "recherche",
+        "parties": 100,
+        "score_median": 3255.0,
+        "score_moyen": 3311.7,
+        "score_ecart_type": 1127.5,
+        "score_min": 0,
+        "score_max": 6710,
+        "retour_median": 3158.5,
+        "taux_victoire": 0.34,
+        "taux_mort": 0.66,
+        "decisions_moyennes": 68.2,
+        "pastilles_restantes_medianes": 19.0,
+        "profondeur": 1
+      },
+      {
+        "agent": "recherche",
+        "parties": 100,
+        "score_median": 4290.0,
+        "score_moyen": 4281.4,
+        "score_ecart_type": 1241.0,
+        "score_min": 0,
+        "score_max": 7090,
+        "retour_median": 4628.0,
+        "taux_victoire": 0.83,
+        "taux_mort": 0.17,
+        "decisions_moyennes": 85.4,
+        "pastilles_restantes_medianes": 0.0,
+        "profondeur": 2
+      },
+      {
+        "agent": "recherche",
+        "parties": 100,
+        "score_median": 4990.0,
+        "score_moyen": 5015.2,
+        "score_ecart_type": 1814.9,
+        "score_min": 0,
+        "score_max": 10690,
+        "retour_median": 5399.0,
+        "taux_victoire": 0.94,
+        "taux_mort": 0.07,
+        "decisions_moyennes": 85.1,
+        "pastilles_restantes_medianes": 0.0,
+        "profondeur": 3
+      }
+    ]
+  }
+}

@@ -138,12 +138,25 @@ lire une ligne de code — on <em>voit</em> l'agent hésiter à une intersection
 </tr>
 <tr>
 <td>Joueur Q approximé</td>
-<td>Q-learning linéaire, 12 features</td>
+<td>Q-learning linéaire</td>
 <td><strong>oui</strong></td>
 <td>le cœur du projet</td>
 </tr>
+<tr>
+<td>Joueur de recherche</td>
+<td>simulation en avant</td>
+<td>non</td>
+<td><strong>ce que coûte de ne pas apprendre</strong></td>
+</tr>
 </tbody>
 </table>
+<p>Le dernier mérite un mot. Les trois premiers décident à partir de ce qu'ils
+<strong>voient</strong> ; celui-ci décide à partir de ce qui <strong>arriverait</strong> : à chaque
+intersection il clone la partie, joue chaque coup possible, laisse le moteur
+dérouler la suite, et garde la meilleure issue.</p>
+<p>Le moteur étant déterministe, cette recherche est <strong>exacte</strong> — il n'y a ni
+nœud de hasard ni espérance à estimer, ce qui la distingue d'un expectimax ou
+d'un MCTS classiques. C'est une propriété du terrain, pas de l'agent.</p>
 <hr />
 <h2 id="3-choix-techniques">3. Choix techniques</h2>
 <h3 id="31-librairies">3.1 Librairies</h3>
@@ -325,7 +338,43 @@ l'erreur que commettent les fantômes de 1980 — l'agent, lui, ne la commet pas
 </tr>
 </tbody>
 </table>
-<h3 id="36-le-bareme-de-recompenses">3.6 Le barème de récompenses</h3>
+<h3 id="36-deux-jeux-de-descripteurs-et-pourquoi-les-comparer">3.6 Deux jeux de descripteurs, et pourquoi les comparer</h3>
+<p>Le jeu ci-dessus ne décrit les fantômes que par des <strong>agrégats</strong> : le chasseur
+<em>le plus proche</em>, la pastille <em>la plus proche</em>. Deux fantômes à huit cases y
+sont donc indiscernables d'un seul. D'où une question qui se tranche par la
+mesure, pas par l'intuition : <strong>donner à l'agent la position de chaque fantôme
+et la répartition de la nourriture le rend-il meilleur ?</strong></p>
+<p>Un second jeu, <code>positions</code> (26 poids), l'a été ajouté pour le savoir :</p>
+<table>
+<thead>
+<tr>
+<th>Ajout</th>
+<th>Contenu</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>3 nombres × 4 fantômes</td>
+<td>sa distance, si l'action <strong>m'en rapproche</strong>, s'il est comestible</td>
+</tr>
+<tr>
+<td>2 nombres pour la nourriture</td>
+<td>direction de la masse de pastilles, densité locale</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Ces positions sont exprimées dans le repère de Pac-Man</strong>, jamais en
+coordonnées absolues. Ce n'est pas un détail de forme : dans un modèle
+linéaire, un poids sur <code>x</code> signifierait « préfère la droite du plan » — une
+règle qui ne généralise à rien. Une distance et un « ça me rapproche » sont la
+même information, exprimée là où elle est apprenable.</p>
+<p>Les fantômes sont rangés du plus proche au plus lointain. Sans cet ordre,
+échanger deux fantômes identiques changerait le vecteur, et l'agent devrait
+apprendre quatre fois la même chose.</p>
+<p>Le jeu de base <strong>reste</strong> et sert de témoin : <code>scripts/comparer_descripteurs.py</code>
+oppose les deux à graines, hyperparamètres et curriculum identiques. Résultat
+au §5.5.</p>
+<h3 id="37-le-bareme-de-recompenses">3.7 Le barème de récompenses</h3>
 <p>Le barème pèse plus lourd sur le résultat final que α et γ réunis.</p>
 <table>
 <thead>
@@ -378,7 +427,7 @@ supplémentaire à 10 000 points y crée une marche que rien dans l'état ne
 permet de prédire, donc du bruit pur pour l'apprentissage.</p>
 <hr />
 <h2 id="4-validation-et-tests">4. Validation et tests</h2>
-<pre><code class="language-bash">pytest                                  # 226 tests
+<pre><code class="language-bash">pytest                                  # 247 tests
 pytest --cov=pacman --cov-report=term   # 98 % de couverture
 ruff check src tests
 </code></pre>
@@ -423,30 +472,30 @@ qui ne prouve rien est pire qu'un test absent : il rassure.</p>
 <tbody>
 <tr>
 <td>aleatoire</td>
-<td style="text-align: right;">550</td>
-<td style="text-align: right;">380</td>
+<td style="text-align: right;">605</td>
+<td style="text-align: right;">374</td>
 <td style="text-align: right;">0</td>
-<td style="text-align: right;">1540</td>
+<td style="text-align: right;">1590</td>
 <td style="text-align: right;">0%</td>
 <td style="text-align: right;">100%</td>
 </tr>
 <tr>
 <td>heuristique</td>
-<td style="text-align: right;">2940</td>
-<td style="text-align: right;">945</td>
+<td style="text-align: right;">2870</td>
+<td style="text-align: right;">895</td>
 <td style="text-align: right;">50</td>
-<td style="text-align: right;">3490</td>
-<td style="text-align: right;">38%</td>
-<td style="text-align: right;">62%</td>
+<td style="text-align: right;">3500</td>
+<td style="text-align: right;">35%</td>
+<td style="text-align: right;">65%</td>
 </tr>
 <tr>
 <td>q-approxime</td>
-<td style="text-align: right;">2500</td>
-<td style="text-align: right;">900</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: right;">4000</td>
-<td style="text-align: right;">20%</td>
-<td style="text-align: right;">80%</td>
+<td style="text-align: right;">2730</td>
+<td style="text-align: right;">405</td>
+<td style="text-align: right;">1030</td>
+<td style="text-align: right;">3390</td>
+<td style="text-align: right;">51%</td>
+<td style="text-align: right;">49%</td>
 </tr>
 </tbody>
 </table>
@@ -466,30 +515,39 @@ qui ne prouve rien est pire qu'un test absent : il rassure.</p>
 <tbody>
 <tr>
 <td>aleatoire</td>
-<td style="text-align: right;">575</td>
-<td style="text-align: right;">401</td>
+<td style="text-align: right;">470</td>
+<td style="text-align: right;">335</td>
 <td style="text-align: right;">0</td>
-<td style="text-align: right;">1890</td>
+<td style="text-align: right;">1700</td>
 <td style="text-align: right;">0%</td>
 <td style="text-align: right;">100%</td>
 </tr>
 <tr>
 <td>heuristique</td>
-<td style="text-align: right;">2395</td>
-<td style="text-align: right;">1710</td>
-<td style="text-align: right;">200</td>
-<td style="text-align: right;">7870</td>
+<td style="text-align: right;">2340</td>
+<td style="text-align: right;">1952</td>
+<td style="text-align: right;">50</td>
+<td style="text-align: right;">10330</td>
 <td style="text-align: right;">0%</td>
 <td style="text-align: right;">100%</td>
 </tr>
 <tr>
 <td>q-approxime</td>
-<td style="text-align: right;">1800</td>
-<td style="text-align: right;">700</td>
+<td style="text-align: right;">2895</td>
+<td style="text-align: right;">1171</td>
+<td style="text-align: right;">560</td>
+<td style="text-align: right;">5800</td>
+<td style="text-align: right;">4%</td>
+<td style="text-align: right;">96%</td>
+</tr>
+<tr>
+<td>recherche</td>
+<td style="text-align: right;">4990</td>
+<td style="text-align: right;">1815</td>
 <td style="text-align: right;">0</td>
-<td style="text-align: right;">3000</td>
-<td style="text-align: right;">0%</td>
-<td style="text-align: right;">100%</td>
+<td style="text-align: right;">10690</td>
+<td style="text-align: right;">94%</td>
+<td style="text-align: right;">7%</td>
 </tr>
 </tbody>
 </table>
@@ -509,16 +567,58 @@ qui ne prouve rien est pire qu'un test absent : il rassure.</p>
 <tbody>
 <tr>
 <td>q-approxime</td>
-<td style="text-align: right;">2500</td>
-<td style="text-align: right;">900</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: right;">4000</td>
-<td style="text-align: right;">20%</td>
-<td style="text-align: right;">80%</td>
+<td style="text-align: right;">2915</td>
+<td style="text-align: right;">1136</td>
+<td style="text-align: right;">340</td>
+<td style="text-align: right;">5820</td>
+<td style="text-align: right;">0%</td>
+<td style="text-align: right;">100%</td>
 </tr>
 </tbody>
 </table>
-<h3 id="53-ce-que-lagent-a-appris-poids-par-poids">5.3 Ce que l'agent a appris, poids par poids</h3>
+<p>Le curriculum <strong>n'améliore donc pas le score</strong> — il n'apporte qu'un peu de
+régularité et quelques victoires. La recommandation initiale était bonne comme
+méthode (elle sépare « l'agent n'apprend pas » de « le problème est trop
+dur ») ; elle ne l'était pas comme gain de performance, et c'est la mesure qui
+le dit.</p>
+<h3 id="53-jusquou-faut-il-chercher">5.3 Jusqu'où faut-il chercher ?</h3>
+<p>La recherche n'a qu'un réglage : la profondeur, en points de décision. Son
+coût suit, et il se paie à chaque coup joué.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">Profondeur</th>
+<th style="text-align: right;">Score médian</th>
+<th style="text-align: right;">Écart-type</th>
+<th style="text-align: right;">Victoires</th>
+<th style="text-align: right;">Morts</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">3255</td>
+<td style="text-align: right;">1128</td>
+<td style="text-align: right;">34%</td>
+<td style="text-align: right;">66%</td>
+</tr>
+<tr>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">4290</td>
+<td style="text-align: right;">1241</td>
+<td style="text-align: right;">83%</td>
+<td style="text-align: right;">17%</td>
+</tr>
+<tr>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">4990</td>
+<td style="text-align: right;">1815</td>
+<td style="text-align: right;">94%</td>
+<td style="text-align: right;">7%</td>
+</tr>
+</tbody>
+</table>
+<h3 id="54-ce-que-lagent-a-appris-poids-par-poids">5.4 Ce que l'agent a appris, poids par poids</h3>
 <p>Les douze poids du modèle entraîné à quatre fantômes, du plus fort au plus
 faible. C'est l'intérêt d'un modèle linéaire : <strong>on lit la politique</strong>.</p>
 <table>
@@ -531,68 +631,83 @@ faible. C'est l'intérêt d'un modèle linéaire : <strong>on lit la politique</
 </thead>
 <tbody>
 <tr>
+<td><code>biais</code></td>
+<td style="text-align: right;">+1071.77</td>
+<td>constante — <strong>sans effet sur les decisions</strong> (identique pour toutes les actions)</td>
+</tr>
+<tr>
+<td><code>avancement</code></td>
+<td style="text-align: right;">-910.87</td>
+<td>prudence croissante en fin de partie</td>
+</tr>
+<tr>
+<td><code>proximite_proie</code></td>
+<td style="text-align: right;">+461.08</td>
+<td><strong>chasse les fantomes effrayes</strong></td>
+</tr>
+<tr>
 <td><code>proximite_chasseur</code></td>
-<td style="text-align: right;">-8.10</td>
+<td style="text-align: right;">-380.27</td>
 <td><strong>fuit les chasseurs</strong></td>
 </tr>
 <tr>
+<td><code>proximite_super_pastille</code></td>
+<td style="text-align: right;">+299.39</td>
+<td>garde les super-pastilles a portee</td>
+</tr>
+<tr>
+<td><code>proximite_pastille</code></td>
+<td style="text-align: right;">+199.22</td>
+<td>se rapproche des pastilles</td>
+</tr>
+<tr>
 <td><code>chasseurs_proches</code></td>
-<td style="text-align: right;">-4.40</td>
+<td style="text-align: right;">-199.20</td>
 <td><strong>fuit l'encerclement</strong></td>
 </tr>
 <tr>
 <td><code>mange_pastille</code></td>
-<td style="text-align: right;">+3.40</td>
-<td>va chercher la pastille</td>
-</tr>
-<tr>
-<td><code>proximite_pastille</code></td>
-<td style="text-align: right;">+2.90</td>
-<td>se rapproche des pastilles</td>
-</tr>
-<tr>
-<td><code>issues</code></td>
-<td style="text-align: right;">+2.20</td>
-<td><strong>prefere les cases qui ont des sorties</strong></td>
+<td style="text-align: right;">-111.86</td>
+<td>signe trompeur : colineaire avec <code>proximite_pastille</code>, qui vaut 1 sur la meme case</td>
 </tr>
 <tr>
 <td><code>mange_super_pastille</code></td>
-<td style="text-align: right;">+1.70</td>
-<td>va chercher la super-pastille</td>
-</tr>
-<tr>
-<td><code>biais</code></td>
-<td style="text-align: right;">-1.20</td>
-<td>valeur moyenne d'un coup</td>
-</tr>
-<tr>
-<td><code>proximite_proie</code></td>
-<td style="text-align: right;">+1.10</td>
-<td><strong>chasse les fantomes effrayes</strong></td>
+<td style="text-align: right;">-90.62</td>
+<td>se mefie de la super-pastille</td>
 </tr>
 <tr>
 <td><code>demi_tour</code></td>
-<td style="text-align: right;">-0.90</td>
+<td style="text-align: right;">-49.96</td>
 <td>evite le demi-tour</td>
 </tr>
 <tr>
-<td><code>proximite_super_pastille</code></td>
-<td style="text-align: right;">+0.60</td>
-<td>garde les super-pastilles a portee</td>
-</tr>
-<tr>
-<td><code>avancement</code></td>
-<td style="text-align: right;">+0.40</td>
-<td>joue plus franc en fin de partie</td>
+<td><code>issues</code></td>
+<td style="text-align: right;">-1.02</td>
+<td>quasi nul : n'a rien tranche</td>
 </tr>
 <tr>
 <td><code>mange_fruit</code></td>
-<td style="text-align: right;">+0.20</td>
+<td style="text-align: right;">+0.00</td>
 <td>va chercher le fruit</td>
 </tr>
 </tbody>
 </table>
-<h3 id="54-la-courbe-dapprentissage-1-fantome">5.4 La courbe d'apprentissage (1 fantôme)</h3>
+<p><strong>Comment lire ces signes.</strong> Deux precautions, sans quoi deux lignes de ce
+tableau se lisent a l'envers :</p>
+<ul>
+<li>Le <strong>biais</strong> est identique pour toutes les actions : il ne departage rien.
+  Sa valeur mesure le retour moyen d'une partie, pas une preference.</li>
+<li>Deux descripteurs peuvent etre <strong>colineaires</strong>. Sur une case qui porte une
+  pastille, <code>mange_pastille</code> vaut 1 <em>et</em> <code>proximite_pastille</code> vaut 1 : les
+  deux poids se partagent le credit, et seule leur <strong>somme</strong> a un sens. Ici
+  elle reste positive — l'agent va bien manger.</li>
+</ul>
+<p>Ce que le tableau dit vraiment : l'agent a appris <strong>la peur avant la
+gourmandise</strong>. Fuir les chasseurs et l'encerclement pese plus lourd que
+n'importe quelle pastille, et chasser une proie effrayee pese plus encore. Ce
+sont exactement les trois priorites de l'heuristique ecrite a la main — sauf
+que personne ne les lui a dites.</p>
+<h3 id="55-la-courbe-dapprentissage-1-fantome">5.5 La courbe d'apprentissage (1 fantôme)</h3>
 <p>Score médian par fenêtre de 500 épisodes, pendant l'entraînement — donc avec
 l'exploration encore active, ce qui explique qu'il reste sous le score final.</p>
 <table>
@@ -614,10 +729,119 @@ l'exploration encore active, ce qui explique qu'il reste sous le score final.</p
 <td style="text-align: right;">0.55</td>
 <td style="text-align: right;">1215</td>
 </tr>
+<tr>
+<td style="text-align: right;">1500</td>
+<td style="text-align: right;">0.32</td>
+<td style="text-align: right;">1885</td>
+</tr>
+<tr>
+<td style="text-align: right;">2000</td>
+<td style="text-align: right;">0.10</td>
+<td style="text-align: right;">2390</td>
+</tr>
+<tr>
+<td style="text-align: right;">2500</td>
+<td style="text-align: right;">0.05</td>
+<td style="text-align: right;">2650</td>
+</tr>
+<tr>
+<td style="text-align: right;">3000</td>
+<td style="text-align: right;">0.05</td>
+<td style="text-align: right;">2620</td>
+</tr>
 </tbody>
 </table>
+<h3 id="56-les-positions-aident-elles">5.6 Les positions aident-elles ?</h3>
+<p>Même curriculum, mêmes graines, mêmes hyperparamètres : seul le jeu de
+descripteurs change.</p>
+<table>
+<thead>
+<tr>
+<th>Descripteurs</th>
+<th style="text-align: right;">Poids</th>
+<th style="text-align: right;">Médiane 1F</th>
+<th style="text-align: right;">Médiane 4F</th>
+<th style="text-align: right;">Écart-type 4F</th>
+<th style="text-align: right;">Victoires 4F</th>
+<th style="text-align: right;">Entraînement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>base</code></td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">2730</td>
+<td style="text-align: right;">2900</td>
+<td style="text-align: right;">1216</td>
+<td style="text-align: right;">1%</td>
+<td style="text-align: right;">988 s</td>
+</tr>
+<tr>
+<td><code>positions</code></td>
+<td style="text-align: right;">26</td>
+<td style="text-align: right;">2580</td>
+<td style="text-align: right;">2390</td>
+<td style="text-align: right;">1073</td>
+<td style="text-align: right;">0%</td>
+<td style="text-align: right;">1153 s</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Les positions n'apportent pas</strong> : -510 points (-18%). Deux fois plus de poids à estimer sur le même budget d'épisodes, pour une information que les agrégats portaient déjà en grande partie. Le coût d'entraînement, lui, est mesuré : ×1.2.</p>
+<p>C'est le genre de résultat qu'un projet honnête doit publier tel quel. La
+question « faut-il donner plus d'information à l'agent ? » n'a pas de réponse
+évidente : plus de descripteurs, c'est plus de poids à estimer sur le même
+budget d'épisodes — et un modèle linéaire ne peut de toute façon pas composer
+ces informations entre elles.</p>
 <!-- FIN RESULTATS -->
 
+<h3 id="57-apprendre-ou-recalculer">5.7 Apprendre ou recalculer</h3>
+<p>L'agent de recherche ne sait rien, n'a rien appris, n'a aucun poids — et il
+gagne largement (§5.2). Le résultat n'est pas décevant pour l'apprentissage :
+il est <strong>la mesure de ce que l'apprentissage achète</strong>.</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Q approximé</th>
+<th>Recherche</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Coût <strong>avant</strong> de jouer</td>
+<td>3 000 épisodes, ~8 min</td>
+<td>zéro</td>
+</tr>
+<tr>
+<td>Coût <strong>pendant</strong> le jeu</td>
+<td>12 multiplications par coup</td>
+<td>des dizaines de parties simulées par coup</td>
+</tr>
+<tr>
+<td>Ce qu'il reste après</td>
+<td><strong>12 nombres</strong>, transférables</td>
+<td>rien</td>
+</tr>
+<tr>
+<td>Si le moteur devient indisponible ou coûteux</td>
+<td>fonctionne toujours</td>
+<td><strong>s'effondre</strong></td>
+</tr>
+<tr>
+<td>Si les règles changent</td>
+<td>à réentraîner</td>
+<td>s'adapte seul</td>
+</tr>
+</tbody>
+</table>
+<p>La recherche est meilleure ici <strong>parce qu'elle a accès à un simulateur exact
+et gratuit</strong>. C'est un luxe : dans presque toutes les applications réelles —
+un robot, un marché, un patient — simuler l'avenir est soit impossible, soit
+plus cher que d'agir. L'apprentissage existe précisément pour ces cas-là.</p>
+<p>Autrement dit, ce comparatif ne dit pas « la recherche gagne », il dit <strong>« sur
+un terrain où l'on peut tout simuler, il ne faut pas apprendre »</strong> — et la
+vraie question devient : dispose-t-on d'un tel terrain ?</p>
 <hr />
 <h2 id="6-usage-de-lia-generative">6. Usage de l'IA générative</h2>
 <p>Cette section est une déclaration, exigée par l'énoncé. Elle est reprise et
@@ -647,7 +871,7 @@ lignes mais de cadrer, arbitrer, éprouver et refuser.</p>
 </tr>
 <tr>
 <td>Générer les tests</td>
-<td>226 tests, dont ceux qui mesurent le déterminisme</td>
+<td>247 tests, dont ceux qui mesurent le déterminisme</td>
 </tr>
 <tr>
 <td>Auditer</td>
@@ -729,8 +953,28 @@ interaction avec la simulation, pas sur un corpus.</p>
 </tr>
 </tbody>
 </table>
-<p>Installation et lancement : voir le README (§ Installation, § Jouer,
-§ Utilisation).</p>
+<h3 id="71-installation-et-lancement">7.1 Installation et lancement</h3>
+<pre><code class="language-bash">python -m venv .venv
+.venv\Scripts\activate          # Windows  (source .venv/bin/activate ailleurs)
+pip install -e &quot;.[dev]&quot;
+
+pacman-server                   # le jeu : http://127.0.0.1:8000
+pytest                          # 247 tests
+pacman-rl baselines --ghosts 1  # le plancher et le plafond
+python scripts/campagne_rl.py   # toute la campagne de mesure
+</code></pre>
+<p>Python 3.11 minimum. Le jeu et les agents n'ont <strong>aucune dépendance</strong> ;
+FastAPI et Uvicorn ne servent qu'au serveur, <code>markdown</code> qu'à produire ce
+document en HTML imprimable.</p>
+<h3 id="72-reproduire-les-chiffres-de-ce-document">7.2 Reproduire les chiffres de ce document</h3>
+<pre><code class="language-bash">python scripts/campagne_rl.py            # ~25 min : entraîne et mesure
+python scripts/comparer_descripteurs.py  # ~30 min : base contre positions
+python scripts/injecter_resultats.py     # réécrit le §5 et le support oral
+python scripts/documentation_html.py     # docs/documentation.html -&gt; Ctrl+P
+</code></pre>
+<p><code>--sans-entrainement</code> sur la première rejoue les mesures à partir des poids
+déjà présents dans <code>results/</code>, sans réapprendre — c'est aussi le contrôle que
+les poids publiés donnent bien les chiffres publiés.</p>
 <hr />
 <h2 id="8-limites-connues">8. Limites connues</h2>
 <ul>

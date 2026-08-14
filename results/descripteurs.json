@@ -1,0 +1,194 @@
+{
+  "episodes": 3000,
+  "parties": 100,
+  "jeux": {
+    "base": {
+      "descripteurs": "base",
+      "nombre_de_poids": 12,
+      "secondes": 987.9,
+      "un_fantome": {
+        "agent": "q-approxime",
+        "parties": 100,
+        "score_median": 2730.0,
+        "score_moyen": 2590.9,
+        "score_ecart_type": 404.6,
+        "score_min": 1030,
+        "score_max": 3390,
+        "retour_median": 3022.5,
+        "taux_victoire": 0.51,
+        "taux_mort": 0.49,
+        "decisions_moyennes": 58.3,
+        "pastilles_restantes_medianes": 0.0
+      },
+      "quatre_fantomes": {
+        "agent": "q-approxime",
+        "parties": 100,
+        "score_median": 2900.0,
+        "score_moyen": 2878.5,
+        "score_ecart_type": 1216.5,
+        "score_min": 560,
+        "score_max": 6090,
+        "retour_median": 2357.0,
+        "taux_victoire": 0.01,
+        "taux_mort": 0.99,
+        "decisions_moyennes": 39.1,
+        "pastilles_restantes_medianes": 73.0
+      },
+      "poids": {
+        "biais": 1066.035738796327,
+        "mange_pastille": -107.94712668224913,
+        "mange_super_pastille": -90.4270017755504,
+        "mange_fruit": 0.0,
+        "proximite_pastille": 191.87927149983906,
+        "proximite_chasseur": -398.8665637172178,
+        "chasseurs_proches": -237.80121879635777,
+        "proximite_proie": 452.6903059324109,
+        "proximite_super_pastille": 302.217047201848,
+        "issues": -6.205203271777975,
+        "demi_tour": -50.5626195894278,
+        "avancement": -914.8841269015063
+      },
+      "fenetres_1f": [
+        {
+          "episode": 1000,
+          "epsilon": 0.548,
+          "alpha": 0.0114,
+          "score_median": 970.0
+        },
+        {
+          "episode": 2000,
+          "epsilon": 0.096,
+          "alpha": 0.0029,
+          "score_median": 2190.0
+        },
+        {
+          "episode": 3000,
+          "epsilon": 0.05,
+          "alpha": 0.002,
+          "score_median": 2630.0
+        }
+      ],
+      "fenetres_4f": [
+        {
+          "episode": 1000,
+          "epsilon": 0.181,
+          "alpha": 0.0114,
+          "score_median": 1830.0
+        },
+        {
+          "episode": 2000,
+          "epsilon": 0.062,
+          "alpha": 0.0029,
+          "score_median": 2330.0
+        },
+        {
+          "episode": 3000,
+          "epsilon": 0.05,
+          "alpha": 0.002,
+          "score_median": 2500.0
+        }
+      ]
+    },
+    "positions": {
+      "descripteurs": "positions",
+      "nombre_de_poids": 26,
+      "secondes": 1153.4,
+      "un_fantome": {
+        "agent": "q-positions",
+        "parties": 100,
+        "score_median": 2580.0,
+        "score_moyen": 2457.4,
+        "score_ecart_type": 261.4,
+        "score_min": 1340,
+        "score_max": 2900,
+        "retour_median": 2008.5,
+        "taux_victoire": 0.44,
+        "taux_mort": 0.56,
+        "decisions_moyennes": 67.5,
+        "pastilles_restantes_medianes": 3.5
+      },
+      "quatre_fantomes": {
+        "agent": "q-positions",
+        "parties": 100,
+        "score_median": 2390.0,
+        "score_moyen": 2332.6,
+        "score_ecart_type": 1073.2,
+        "score_min": 500,
+        "score_max": 5760,
+        "retour_median": 1859.0,
+        "taux_victoire": 0.0,
+        "taux_mort": 1.0,
+        "decisions_moyennes": 32.7,
+        "pastilles_restantes_medianes": 78.5
+      },
+      "poids": {
+        "biais": 1017.657381187671,
+        "mange_pastille": -4.26820852569767,
+        "mange_super_pastille": -87.93024204273132,
+        "mange_fruit": 0.0,
+        "proximite_pastille": 18.10927815852172,
+        "proximite_chasseur": -268.96263125936287,
+        "chasseurs_proches": -258.6543773835567,
+        "proximite_proie": 283.5257841831216,
+        "proximite_super_pastille": 406.4735397289028,
+        "issues": 9.870337857651808,
+        "demi_tour": -54.93529550363655,
+        "avancement": -1152.5714683647539,
+        "fantome0_proximite": 16.82669012526926,
+        "fantome0_approche": 0.21488321960215093,
+        "fantome0_effraye": 39.824497396491985,
+        "fantome1_proximite": -9.249569229423532,
+        "fantome1_approche": -3.0758801194717336,
+        "fantome1_effraye": 21.447519710499254,
+        "fantome2_proximite": -22.98057261740971,
+        "fantome2_approche": -2.6200197086877806,
+        "fantome2_effraye": 28.128550471938343,
+        "fantome3_proximite": -22.083685778013677,
+        "fantome3_approche": 1.474390432309008,
+        "fantome3_effraye": 31.68567021179791,
+        "nourriture_devant": -8.988714743173718,
+        "nourriture_amas": 100.49870364364996
+      },
+      "fenetres_1f": [
+        {
+          "episode": 1000,
+          "epsilon": 0.548,
+          "alpha": 0.0114,
+          "score_median": 950.0
+        },
+        {
+          "episode": 2000,
+          "epsilon": 0.096,
+          "alpha": 0.0029,
+          "score_median": 2070.0
+        },
+        {
+          "episode": 3000,
+          "epsilon": 0.05,
+          "alpha": 0.002,
+          "score_median": 2540.0
+        }
+      ],
+      "fenetres_4f": [
+        {
+          "episode": 1000,
+          "epsilon": 0.181,
+          "alpha": 0.0114,
+          "score_median": 1520.0
+        },
+        {
+          "episode": 2000,
+          "epsilon": 0.062,
+          "alpha": 0.0029,
+          "score_median": 1860.0
+        },
+        {
+          "episode": 3000,
+          "epsilon": 0.05,
+          "alpha": 0.002,
+          "score_median": 2150.0
+        }
+      ]
+    }
+  }
+}

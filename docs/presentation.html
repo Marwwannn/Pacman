@@ -373,113 +373,141 @@ const RESULTATS = {
   "un_fantome": [
     {
       "agent": "aleatoire",
-      "score_median": "550",
-      "score_ecart_type": "380",
+      "score_median": "605",
+      "score_ecart_type": "374",
       "victoires": 0,
       "morts": 100
     },
     {
       "agent": "heuristique",
-      "score_median": "2940",
-      "score_ecart_type": "945",
-      "victoires": 38,
-      "morts": 62
+      "score_median": "2870",
+      "score_ecart_type": "895",
+      "victoires": 35,
+      "morts": 65
     },
     {
       "agent": "q-approxime",
-      "score_median": "2500",
-      "score_ecart_type": "900",
-      "victoires": 20,
-      "morts": 80
+      "score_median": "2730",
+      "score_ecart_type": "405",
+      "victoires": 51,
+      "morts": 49
     }
   ],
   "quatre_fantomes": [
     {
       "agent": "aleatoire",
-      "score_median": "575",
-      "score_ecart_type": "401",
+      "score_median": "470",
+      "score_ecart_type": "335",
       "victoires": 0,
       "morts": 100
     },
     {
       "agent": "heuristique",
-      "score_median": "2395",
-      "score_ecart_type": "1710",
+      "score_median": "2340",
+      "score_ecart_type": "1952",
       "victoires": 0,
       "morts": 100
     },
     {
       "agent": "q-approxime",
-      "score_median": "1800",
-      "score_ecart_type": "700",
-      "victoires": 0,
-      "morts": 100
+      "score_median": "2895",
+      "score_ecart_type": "1171",
+      "victoires": 4,
+      "morts": 96
+    },
+    {
+      "agent": "recherche",
+      "score_median": "4990",
+      "score_ecart_type": "1815",
+      "victoires": 94,
+      "morts": 7
     }
   ],
-  "commentaire": "L'agent appris fait <b>4.5 ×</b> le hasard à un fantôme, <b>3.1 ×</b> à quatre. 100 parties, graines jamais vues, ε = 0.",
+  "commentaire": "L'agent appris fait <b>4.5 ×</b> le hasard à un fantôme, <b>6.2 ×</b> à quatre. 100 parties, graines jamais vues, ε = 0.",
   "poids": [
     {
+      "nom": "biais",
+      "valeur": "+1071.77",
+      "lecture": "constante — sans effet sur les decisions (identique pour toutes les actions)"
+    },
+    {
+      "nom": "avancement",
+      "valeur": "-910.87",
+      "lecture": "prudence croissante en fin de partie"
+    },
+    {
+      "nom": "proximite_proie",
+      "valeur": "+461.08",
+      "lecture": "chasse les fantomes effrayes"
+    },
+    {
       "nom": "proximite_chasseur",
-      "valeur": "-8.10",
+      "valeur": "-380.27",
       "lecture": "fuit les chasseurs"
     },
     {
+      "nom": "proximite_super_pastille",
+      "valeur": "+299.39",
+      "lecture": "garde les super-pastilles a portee"
+    },
+    {
+      "nom": "proximite_pastille",
+      "valeur": "+199.22",
+      "lecture": "se rapproche des pastilles"
+    },
+    {
       "nom": "chasseurs_proches",
-      "valeur": "-4.40",
+      "valeur": "-199.20",
       "lecture": "fuit l'encerclement"
     },
     {
       "nom": "mange_pastille",
-      "valeur": "+3.40",
-      "lecture": "va chercher la pastille"
-    },
-    {
-      "nom": "proximite_pastille",
-      "valeur": "+2.90",
-      "lecture": "se rapproche des pastilles"
-    },
-    {
-      "nom": "issues",
-      "valeur": "+2.20",
-      "lecture": "prefere les cases qui ont des sorties"
+      "valeur": "-111.86",
+      "lecture": "signe trompeur : colineaire avec `proximite_pastille`, qui vaut 1 sur la meme case"
     },
     {
       "nom": "mange_super_pastille",
-      "valeur": "+1.70",
-      "lecture": "va chercher la super-pastille"
-    },
-    {
-      "nom": "biais",
-      "valeur": "-1.20",
-      "lecture": "valeur moyenne d'un coup"
-    },
-    {
-      "nom": "proximite_proie",
-      "valeur": "+1.10",
-      "lecture": "chasse les fantomes effrayes"
+      "valeur": "-90.62",
+      "lecture": "se mefie de la super-pastille"
     },
     {
       "nom": "demi_tour",
-      "valeur": "-0.90",
+      "valeur": "-49.96",
       "lecture": "evite le demi-tour"
     },
     {
-      "nom": "proximite_super_pastille",
-      "valeur": "+0.60",
-      "lecture": "garde les super-pastilles a portee"
-    },
-    {
-      "nom": "avancement",
-      "valeur": "+0.40",
-      "lecture": "joue plus franc en fin de partie"
+      "nom": "issues",
+      "valeur": "-1.02",
+      "lecture": "quasi nul : n'a rien tranche"
     },
     {
       "nom": "mange_fruit",
-      "valeur": "+0.20",
+      "valeur": "+0.00",
       "lecture": "va chercher le fruit"
     }
   ],
-  "commentaire_poids": "Aucun de ces poids n'a été écrit : ils sortent de 3000 épisodes. C'est ce qu'un réseau profond n'aurait pas permis de montrer."
+  "commentaire_poids": "Aucun de ces poids n'a été écrit : ils sortent de 3000 épisodes. C'est ce qu'un réseau profond n'aurait pas permis de montrer.",
+  "descripteurs": {
+    "lignes": [
+      {
+        "nom": "base",
+        "poids": 12,
+        "un": "2730",
+        "quatre": "2900",
+        "ecart_type": "1216",
+        "secondes": "988"
+      },
+      {
+        "nom": "positions",
+        "poids": 26,
+        "un": "2580",
+        "quatre": "2390",
+        "ecart_type": "1073",
+        "secondes": "1153"
+      }
+    ],
+    "verdict": "Écart : <b>-510 points</b> (-18%) à quatre fantômes."
+  }
 };
 
 function rendreResultats() {

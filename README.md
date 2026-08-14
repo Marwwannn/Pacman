@@ -330,6 +330,25 @@ La lecture se fait sur la **médiane et l'écart-type**, jamais sur le meilleur
 run : un maximum flatteur ne dit rien d'une politique. Les 100 parties sont
 jouées sur des graines que l'agent n'a jamais vues à l'entraînement.
 
+### Résultats
+
+<!-- RESULTATS -->
+
+Les quatre agents à quatre fantômes, sur 100 parties de graines jamais vues, ε = 0 :
+
+| Agent | Score médian | Écart-type | Min | Max | Victoires | Morts |
+|---|---:|---:|---:|---:|---:|---:|
+| aleatoire | 470 | 335 | 0 | 1700 | 0% | 100% |
+| heuristique | 2340 | 1952 | 50 | 10330 | 0% | 100% |
+| q-approxime | 2895 | 1171 | 560 | 5800 | 4% | 96% |
+| recherche | 4990 | 1815 | 0 | 10690 | 94% | 7% |
+
+L'agent **appris** dépasse l'heuristique écrite à la main. L'agent de **recherche** les dépasse tous les deux — sans avoir rien appris, mais en payant à chaque coup ce que l'agent entraîné a payé une seule fois.
+<!-- FIN RESULTATS -->
+
+Détail complet, courbe d'apprentissage, poids appris et comparatif des jeux de
+descripteurs : [`docs/documentation.md`](docs/documentation.md), section 5.
+
 ### Rejouer toute la campagne de mesure
 
 ```bash

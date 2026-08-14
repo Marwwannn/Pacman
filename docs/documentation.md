@@ -311,45 +311,80 @@ Toutes les mesures ci-dessous viennent d'une seule commande
 
 | Agent | Score médian | Écart-type | Min | Max | Victoires | Morts |
 |---|---:|---:|---:|---:|---:|---:|
-| aleatoire | 550 | 380 | 0 | 1540 | 0% | 100% |
-| heuristique | 2940 | 945 | 50 | 3490 | 38% | 62% |
-| q-approxime | 2500 | 900 | 0 | 4000 | 20% | 80% |
+| aleatoire | 605 | 374 | 0 | 1590 | 0% | 100% |
+| heuristique | 2870 | 895 | 50 | 3500 | 35% | 65% |
+| q-approxime | 2730 | 405 | 1030 | 3390 | 51% | 49% |
 
 ### 5.2 Quatre fantômes — le jeu complet
 
 | Agent | Score médian | Écart-type | Min | Max | Victoires | Morts |
 |---|---:|---:|---:|---:|---:|---:|
-| aleatoire | 575 | 401 | 0 | 1890 | 0% | 100% |
-| heuristique | 2395 | 1710 | 200 | 7870 | 0% | 100% |
-| q-approxime | 1800 | 700 | 0 | 3000 | 0% | 100% |
+| aleatoire | 470 | 335 | 0 | 1700 | 0% | 100% |
+| heuristique | 2340 | 1952 | 50 | 10330 | 0% | 100% |
+| q-approxime | 2895 | 1171 | 560 | 5800 | 4% | 96% |
+| recherche | 4990 | 1815 | 0 | 10690 | 94% | 7% |
 
 Et le témoin, entraîné directement à quatre fantômes sans passer par un :
 
 | Agent | Score médian | Écart-type | Min | Max | Victoires | Morts |
 |---|---:|---:|---:|---:|---:|---:|
-| q-approxime | 2500 | 900 | 0 | 4000 | 20% | 80% |
+| q-approxime | 2915 | 1136 | 340 | 5820 | 0% | 100% |
 
-### 5.3 Ce que l'agent a appris, poids par poids
+Le curriculum **n'améliore donc pas le score** — il n'apporte qu'un peu de
+régularité et quelques victoires. La recommandation initiale était bonne comme
+méthode (elle sépare « l'agent n'apprend pas » de « le problème est trop
+dur ») ; elle ne l'était pas comme gain de performance, et c'est la mesure qui
+le dit.
+
+### 5.3 Jusqu'où faut-il chercher ?
+
+La recherche n'a qu'un réglage : la profondeur, en points de décision. Son
+coût suit, et il se paie à chaque coup joué.
+
+| Profondeur | Score médian | Écart-type | Victoires | Morts |
+|---:|---:|---:|---:|---:|
+| 1 | 3255 | 1128 | 34% | 66% |
+| 2 | 4290 | 1241 | 83% | 17% |
+| 3 | 4990 | 1815 | 94% | 7% |
+
+### 5.4 Ce que l'agent a appris, poids par poids
 
 Les douze poids du modèle entraîné à quatre fantômes, du plus fort au plus
 faible. C'est l'intérêt d'un modèle linéaire : **on lit la politique**.
 
 | Descripteur | Poids | Lecture |
 |---|---:|---|
-| `proximite_chasseur` | -8.10 | **fuit les chasseurs** |
-| `chasseurs_proches` | -4.40 | **fuit l'encerclement** |
-| `mange_pastille` | +3.40 | va chercher la pastille |
-| `proximite_pastille` | +2.90 | se rapproche des pastilles |
-| `issues` | +2.20 | **prefere les cases qui ont des sorties** |
-| `mange_super_pastille` | +1.70 | va chercher la super-pastille |
-| `biais` | -1.20 | valeur moyenne d'un coup |
-| `proximite_proie` | +1.10 | **chasse les fantomes effrayes** |
-| `demi_tour` | -0.90 | evite le demi-tour |
-| `proximite_super_pastille` | +0.60 | garde les super-pastilles a portee |
-| `avancement` | +0.40 | joue plus franc en fin de partie |
-| `mange_fruit` | +0.20 | va chercher le fruit |
+| `biais` | +1071.77 | constante — **sans effet sur les decisions** (identique pour toutes les actions) |
+| `avancement` | -910.87 | prudence croissante en fin de partie |
+| `proximite_proie` | +461.08 | **chasse les fantomes effrayes** |
+| `proximite_chasseur` | -380.27 | **fuit les chasseurs** |
+| `proximite_super_pastille` | +299.39 | garde les super-pastilles a portee |
+| `proximite_pastille` | +199.22 | se rapproche des pastilles |
+| `chasseurs_proches` | -199.20 | **fuit l'encerclement** |
+| `mange_pastille` | -111.86 | signe trompeur : colineaire avec `proximite_pastille`, qui vaut 1 sur la meme case |
+| `mange_super_pastille` | -90.62 | se mefie de la super-pastille |
+| `demi_tour` | -49.96 | evite le demi-tour |
+| `issues` | -1.02 | quasi nul : n'a rien tranche |
+| `mange_fruit` | +0.00 | va chercher le fruit |
 
-### 5.4 La courbe d'apprentissage (1 fantôme)
+**Comment lire ces signes.** Deux precautions, sans quoi deux lignes de ce
+tableau se lisent a l'envers :
+
+- Le **biais** est identique pour toutes les actions : il ne departage rien.
+  Sa valeur mesure le retour moyen d'une partie, pas une preference.
+- Deux descripteurs peuvent etre **colineaires**. Sur une case qui porte une
+  pastille, `mange_pastille` vaut 1 *et* `proximite_pastille` vaut 1 : les
+  deux poids se partagent le credit, et seule leur **somme** a un sens. Ici
+  elle reste positive — l'agent va bien manger.
+
+Ce que le tableau dit vraiment : l'agent a appris **la peur avant la
+gourmandise**. Fuir les chasseurs et l'encerclement pese plus lourd que
+n'importe quelle pastille, et chasser une proie effrayee pese plus encore. Ce
+sont exactement les trois priorites de l'heuristique ecrite a la main — sauf
+que personne ne les lui a dites.
+
+
+### 5.5 La courbe d'apprentissage (1 fantôme)
 
 Score médian par fenêtre de 500 épisodes, pendant l'entraînement — donc avec
 l'exploration encore active, ce qui explique qu'il reste sous le score final.
@@ -358,13 +393,34 @@ l'exploration encore active, ce qui explique qu'il reste sous le score final.
 |---:|---:|---:|
 | 500 | 0.77 | 770 |
 | 1000 | 0.55 | 1215 |
+| 1500 | 0.32 | 1885 |
+| 2000 | 0.10 | 2390 |
+| 2500 | 0.05 | 2650 |
+| 3000 | 0.05 | 2620 |
+
+### 5.6 Les positions aident-elles ?
+
+Même curriculum, mêmes graines, mêmes hyperparamètres : seul le jeu de
+descripteurs change.
+
+| Descripteurs | Poids | Médiane 1F | Médiane 4F | Écart-type 4F | Victoires 4F | Entraînement |
+|---|---:|---:|---:|---:|---:|---:|
+| `base` | 12 | 2730 | 2900 | 1216 | 1% | 988 s |
+| `positions` | 26 | 2580 | 2390 | 1073 | 0% | 1153 s |
+
+**Les positions n'apportent pas** : -510 points (-18%). Deux fois plus de poids à estimer sur le même budget d'épisodes, pour une information que les agrégats portaient déjà en grande partie. Le coût d'entraînement, lui, est mesuré : ×1.2.
+
+C'est le genre de résultat qu'un projet honnête doit publier tel quel. La
+question « faut-il donner plus d'information à l'agent ? » n'a pas de réponse
+évidente : plus de descripteurs, c'est plus de poids à estimer sur le même
+budget d'épisodes — et un modèle linéaire ne peut de toute façon pas composer
+ces informations entre elles.
 
 <!-- FIN RESULTATS -->
 
 
----
 
-## 5.6 Apprendre ou recalculer
+### 5.7 Apprendre ou recalculer
 
 L'agent de recherche ne sait rien, n'a rien appris, n'a aucun poids — et il
 gagne largement (§5.2). Le résultat n'est pas décevant pour l'apprentissage :

@@ -1,0 +1,17 @@
+{
+  "features": "base",
+  "weights": {
+    "biais": 947.7867833734143,
+    "mange_pastille": -106.85116960092014,
+    "mange_super_pastille": -23.97969239431839,
+    "mange_fruit": 0.0,
+    "proximite_pastille": 208.2339167698965,
+    "proximite_chasseur": -336.7521625458769,
+    "chasseurs_proches": -127.89727933274365,
+    "proximite_proie": 364.883543507377,
+    "proximite_super_pastille": 297.80971784486127,
+    "issues": 98.90859374982985,
+    "demi_tour": -40.61316594682324,
+    "avancement": -527.1715427749763
+  }
+}
