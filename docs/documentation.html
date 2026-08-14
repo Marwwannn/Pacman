@@ -427,7 +427,7 @@ supplémentaire à 10 000 points y crée une marche que rien dans l'état ne
 permet de prédire, donc du bruit pur pour l'apprentissage.</p>
 <hr />
 <h2 id="4-validation-et-tests">4. Validation et tests</h2>
-<pre><code class="language-bash">pytest                                  # 247 tests
+<pre><code class="language-bash">pytest                                  # 250 tests
 pytest --cov=pacman --cov-report=term   # 98 % de couverture
 ruff check src tests
 </code></pre>
@@ -889,7 +889,7 @@ lignes mais de cadrer, arbitrer, éprouver et refuser.</p>
 </tr>
 <tr>
 <td>Générer les tests</td>
-<td>247 tests, dont ceux qui mesurent le déterminisme</td>
+<td>250 tests, dont ceux qui mesurent le déterminisme</td>
 </tr>
 <tr>
 <td>Auditer</td>
@@ -977,7 +977,7 @@ interaction avec la simulation, pas sur un corpus.</p>
 pip install -e &quot;.[dev]&quot;
 
 pacman-server                   # le jeu : http://127.0.0.1:8000
-pytest                          # 247 tests
+pytest                          # 250 tests
 pacman-rl baselines --ghosts 1  # le plancher et le plafond
 python scripts/campagne_rl.py   # toute la campagne de mesure
 </code></pre>

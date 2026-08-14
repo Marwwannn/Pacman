@@ -537,6 +537,46 @@ class TestDescripteursDePosition:
         assert any(rapport.weights[nom] != 0.0 for nom in nouveaux)
 
 
+class TestObservateurDeTicks:
+    """Filmer une partie ne doit rien changer a son deroulement."""
+
+    def test_l_observateur_voit_chaque_tick(self):
+        images = []
+        env = PacmanEnv(
+            EnvConfig(ghosts=1, lives=1),
+            on_tick=lambda game, evenements: images.append(game.tick_count),
+        )
+        env.reset(EVALUATION_SEEDS)
+        env.step(env.legal_actions()[0])
+        # Un pas de decision traverse tout un couloir : il y a donc plusieurs
+        # images pour une seule decision, et c'est precisement ce qu'on veut
+        # rendre visible.
+        assert len(images) == env.ticks > 1
+        assert images == sorted(images)
+
+    def test_la_partie_se_deroule_a_l_identique_avec_ou_sans_observateur(self):
+        config = EnvConfig(ghosts=4, lives=1)
+        temoin = PacmanEnv(config).run_episode(RandomAgent(seed=2), EVALUATION_SEEDS)
+        filme = PacmanEnv(config, on_tick=lambda game, evenements: None).run_episode(
+            RandomAgent(seed=2), EVALUATION_SEEDS
+        )
+        assert temoin == filme
+
+    def test_les_evenements_du_tick_sont_transmis(self):
+        recus = []
+        env = PacmanEnv(
+            EnvConfig(ghosts=1, lives=1),
+            on_tick=lambda game, evenements: recus.extend(e.type for e in evenements),
+        )
+        env.reset(EVALUATION_SEEDS)
+        agent = RandomAgent(seed=4)
+        while not env.finished:
+            env.step(agent.act(env.game, env.legal_actions(), env))
+        # Une partie entiere produit forcement des pastilles mangees : sans
+        # cela le rejeu ne saurait pas quoi effacer du plateau.
+        assert "pellet" in recus
+
+
 class TestClonageDUnePartie:
     """Sans copie independante, aucune recherche en avant n'est possible."""
 

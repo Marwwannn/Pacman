@@ -271,7 +271,7 @@ permet de prédire, donc du bruit pur pour l'apprentissage.
 ## 4. Validation et tests
 
 ```bash
-pytest                                  # 247 tests
+pytest                                  # 250 tests
 pytest --cov=pacman --cov-report=term   # 98 % de couverture
 ruff check src tests
 ```
@@ -490,7 +490,7 @@ lignes mais de cadrer, arbitrer, éprouver et refuser.
 |---|---|
 | Écrire vite un socle sans intérêt pédagogique | parsing du labyrinthe, sérialisation de l'API, rendu canvas |
 | Reproduire fidèlement un système documenté | les 4 personnalités et le bug d'adressage de 1980 |
-| Générer les tests | 247 tests, dont ceux qui mesurent le déterminisme |
+| Générer les tests | 250 tests, dont ceux qui mesurent le déterminisme |
 | Auditer | audit sécurité : 3 failles trouvées et fermées |
 | Cadrer avant de coder | mesure du moteur comme environnement d'apprentissage |
 
@@ -554,7 +554,7 @@ python -m venv .venv
 pip install -e ".[dev]"
 
 pacman-server                   # le jeu : http://127.0.0.1:8000
-pytest                          # 247 tests
+pytest                          # 250 tests
 pacman-rl baselines --ghosts 1  # le plancher et le plafond
 python scripts/campagne_rl.py   # toute la campagne de mesure
 ```
