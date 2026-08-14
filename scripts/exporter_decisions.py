@@ -33,6 +33,20 @@ GABARIT = RACINE / "docs" / "decisions_gabarit.html"
 SORTIE = RACINE / "docs" / "decisions.html"
 POIDS = RACINE / "results" / "poids_4fantomes.json"
 
+#: Evenements qui meritent d'etre signales pendant le rejeu. Le reste (chaque
+#: pastille, chaque vague) ferait du bruit sans rien apprendre.
+MARQUANTS = frozenset(
+    {
+        "power_pellet",
+        "ghost_eaten",
+        "fruit_eaten",
+        "pacman_died",
+        "extra_life",
+        "level_complete",
+        "frightened",
+    }
+)
+
 
 def plan(maze) -> dict:
     """Le decor, envoye une seule fois : murs, portes, cases praticables."""
@@ -136,11 +150,39 @@ def construire_agent(nom: str):
 
 
 def rejouer(agent, graine: int, fantomes: int) -> dict:
-    env = PacmanEnv(EnvConfig(ghosts=fantomes, lives=1))
+    #: Une image par tick, pour rejouer le MOUVEMENT et pas seulement les
+    #: choix. L'environnement ne rend la main qu'aux intersections : sans cet
+    #: observateur, tout ce qui se passe dans les couloirs serait invisible.
+    images: list[dict] = []
+
+    def filmer(game, evenements) -> None:
+        images.append(
+            {
+                "p": [game.pacman.position.x, game.pacman.position.y],
+                "d": game.pacman.direction.name.lower(),
+                "f": [
+                    [g.position.x, g.position.y, 1 if g.mode is GhostMode.FRIGHTENED else 0]
+                    for g in game.ghosts
+                    if g.is_active
+                ],
+                "s": game.score,
+                "m": [e.type for e in evenements if e.type in MARQUANTS],
+                "n": [
+                    [e.payload["x"], e.payload["y"]]
+                    for e in evenements
+                    if e.type in ("pellet", "power_pellet")
+                ],
+            }
+        )
+
+    env = PacmanEnv(EnvConfig(ghosts=fantomes, lives=1), on_tick=filmer)
     game = env.reset(graine)
 
+    # Les pastilles ne sont envoyees qu'une fois : le film porte deja celles
+    # qui sont mangees a chaque tick, donc les recopier a chaque decision
+    # quadruplerait le poids de la page pour la meme information.
     pastilles_initiales = sorted(game.pellets | game.power_pellets, key=lambda p: (p.y, p.x))
-    restantes = set(game.pellets | game.power_pellets)
+    super_initiales = sorted(game.power_pellets, key=lambda p: (p.y, p.x))
     decisions = []
 
     while not env.finished and len(decisions) < 400:
@@ -153,6 +195,9 @@ def rejouer(agent, graine: int, fantomes: int) -> dict:
             {
                 "numero": len(decisions) + 1,
                 "tick": env.ticks,
+                # Index de l'image ou cette decision est prise : c'est ce qui
+                # raccroche le film au raisonnement.
+                "image": len(images),
                 "score": game.score,
                 "x": game.pacman.position.x,
                 "y": game.pacman.position.y,
@@ -160,14 +205,10 @@ def rejouer(agent, graine: int, fantomes: int) -> dict:
                 "fantomes": etat_des_fantomes(game),
                 "actions": evaluation_des_actions(agent, game, actions, env),
                 "choix": choix.name.lower(),
-                "pastilles": [[p.x, p.y] for p in sorted(restantes, key=lambda p: (p.y, p.x))],
-                "super_pastilles": [[p.x, p.y] for p in sorted(game.power_pellets, key=lambda p: (p.y, p.x))],
-                "fruit": [game.fruit.x, game.fruit.y] if game.fruit else None,
             }
         )
 
         resultat = env.step(choix)
-        restantes = set(game.pellets) | set(game.power_pellets)
 
     return {
         "agent": getattr(agent, "name", type(agent).__name__),
@@ -175,6 +216,8 @@ def rejouer(agent, graine: int, fantomes: int) -> dict:
         "fantomes": fantomes,
         "plan": plan(game.maze),
         "pastilles_initiales": [[p.x, p.y] for p in pastilles_initiales],
+        "super_pastilles": [[p.x, p.y] for p in super_initiales],
+        "images": images,
         "decisions": decisions,
         "final": {
             "score": game.score,

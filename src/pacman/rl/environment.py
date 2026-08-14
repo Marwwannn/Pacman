@@ -71,9 +71,15 @@ class PacmanEnv:
         rewards: RewardConfig | None = None,
         *,
         maze: Maze | None = None,
+        on_tick=None,
     ) -> None:
         self.config = config or EnvConfig()
         self.rewards = rewards or RewardConfig()
+        # Observateur appele apres chaque tick, jamais consulte pour decider :
+        # il sert a filmer une partie sans changer d'un iota son deroulement.
+        # L'environnement ne rend la main qu'aux intersections, donc sans lui
+        # il serait impossible de rejouer le mouvement image par image.
+        self._on_tick = on_tick
         # `maze` prend le pas sur le nom : il sert aux plans construits en
         # memoire, notamment pour eprouver des topologies que le labyrinthe
         # classique n'a pas (il ne contient aucune impasse).
@@ -170,6 +176,8 @@ class PacmanEnv:
             before = self.position
             events = self.game.tick()
             self.ticks += 1
+            if self._on_tick is not None:
+                self._on_tick(self.game, events)
             reward += self.rewards.from_events(events)
 
             for event in events:
