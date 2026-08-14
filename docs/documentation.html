@@ -338,7 +338,25 @@ l'erreur que commettent les fantômes de 1980 — l'agent, lui, ne la commet pas
 </tr>
 </tbody>
 </table>
-<h3 id="36-deux-jeux-de-descripteurs-et-pourquoi-les-comparer">3.6 Deux jeux de descripteurs, et pourquoi les comparer</h3>
+<h3 id="36-aucune-information-du-futur">3.6 Aucune information du futur</h3>
+<p>Un agent est facile à rendre bon par accident : il suffit qu'il voie les
+fantômes <strong>un tick en avance</strong>. Le score monte, et il ne prouve plus rien.</p>
+<p>Garantie tenue ici : les fantômes sont lus à la position qu'ils occupent <strong>au
+moment du choix</strong>. La seule projection est la case où Pac-Man arriverait — et
+c'est l'effet de l'action évaluée, donc précisément ce qui rend le descripteur
+dépendant de l'action, pas un renseignement que le jeu refuse au joueur.</p>
+<p>Ce n'est pas une affirmation, c'est une mesure. Le test se place sur un tick
+où un fantôme <strong>bouge réellement</strong>, calcule les deux proximités possibles —
+depuis sa position d'avant, depuis celle d'après — vérifie qu'elles diffèrent,
+puis vérifie que l'agent lit bien la seconde. Sans le contrôle « elles
+diffèrent », le test passerait aussi avec une lecture décalée d'un tick.</p>
+<p>Deux autres gardes complètent : évaluer une action ne fait <strong>pas avancer la
+partie</strong> (un extracteur qui simulerait un tick pour « voir venir » serait
+détecté), et déplacer un fantôme change <strong>immédiatement</strong> ce que l'agent voit
+— aucune mémoire, aucune anticipation.</p>
+<p>L'exception est assumée et déclarée : l'agent de recherche (§2.3) simule
+l'avenir. C'est sa définition même, et c'est pourquoi il gagne — voir §5.8.</p>
+<h3 id="37-deux-jeux-de-descripteurs-et-pourquoi-les-comparer">3.7 Deux jeux de descripteurs, et pourquoi les comparer</h3>
 <p>Le jeu ci-dessus ne décrit les fantômes que par des <strong>agrégats</strong> : le chasseur
 <em>le plus proche</em>, la pastille <em>la plus proche</em>. Deux fantômes à huit cases y
 sont donc indiscernables d'un seul. D'où une question qui se tranche par la
@@ -374,7 +392,7 @@ apprendre quatre fois la même chose.</p>
 <p>Le jeu de base <strong>reste</strong> et sert de témoin : <code>scripts/comparer_descripteurs.py</code>
 oppose les deux à graines, hyperparamètres et curriculum identiques. Résultat
 au §5.5.</p>
-<h3 id="37-le-bareme-de-recompenses">3.7 Le barème de récompenses</h3>
+<h3 id="38-le-bareme-de-recompenses">3.8 Le barème de récompenses</h3>
 <p>Le barème pèse plus lourd sur le résultat final que α et γ réunis.</p>
 <table>
 <thead>
@@ -427,7 +445,7 @@ supplémentaire à 10 000 points y crée une marche que rien dans l'état ne
 permet de prédire, donc du bruit pur pour l'apprentissage.</p>
 <hr />
 <h2 id="4-validation-et-tests">4. Validation et tests</h2>
-<pre><code class="language-bash">pytest                                  # 250 tests
+<pre><code class="language-bash">pytest                                  # 253 tests
 pytest --cov=pacman --cov-report=term   # 98 % de couverture
 ruff check src tests
 </code></pre>
@@ -889,7 +907,7 @@ lignes mais de cadrer, arbitrer, éprouver et refuser.</p>
 </tr>
 <tr>
 <td>Générer les tests</td>
-<td>250 tests, dont ceux qui mesurent le déterminisme</td>
+<td>253 tests, dont ceux qui mesurent le déterminisme</td>
 </tr>
 <tr>
 <td>Auditer</td>
@@ -977,7 +995,7 @@ interaction avec la simulation, pas sur un corpus.</p>
 pip install -e &quot;.[dev]&quot;
 
 pacman-server                   # le jeu : http://127.0.0.1:8000
-pytest                          # 250 tests
+pytest                          # 253 tests
 pacman-rl baselines --ghosts 1  # le plancher et le plafond
 python scripts/campagne_rl.py   # toute la campagne de mesure
 </code></pre>

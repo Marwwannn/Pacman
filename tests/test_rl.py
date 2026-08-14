@@ -421,6 +421,88 @@ class TestAgents:
             ApproximateQAgent({"inexistant": 3.0, "biais": 1.0})
 
 
+class TestAucuneFuiteDuFutur:
+    """L'agent voit les fantomes OU ILS SONT, jamais ou ils vont.
+
+    C'est la propriete qui separe un agent d'un tricheur. Elle ne se lit pas
+    dans le code sans risque d'erreur : elle se mesure sur un tick ou les
+    fantomes bougent vraiment, en comparant les deux calculs possibles.
+    """
+
+    def _avancer_jusqu_a_un_deplacement(self, env):
+        """Rend (positions avant, positions apres) d'un tick ou un fantome bouge."""
+        for _ in range(400):
+            avant = [ghost.position for ghost in env.game.ghosts if ghost.is_active]
+            env.game.tick()
+            apres = [ghost.position for ghost in env.game.ghosts if ghost.is_active]
+            if avant and apres and avant != apres:
+                return avant, apres
+        pytest.skip("aucun deplacement de fantome observe")
+
+    def test_la_distance_au_chasseur_part_de_sa_position_ACTUELLE(self, env):
+        game = env.reset(EVALUATION_SEEDS)
+        game.run(200)  # sortir les fantomes de la maison
+        avant, apres = self._avancer_jusqu_a_un_deplacement(env)
+
+        action = env.legal_actions()[0]
+        case = game.maze.step(game.pacman.position, action)
+        mesure = named(extract(game, action, env.metrics))["proximite_chasseur"]
+
+        # `apres` est l'etat courant : c'est LUI que l'agent doit voir.
+        attendu = env.metrics.proximity(min(env.metrics.distance(case, p) for p in apres))
+        assert mesure == attendu
+
+        # Et si les deux calculs different, le calcul « d'avant » doit etre exclu :
+        # sinon le test passerait meme avec une lecture decalee d'un tick.
+        depasse = env.metrics.proximity(min(env.metrics.distance(case, p) for p in avant))
+        if depasse != attendu:
+            assert mesure != depasse
+
+    def test_evaluer_une_action_ne_fait_pas_avancer_la_partie(self, env):
+        game = env.reset(EVALUATION_SEEDS)
+        game.run(200)
+        temoin = (
+            game.tick_count,
+            game.score,
+            game.pacman.position,
+            [g.position for g in game.ghosts],
+            len(game.pellets),
+        )
+        for action in env.legal_actions():
+            extract(game, action, env.metrics)
+            POSITIONS.extract(game, action, env.metrics)
+
+        # Un extracteur qui simulerait ne serait-ce qu'un tick pour « voir venir »
+        # donnerait a l'agent une information que le jeu ne lui accorde pas.
+        assert temoin == (
+            game.tick_count,
+            game.score,
+            game.pacman.position,
+            [g.position for g in game.ghosts],
+            len(game.pellets),
+        )
+
+    def test_deplacer_un_fantome_change_immediatement_ce_que_l_agent_voit(self, env):
+        game = env.reset(EVALUATION_SEEDS)
+        game.run(200)
+        action = env.legal_actions()[0]
+        case = game.maze.step(game.pacman.position, action)
+
+        ghost = next(g for g in game.ghosts if g.is_active)
+        ghost.set_mode(GhostMode.CHASE, reverse=False)
+        loin = max(env.metrics.walkable, key=lambda p: env.metrics.distance(case, p))
+
+        ghost.position = loin
+        eloigne = named(extract(game, action, env.metrics))["proximite_chasseur"]
+        ghost.position = case
+        colle = named(extract(game, action, env.metrics))["proximite_chasseur"]
+
+        # La lecture suit la position posee a l'instant meme : aucune memoire,
+        # aucune anticipation.
+        assert colle == 1.0
+        assert eloigne < colle
+
+
 class TestDescripteursDePosition:
     """Le jeu `positions` : chaque fantome et la nourriture, dans le repere de Pac-Man."""
 

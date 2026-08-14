@@ -98,7 +98,7 @@ Documentation interactive de l'API : http://127.0.0.1:8000/docs
 ## Tests
 
 ```bash
-pytest                                  # 250 tests
+pytest                                  # 253 tests
 pytest --cov=pacman --cov-report=term   # 98 % de couverture
 ruff check src tests
 ```
@@ -401,7 +401,7 @@ la partie qui décide du résultat.
 |---|---|
 | Écrire vite un socle sans intérêt pédagogique | parsing du labyrinthe, sérialisation de l'API, client canvas |
 | Reproduire fidèlement un système documenté | les 4 personnalités de fantômes et le bug d'adressage de 1980 |
-| Générer les tests | 250 tests, dont ceux qui mesurent le déterminisme |
+| Générer les tests | 253 tests, dont ceux qui mesurent le déterminisme |
 | Auditer | audit sécurité du 23/07 : 3 failles trouvées et fermées |
 | Cadrer une approche avant de coder | mesure du moteur comme environnement d'apprentissage |
 

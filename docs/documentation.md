@@ -219,7 +219,31 @@ l'erreur que commettent les fantômes de 1980 — l'agent, lui, ne la commet pas
 | `demi_tour` | l'action est-elle un retour en arrière |
 | `avancement` | part de pastilles déjà mangées — sépare le début et la fin de partie |
 
-### 3.6 Deux jeux de descripteurs, et pourquoi les comparer
+### 3.6 Aucune information du futur
+
+Un agent est facile à rendre bon par accident : il suffit qu'il voie les
+fantômes **un tick en avance**. Le score monte, et il ne prouve plus rien.
+
+Garantie tenue ici : les fantômes sont lus à la position qu'ils occupent **au
+moment du choix**. La seule projection est la case où Pac-Man arriverait — et
+c'est l'effet de l'action évaluée, donc précisément ce qui rend le descripteur
+dépendant de l'action, pas un renseignement que le jeu refuse au joueur.
+
+Ce n'est pas une affirmation, c'est une mesure. Le test se place sur un tick
+où un fantôme **bouge réellement**, calcule les deux proximités possibles —
+depuis sa position d'avant, depuis celle d'après — vérifie qu'elles diffèrent,
+puis vérifie que l'agent lit bien la seconde. Sans le contrôle « elles
+diffèrent », le test passerait aussi avec une lecture décalée d'un tick.
+
+Deux autres gardes complètent : évaluer une action ne fait **pas avancer la
+partie** (un extracteur qui simulerait un tick pour « voir venir » serait
+détecté), et déplacer un fantôme change **immédiatement** ce que l'agent voit
+— aucune mémoire, aucune anticipation.
+
+L'exception est assumée et déclarée : l'agent de recherche (§2.3) simule
+l'avenir. C'est sa définition même, et c'est pourquoi il gagne — voir §5.8.
+
+### 3.7 Deux jeux de descripteurs, et pourquoi les comparer
 
 Le jeu ci-dessus ne décrit les fantômes que par des **agrégats** : le chasseur
 *le plus proche*, la pastille *la plus proche*. Deux fantômes à huit cases y
@@ -248,7 +272,7 @@ Le jeu de base **reste** et sert de témoin : `scripts/comparer_descripteurs.py`
 oppose les deux à graines, hyperparamètres et curriculum identiques. Résultat
 au §5.5.
 
-### 3.7 Le barème de récompenses
+### 3.8 Le barème de récompenses
 
 Le barème pèse plus lourd sur le résultat final que α et γ réunis.
 
@@ -271,7 +295,7 @@ permet de prédire, donc du bruit pur pour l'apprentissage.
 ## 4. Validation et tests
 
 ```bash
-pytest                                  # 250 tests
+pytest                                  # 253 tests
 pytest --cov=pacman --cov-report=term   # 98 % de couverture
 ruff check src tests
 ```
@@ -490,7 +514,7 @@ lignes mais de cadrer, arbitrer, éprouver et refuser.
 |---|---|
 | Écrire vite un socle sans intérêt pédagogique | parsing du labyrinthe, sérialisation de l'API, rendu canvas |
 | Reproduire fidèlement un système documenté | les 4 personnalités et le bug d'adressage de 1980 |
-| Générer les tests | 250 tests, dont ceux qui mesurent le déterminisme |
+| Générer les tests | 253 tests, dont ceux qui mesurent le déterminisme |
 | Auditer | audit sécurité : 3 failles trouvées et fermées |
 | Cadrer avant de coder | mesure du moteur comme environnement d'apprentissage |
 
@@ -554,7 +578,7 @@ python -m venv .venv
 pip install -e ".[dev]"
 
 pacman-server                   # le jeu : http://127.0.0.1:8000
-pytest                          # 250 tests
+pytest                          # 253 tests
 pacman-rl baselines --ghosts 1  # le plancher et le plafond
 python scripts/campagne_rl.py   # toute la campagne de mesure
 ```

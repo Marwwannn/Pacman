@@ -13,6 +13,16 @@ Les distances sont des distances reelles dans le labyrinthe, jamais a vol
 d'oiseau : deux cases separees par un mur epais sont proches en ligne droite
 et tres loin dans les faits.
 
+**Aucune information du futur.** Les fantomes sont lus a la position qu'ils
+occupent AU MOMENT du choix, jamais a celle qu'ils occuperont apres le tick.
+La seule projection est la case ou Pac-Man arriverait : c'est l'effet de
+l'action evaluee, donc ce qui rend la feature dependante de l'action — pas un
+renseignement que le jeu refuse au joueur. Un agent qui verrait les fantomes
+d'un tick en avance jouerait mieux et ne prouverait rien. Trois tests le
+gardent (`TestAucuneFuiteDuFutur`), dont un mesure l'ecart sur un tick ou les
+fantomes bougent reellement. L'exception assumee est `search.py`, qui simule
+l'avenir : c'est sa definition meme, et elle est declaree.
+
 **Deux jeux de descripteurs** cohabitent, et se comparent (voir `FEATURE_SETS`) :
 
 - `base` — douze quantites agregees : le chasseur le PLUS proche, la pastille
