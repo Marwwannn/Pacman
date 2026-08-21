@@ -302,7 +302,7 @@ python scripts/campagne_rl.py     # toute la campagne, graines fixées</pre>
   <div class="etape">Usage de l'IA générative</div>
   <h2>Déclaré, total, assumé</h2>
   <ul>
-    <li><b>Claude Code</b> (Anthropic), du 19/07 au 21/08. Aucun autre outil. <b>Chaque commit</b> porte le trailer <code>Co-Authored-By: Claude</code>.</li>
+    <li><b>Claude Code</b> (Anthropic — Claude Opus 4.8, puis Claude Opus 5), du 19/07 au 21/08. Aucun autre outil. <b>Chaque commit</b> porte le trailer <code>Co-Authored-By: Claude</code>.</li>
     <li><b>Ce qu'il a fait</b> : le socle sans intérêt pédagogique, la fidélité à l'arcade, les 261 tests, l'audit sécurité, le cadrage chiffré de l'approche.</li>
     <li><b>Ce que j'ai fait</b> : cadrer, arbitrer, éprouver, refuser. Le périmètre (client web, puis agent apprenant), la méthode (renforcement plutôt que non-supervisé), et les bugs que <b>seul un joueur</b> pouvait voir — le jeu tournait à 48 cases/s, puis restait saccadé. Aucun test ne les voyait. Et les <b>deux questions</b> qui ont produit les résultats les plus forts du rendu : « et si on lui donnait la position des fantômes ? » (−18 %, publié tel quel) et « les positions des fantômes sont aléatoires ? » (une seule configuration sur 100 parties — l'angle mort levé).</li>
   </ul>
@@ -352,7 +352,7 @@ python scripts/campagne_rl.py     # toute la campagne, graines fixées</pre>
     <li><b>The Pac-Man Dossier</b>, Jamey Pittman — la référence sur les comportements de l'arcade de 1980 (modes, cibles, bug d'adressage).</li>
     <li><b>Sutton &amp; Barto</b>, <i>Reinforcement Learning: An Introduction</i> — Q-learning, approximation linéaire, ε-glouton décroissant.</li>
     <li><b>Berkeley CS188</b>, projet Pac-Man — le précédent académique du Q-learning approximé sur ce jeu.</li>
-    <li><b>IA générative</b> : Claude Code (Anthropic, modèles Claude Opus / Sonnet). Seul outil utilisé, déclaré en détail dans le README et la documentation.</li>
+    <li><b>IA générative</b> : Claude Code (Anthropic, modèles Claude Opus 4.8 puis Claude Opus 5, le modèle exact étant dans le trailer de chaque commit). Seul outil utilisé, déclaré en détail dans le README et la documentation.</li>
     <li><b>Outils</b> : Python 3.13, FastAPI, Uvicorn, pytest, ruff.</li>
   </ul>
 </section>

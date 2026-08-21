@@ -404,7 +404,7 @@ plus près de ce qui s'est réellement passé.
 
 ### Ce qui a été utilisé
 
-**Claude Code** (Anthropic, modèles Claude Opus/Sonnet), en ligne de commande,
+**Claude Code** (Anthropic, modèles **Claude Opus 4.8** puis **Claude Opus 5** — le modèle exact figure dans le trailer de chaque commit), en ligne de commande,
 du 19/07/2026 au 21/08/2026. Aucun autre outil d'IA générative.
 
 L'usage est **total et assumé** : **chaque commit** du dépôt porte le trailer
