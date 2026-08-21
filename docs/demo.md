@@ -4,6 +4,19 @@
 > avec de la marge. Chaque durée d'exécution a été chronométrée sur la machine
 > de développement le 21/08/2026 — rien ici ne se lance « en espérant ».
 
+## Version courte — 3 écrans, 3 minutes
+
+C'est celle à tourner. La version détaillée plus bas sert si l'on veut aller
+jusqu'à 5 minutes.
+
+| | Ce qu'on fait | Ce qu'on dit |
+|---|---|---|
+| **1. Le jeu** (1 min) | `pacman-server`, ouvrir http://127.0.0.1:8000, jouer 30 s, `Ctrl+C` | « Le serveur Python calcule tout ; le navigateur ne fait qu'afficher. » |
+| **2. Les IA** (1 min) | `pacman-rl compare --ghosts 4 --games 30 --weights results/poids_4fantomes.json` | « Trois joueurs automatiques sur les mêmes parties : au hasard, avec des règles écrites à la main, et un qui a appris seul. Celui qui a appris fait le meilleur score. Il gagne rarement : un modèle à douze poids ne planifie pas la fin du niveau — l'agent de recherche, qui simule les coups, gagne 94 %. » |
+| **3. L'IA réfléchit** (1 min) | ouvrir `docs/decisions.html`, lecture 20 s, pause sur un croisement | « On rejoue une partie de l'IA. À chaque croisement, on voit ce qu'elle a envisagé et pourquoi elle a choisi. » |
+
+Rien d'autre à lancer. Une hésitation ne se recommence pas.
+
 ## Avant d'appuyer sur REC
 
 ```powershell
