@@ -27,6 +27,15 @@ Le partage est net : le back-end simule, le front affiche. Le client ne
 contient aucune règle du jeu — il envoie des intentions et dessine l'état
 que le serveur lui diffuse.
 
+**Où est l'IA dans le dépôt.** En lignes de Python, les modules d'intelligence
+artificielle — `ai/` (les fantômes), `rl/` (agents, environnement, protocole
+d'évaluation) et les quatre scripts de mesure — pèsent **47 % du code** ;
+36 % si l'on compte le client web en JavaScript. Le reste est le moteur et
+l'API, qui n'ont pas été écrits pour eux-mêmes mais **comme banc d'essai** :
+déterministes, clonables, sans horloge — trois propriétés dont aucun agent ne
+peut se passer et que les tests gardent en premier. Le chiffre se recalcule
+avec `wc -l` sur ces dossiers ; il n'est pas plus flatteur que ça.
+
 > **Usage de l'IA générative** : ce projet a été développé avec Claude Code.
 > Le détail complet est en fin de README, section [Usage IA](#usage-ia).
 
@@ -78,9 +87,14 @@ Deux principes structurent le projet :
 
 ## Installation
 
+**Prérequis** : Python **3.11 ou plus** (testé en 3.11 et 3.13), Git, et un
+navigateur récent pour jouer. Aucune dépendance système, aucune base de données.
+
 ```bash
+git clone https://github.com/Marwwannn/Pacman.git && cd Pacman
 python -m venv .venv
-.venv\Scripts\activate      # Windows
+.venv\Scripts\activate       # Windows
+source .venv/bin/activate      # Linux / macOS
 pip install -e ".[dev]"
 ```
 
@@ -98,10 +112,13 @@ Documentation interactive de l'API : http://127.0.0.1:8000/docs
 ## Tests
 
 ```bash
-pytest                                  # 253 tests
-pytest --cov=pacman --cov-report=term   # 98 % de couverture
+pytest                                  # 261 tests, ~1 min
+pytest --cov=pacman --cov-report=term   # 97 % de couverture
 ruff check src tests
 ```
+
+Les mêmes commandes tournent en **intégration continue** à chaque push
+(`.github/workflows/tests.yml`, Python 3.11 et 3.13).
 
 Les tests ne vérifient pas seulement que le code s'exécute : ils **mesurent
 les propriétés dont tout le reste dépend**. Deux parties lancées avec la même
@@ -371,6 +388,7 @@ préféré douze poids lisibles à un réseau de neurones.
 
 ```bash
 python scripts/campagne_rl.py     # quelques minutes
+python scripts/fantomes_ailleurs.py   # l'angle mort du protocole (documentation, §5.7)
 ```
 
 Une seule commande enchaîne les bornes, l'apprentissage à 1 fantôme, la
@@ -387,11 +405,11 @@ plus près de ce qui s'est réellement passé.
 ### Ce qui a été utilisé
 
 **Claude Code** (Anthropic, modèles Claude Opus/Sonnet), en ligne de commande,
-du 19/07/2026 au 14/08/2026. Aucun autre outil d'IA générative.
+du 19/07/2026 au 21/08/2026. Aucun autre outil d'IA générative.
 
-L'usage est **total et assumé** : les 33 commits du dépôt portent tous le
-trailer `Co-Authored-By: Claude`, et il n'y a pas de fichier écrit sans
-l'outil. Le rôle humain n'a pas été d'écrire les lignes mais de **cadrer,
+L'usage est **total et assumé** : **chaque commit** du dépôt porte le trailer
+`Co-Authored-By: Claude` (vérifiable : `git log --format='%(trailers)'`), et
+il n'y a pas de fichier écrit sans l'outil. Le rôle humain n'a pas été d'écrire les lignes mais de **cadrer,
 arbitrer, éprouver et refuser** — ce qui, sur un projet de cette taille, est
 la partie qui décide du résultat.
 
@@ -401,7 +419,7 @@ la partie qui décide du résultat.
 |---|---|
 | Écrire vite un socle sans intérêt pédagogique | parsing du labyrinthe, sérialisation de l'API, client canvas |
 | Reproduire fidèlement un système documenté | les 4 personnalités de fantômes et le bug d'adressage de 1980 |
-| Générer les tests | 253 tests, dont ceux qui mesurent le déterminisme |
+| Générer les tests | 261 tests, dont ceux qui mesurent le déterminisme |
 | Auditer | audit sécurité du 23/07 : 3 failles trouvées et fermées |
 | Cadrer une approche avant de coder | mesure du moteur comme environnement d'apprentissage |
 
@@ -472,6 +490,8 @@ sont traitées comme telles :
 - [x] 11 — client web : rendu canvas, entrées, son, classement
 - [x] 12 — audit sécurité et durcissement des entrées
 - [x] 13 — agent joueur par renforcement : harnais, baselines, Q approximé
+- [x] 14 — agent de recherche en ligne, et rejeu tick par tick de chaque décision
+- [x] 15 — angle mort du protocole levé : fantômes dispersés, la politique tient
 
 ## Limites connues
 
@@ -481,17 +501,21 @@ sont traitées comme telles :
 - **Les descripteurs sont écrits à la main.** L'agent hérite donc de l'analyse
   humaine du problème : il n'apprend pas *quoi regarder*, seulement *combien
   ça compte*.
-- **Un seul labyrinthe est mesuré.** Les features étant topologiques et non
-  positionnelles, les poids devraient se transférer — ce n'est pas vérifié.
+- **Un seul labyrinthe est mesuré.** Déplacer les quatre fantômes ne dégrade
+  pas la politique (documentation, §5.7) ; changer de *plan* n'a pas été
+  mesuré, et demanderait un second labyrinthe.
 - **Le rendu visuel n'a pas été inspecté image par image**, seulement validé
   en jouant.
 
 ## Pistes d'amélioration
 
-- **Une quatrième colonne au comparatif : recherche en ligne (MCTS ou
-  expectimax)**, plus forte en score brut sans aucun entraînement. L'écart
-  « appris vs recherche » est la discussion la plus intéressante que ce
-  terrain permette.
+- **Un réseau à la place du modèle linéaire**, pour *croiser* les
+  descripteurs au lieu de les additionner — c'est la limite que le jeu
+  `positions` a rendue visible (−18 % avec plus d'information).
+- **Une recherche à budget de simulations (MCTS)** plutôt qu'à profondeur
+  fixe : la profondeur 3 coûte 4 minutes pour 100 parties, un budget
+  s'adapterait à la difficulté de chaque intersection.
+- **Un second labyrinthe**, pour mesurer le transfert des poids appris.
 - Descripteurs *appris* plutôt qu'écrits : le non-supervisé retrouverait ici
   sa vraie place, en amont de la politique et non à sa place.
 - Niveaux multiples et vitesses croissantes, mode multijoueur, et fantômes
@@ -500,5 +524,11 @@ sont traitées comme telles :
 
 ## Documentation
 
-Documentation technique complète (contexte, architecture, choix, métriques,
-usage de l'IA) : [`docs/documentation.md`](docs/documentation.md).
+- **Documentation technique** (contexte, architecture, choix, métriques,
+  usage de l'IA) : [`docs/documentation.md`](docs/documentation.md), et sa
+  version **PDF** [`docs/documentation.pdf`](docs/documentation.pdf) — les deux
+  sont produites par `python scripts/documentation_html.py`.
+- **Support oral** : [`docs/presentation.html`](docs/presentation.html)
+  (26 diapositives, navigation au clavier, imprimable).
+- **Script de la démo** : [`docs/demo.md`](docs/demo.md), chaque commande
+  chronométrée.

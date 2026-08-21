@@ -1,18 +1,23 @@
-"""Rend `docs/documentation.md` en un HTML autonome, pret a imprimer en PDF.
+"""Rend `docs/documentation.md` en HTML autonome, puis en PDF.
 
 L'enonce demande une documentation au format PDF. Plutot que d'ajouter une
 dependance lourde (WeasyPrint et sa chaine GTK, LaTeX...), on produit un HTML
-mis en page pour l'impression : le navigateur fait le PDF en deux clics, avec
-un rendu identique partout.
+mis en page pour l'impression, et on demande au navigateur deja present sur la
+machine — Chrome ou Edge, en mode sans fenetre — d'en faire le PDF. Le rendu
+est celui de Ctrl+P, sans le clic.
 
     python scripts/documentation_html.py
-    # puis ouvrir docs/documentation.html et Ctrl+P -> « Enregistrer en PDF »
+    # -> docs/documentation.html et docs/documentation.pdf
 
-Seule dependance : `markdown`, deja disponible.
+Sans navigateur detecte, le HTML est tout de meme ecrit et il reste
+Ctrl+P -> « Enregistrer en PDF ». Seule dependance Python : `markdown`.
 """
 
 from __future__ import annotations
 
+import os
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -25,6 +30,17 @@ except ModuleNotFoundError:  # pragma: no cover - message d'aide
 RACINE = Path(__file__).resolve().parent.parent
 SOURCE = RACINE / "docs" / "documentation.md"
 CIBLE = RACINE / "docs" / "documentation.html"
+PDF = RACINE / "docs" / "documentation.pdf"
+
+#: Navigateurs capables d'imprimer en PDF sans fenetre, du plus courant au moins.
+#: Les chemins Windows sont cherches en plus du PATH, ou ils ne figurent jamais.
+NAVIGATEURS = (
+    "chrome", "google-chrome", "chromium", "chromium-browser", "msedge",
+    r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+    r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+    r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+    r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
+)
 
 STYLE = """
 @page { size: A4; margin: 18mm 16mm; }
@@ -85,6 +101,34 @@ GABARIT = """<!doctype html>
 """
 
 
+def navigateur() -> str | None:
+    """Premier navigateur Chromium trouve, ou None."""
+    for candidat in NAVIGATEURS:
+        if os.path.sep in candidat or candidat.endswith(".exe"):
+            if Path(candidat).is_file():
+                return candidat
+        elif (trouve := shutil.which(candidat)):
+            return trouve
+    return None
+
+
+def exporter_pdf(html: Path, pdf: Path) -> bool:
+    """Imprime `html` en `pdf` via un navigateur sans fenetre. False si impossible."""
+    executable = navigateur()
+    if executable is None:
+        return False
+    commande = [
+        executable,
+        "--headless=new",
+        "--disable-gpu",
+        "--no-pdf-header-footer",
+        f"--print-to-pdf={pdf}",
+        html.resolve().as_uri(),
+    ]
+    resultat = subprocess.run(commande, capture_output=True, text=True, timeout=120)
+    return resultat.returncode == 0 and pdf.is_file() and pdf.stat().st_size > 0
+
+
 def main() -> int:
     if not SOURCE.exists():
         print(f"{SOURCE} introuvable")
@@ -100,7 +144,12 @@ def main() -> int:
         ),
         encoding="utf-8",
     )
-    print(f"{CIBLE.relative_to(RACINE)} ecrit — ouvrir puis Ctrl+P > « Enregistrer en PDF »")
+    print(f"{CIBLE.relative_to(RACINE)} ecrit")
+
+    if exporter_pdf(CIBLE, PDF):
+        print(f"{PDF.relative_to(RACINE)} ecrit ({PDF.stat().st_size // 1024} Ko)")
+    else:
+        print("aucun navigateur Chromium trouve : ouvrir le HTML puis Ctrl+P > « Enregistrer en PDF »")
     return 0
 
 

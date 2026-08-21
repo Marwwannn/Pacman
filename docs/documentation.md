@@ -1,7 +1,9 @@
 # Pac-Man — un terrain de mesure pour l'intelligence artificielle
 
 **Documentation technique du projet**
+
 Module IA_PO — Projet d'Intelligence Artificielle Libre, Master 1, 2025-2026
+
 Dépôt : <https://github.com/Marwwannn/Pacman>
 
 ---
@@ -292,13 +294,30 @@ permet de prédire, donc du bruit pur pour l'apprentissage.
 
 ---
 
+### 3.9 La part de l'IA dans le dépôt
+
+L'énoncé demande que l'IA représente « à minima 70 % du projet ». Compté en
+lignes, ce dépôt ne l'atteint pas, et il vaut mieux le dire que le laisser
+compter : les modules d'IA — `ai/`, `rl/` et les quatre scripts de mesure —
+font **47 % du Python**, 36 % avec le client web. Le reste est le moteur
+et l'API. Mais ils n'ont pas été écrits pour eux-mêmes : le moteur a été conçu
+comme un **banc d'essai** — déterministe, clonable, sans horloge — et c'est ce
+qui a permis le protocole d'évaluation (§5), la recherche en ligne (§5.3) et le
+rejeu de chaque décision (§5.8). Sans terrain mesurable, aucun agent n'est
+évaluable. C'est la lecture que ce document défend ; le chiffre brut est là
+pour que le lecteur puisse ne pas la partager.
+
 ## 4. Validation et tests
 
 ```bash
-pytest                                  # 253 tests
-pytest --cov=pacman --cov-report=term   # 98 % de couverture
+pytest                                  # 261 tests, ~1 min
+pytest --cov=pacman --cov-report=term   # 97 % de couverture
 ruff check src tests
 ```
+
+Les mêmes commandes tournent en intégration continue à chaque push
+(`.github/workflows/tests.yml`, Python 3.11 et 3.13) : un dépôt dont les tests
+ne passent que sur la machine de son auteur n'est pas validé.
 
 Les tests ne se contentent pas de vérifier que le code s'exécute, ils
 **mesurent les propriétés dont tout le reste dépend** :
@@ -555,9 +574,9 @@ détaillée dans le README (section « Usage IA »).
 ### 6.1 Ce qui a été utilisé
 
 **Claude Code** (Anthropic, modèles Claude Opus / Sonnet), en ligne de
-commande, du 19/07/2026 au 14/08/2026. Aucun autre outil d'IA générative.
+commande, du 19/07/2026 au 21/08/2026. Aucun autre outil d'IA générative.
 
-L'usage est **total et assumé** : les 34 commits du dépôt portent tous le
+L'usage est **total et assumé** : chaque commit du dépôt porte le
 trailer `Co-Authored-By: Claude`. Le rôle humain n'a pas été d'écrire les
 lignes mais de cadrer, arbitrer, éprouver et refuser.
 
@@ -567,7 +586,7 @@ lignes mais de cadrer, arbitrer, éprouver et refuser.
 |---|---|
 | Écrire vite un socle sans intérêt pédagogique | parsing du labyrinthe, sérialisation de l'API, rendu canvas |
 | Reproduire fidèlement un système documenté | les 4 personnalités et le bug d'adressage de 1980 |
-| Générer les tests | 253 tests, dont ceux qui mesurent le déterminisme |
+| Générer les tests | 261 tests, dont ceux qui mesurent le déterminisme |
 | Auditer | audit sécurité : 3 failles trouvées et fermées |
 | Cadrer avant de coder | mesure du moteur comme environnement d'apprentissage |
 
@@ -631,7 +650,7 @@ python -m venv .venv
 pip install -e ".[dev]"
 
 pacman-server                   # le jeu : http://127.0.0.1:8000
-pytest                          # 253 tests
+pytest                          # 261 tests
 pacman-rl baselines --ghosts 1  # le plancher et le plafond
 python scripts/campagne_rl.py   # toute la campagne de mesure
 ```
@@ -674,10 +693,13 @@ les poids publiés donnent bien les chiffres publiés.
 
 ## 9. Pistes d'amélioration
 
-- **Une quatrième colonne au comparatif : recherche en ligne (MCTS ou
-  expectimax).** Plus forte en score brut sans aucun entraînement — l'écart
-  « appris vs recherche » est la discussion la plus intéressante que ce
-  terrain permette.
+- **Un réseau à la place du modèle linéaire**, pour *croiser* les
+  descripteurs au lieu de les additionner — la limite que le §5.6 a rendue
+  visible.
+- **Une recherche à budget de simulations (MCTS)** plutôt qu'à profondeur
+  fixe, pour adapter le coût à la difficulté de chaque intersection.
+- **Un second labyrinthe**, pour mesurer le transfert des poids appris — le
+  §5.7 n'en vérifie que la moitié.
 - Features apprises plutôt qu'écrites (auto-encodeur sur l'état local) : le
   non-supervisé retrouverait ici sa vraie place, en amont de la politique.
 - Niveaux multiples et vitesses croissantes, comme l'arcade.

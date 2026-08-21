@@ -50,9 +50,9 @@ a { color: var(--encre); text-decoration: underline; text-decoration-color: var(
 </head>
 <body>
 <h1 id="pac-man-un-terrain-de-mesure-pour-lintelligence-artificielle">Pac-Man — un terrain de mesure pour l'intelligence artificielle</h1>
-<p><strong>Documentation technique du projet</strong>
-Module IA_PO — Projet d'Intelligence Artificielle Libre, Master 1, 2025-2026
-Dépôt : <a href="https://github.com/Marwwannn/Pacman">https://github.com/Marwwannn/Pacman</a></p>
+<p><strong>Documentation technique du projet</strong></p>
+<p>Module IA_PO — Projet d'Intelligence Artificielle Libre, Master 1, 2025-2026</p>
+<p>Dépôt : <a href="https://github.com/Marwwannn/Pacman">https://github.com/Marwwannn/Pacman</a></p>
 <hr />
 <h2 id="1-contexte-et-besoin">1. Contexte et besoin</h2>
 <h3 id="11-le-probleme">1.1 Le problème</h3>
@@ -444,11 +444,25 @@ au §5.5.</p>
 supplémentaire à 10 000 points y crée une marche que rien dans l'état ne
 permet de prédire, donc du bruit pur pour l'apprentissage.</p>
 <hr />
+<h3 id="39-la-part-de-lia-dans-le-depot">3.9 La part de l'IA dans le dépôt</h3>
+<p>L'énoncé demande que l'IA représente « à minima 70 % du projet ». Compté en
+lignes, ce dépôt ne l'atteint pas, et il vaut mieux le dire que le laisser
+compter : les modules d'IA — <code>ai/</code>, <code>rl/</code> et les quatre scripts de mesure —
+font <strong>47 % du Python</strong>, 36 % avec le client web. Le reste est le moteur
+et l'API. Mais ils n'ont pas été écrits pour eux-mêmes : le moteur a été conçu
+comme un <strong>banc d'essai</strong> — déterministe, clonable, sans horloge — et c'est ce
+qui a permis le protocole d'évaluation (§5), la recherche en ligne (§5.3) et le
+rejeu de chaque décision (§5.8). Sans terrain mesurable, aucun agent n'est
+évaluable. C'est la lecture que ce document défend ; le chiffre brut est là
+pour que le lecteur puisse ne pas la partager.</p>
 <h2 id="4-validation-et-tests">4. Validation et tests</h2>
-<pre><code class="language-bash">pytest                                  # 253 tests
-pytest --cov=pacman --cov-report=term   # 98 % de couverture
+<pre><code class="language-bash">pytest                                  # 261 tests, ~1 min
+pytest --cov=pacman --cov-report=term   # 97 % de couverture
 ruff check src tests
 </code></pre>
+<p>Les mêmes commandes tournent en intégration continue à chaque push
+(<code>.github/workflows/tests.yml</code>, Python 3.11 et 3.13) : un dépôt dont les tests
+ne passent que sur la machine de son auteur n'est pas validé.</p>
 <p>Les tests ne se contentent pas de vérifier que le code s'exécute, ils
 <strong>mesurent les propriétés dont tout le reste dépend</strong> :</p>
 <ul>
@@ -968,8 +982,8 @@ vraie question devient : dispose-t-on d'un tel terrain ?</p>
 détaillée dans le README (section « Usage IA »).</p>
 <h3 id="61-ce-qui-a-ete-utilise">6.1 Ce qui a été utilisé</h3>
 <p><strong>Claude Code</strong> (Anthropic, modèles Claude Opus / Sonnet), en ligne de
-commande, du 19/07/2026 au 14/08/2026. Aucun autre outil d'IA générative.</p>
-<p>L'usage est <strong>total et assumé</strong> : les 34 commits du dépôt portent tous le
+commande, du 19/07/2026 au 21/08/2026. Aucun autre outil d'IA générative.</p>
+<p>L'usage est <strong>total et assumé</strong> : chaque commit du dépôt porte le
 trailer <code>Co-Authored-By: Claude</code>. Le rôle humain n'a pas été d'écrire les
 lignes mais de cadrer, arbitrer, éprouver et refuser.</p>
 <h3 id="62-pourquoi-et-sur-quoi">6.2 Pourquoi, et sur quoi</h3>
@@ -991,7 +1005,7 @@ lignes mais de cadrer, arbitrer, éprouver et refuser.</p>
 </tr>
 <tr>
 <td>Générer les tests</td>
-<td>253 tests, dont ceux qui mesurent le déterminisme</td>
+<td>261 tests, dont ceux qui mesurent le déterminisme</td>
 </tr>
 <tr>
 <td>Auditer</td>
@@ -1079,7 +1093,7 @@ interaction avec la simulation, pas sur un corpus.</p>
 pip install -e &quot;.[dev]&quot;
 
 pacman-server                   # le jeu : http://127.0.0.1:8000
-pytest                          # 253 tests
+pytest                          # 261 tests
 pacman-rl baselines --ghosts 1  # le plancher et le plafond
 python scripts/campagne_rl.py   # toute la campagne de mesure
 </code></pre>
@@ -1115,10 +1129,13 @@ les poids publiés donnent bien les chiffres publiés.</p>
 </ul>
 <h2 id="9-pistes-damelioration">9. Pistes d'amélioration</h2>
 <ul>
-<li><strong>Une quatrième colonne au comparatif : recherche en ligne (MCTS ou
-  expectimax).</strong> Plus forte en score brut sans aucun entraînement — l'écart
-  « appris vs recherche » est la discussion la plus intéressante que ce
-  terrain permette.</li>
+<li><strong>Un réseau à la place du modèle linéaire</strong>, pour <em>croiser</em> les
+  descripteurs au lieu de les additionner — la limite que le §5.6 a rendue
+  visible.</li>
+<li><strong>Une recherche à budget de simulations (MCTS)</strong> plutôt qu'à profondeur
+  fixe, pour adapter le coût à la difficulté de chaque intersection.</li>
+<li><strong>Un second labyrinthe</strong>, pour mesurer le transfert des poids appris — le
+  §5.7 n'en vérifie que la moitié.</li>
 <li>Features apprises plutôt qu'écrites (auto-encodeur sur l'état local) : le
   non-supervisé retrouverait ici sa vraie place, en amont de la politique.</li>
 <li>Niveaux multiples et vitesses croissantes, comme l'arcade.</li>
