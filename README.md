@@ -39,6 +39,25 @@ avec `wc -l` sur ces dossiers ; il n'est pas plus flatteur que ça.
 > **Usage de l'IA générative** : ce projet a été développé avec Claude Code.
 > Le détail complet est en fin de README, section [Usage IA](#usage-ia).
 
+## Voir l'IA jouer — sans rien installer
+
+[`docs/decisions.html`](docs/decisions.html) est une page **autonome, déjà
+générée** : elle rejoue une partie complète de l'agent appris, image par image,
+et montre à chaque intersection ce qu'il a envisagé, ce que chaque direction
+valait, et pourquoi il a choisi celle-là.
+
+GitHub affiche le *code* d'un fichier HTML, pas la page : cliquer sur le lien
+ci-dessus, puis sur **« Download raw file »** (icône de téléchargement, en haut
+à droite), et ouvrir le fichier téléchargé dans un navigateur. Ou cloner le
+dépôt et double-cliquer dessus. Aucun serveur, aucune installation.
+
+Pour le voir **jouer en direct** et le comparer aux autres agents, installer le
+projet (deux minutes, ci-dessous) puis :
+
+```bash
+pacman-rl compare --ghosts 4 --games 30 --weights results/poids_4fantomes.json
+```
+
 ## Architecture
 
 ```
@@ -369,7 +388,7 @@ descripteurs : [`docs/documentation.md`](docs/documentation.md), section 5.
 ### Voir l'agent décider
 
 ```bash
-python scripts/exporter_decisions.py     # puis ouvrir docs/decisions.html
+python scripts/exporter_decisions.py     # regénère docs/decisions.html (déjà fourni)
 ```
 
 Rejoue une partie et produit une page autonome où **chaque intersection se
