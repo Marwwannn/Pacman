@@ -39,7 +39,36 @@ avec `wc -l` sur ces dossiers ; il n'est pas plus flatteur que ça.
 > **Usage de l'IA générative** : ce projet a été développé avec Claude Code.
 > Le détail complet est en fin de README, section [Usage IA](#usage-ia).
 
-## Voir l'IA jouer — sans rien installer
+## Voir l'IA jouer
+
+### En direct, dans le jeu
+
+Une fois le projet installé (deux minutes, section suivante) :
+
+```bash
+pacman-server
+```
+
+puis ouvrir **http://127.0.0.1:8000/?ia=appris** et appuyer sur Entrée. Le
+serveur fait jouer le **modèle final** — l'agent appris du comparatif, dont les
+poids sont embarqués dans le paquet — et le navigateur affiche la partie comme
+pour un joueur humain. Les touches de direction sont ignorées ; `Espace` met en
+pause. L'écran d'accueil propose aussi les trois autres agents :
+`?ia=recherche`, `?ia=heuristique`, `?ia=aleatoire`.
+
+L'agent que l'on regarde est **exactement celui qui a été mesuré** : le pilote
+côté serveur reprend la discipline de l'environnement d'entraînement (décider
+aux intersections, suivre le couloir entre deux), et un test compare les deux
+trajectoires case par case (`tests/test_pilot.py`). Son score n'entre pas dans
+le classement des joueurs.
+
+Pour le comparer aux autres agents en chiffres plutôt qu'à l'œil :
+
+```bash
+pacman-rl compare --ghosts 4 --games 30 --weights results/poids_4fantomes.json
+```
+
+### Sans rien installer
 
 [`docs/decisions.html`](docs/decisions.html) est une page **autonome, déjà
 générée** : elle rejoue une partie complète de l'agent appris, image par image,
@@ -49,14 +78,7 @@ valait, et pourquoi il a choisi celle-là.
 GitHub affiche le *code* d'un fichier HTML, pas la page : cliquer sur le lien
 ci-dessus, puis sur **« Download raw file »** (icône de téléchargement, en haut
 à droite), et ouvrir le fichier téléchargé dans un navigateur. Ou cloner le
-dépôt et double-cliquer dessus. Aucun serveur, aucune installation.
-
-Pour le voir **jouer en direct** et le comparer aux autres agents, installer le
-projet (deux minutes, ci-dessous) puis :
-
-```bash
-pacman-rl compare --ghosts 4 --games 30 --weights results/poids_4fantomes.json
-```
+dépôt et double-cliquer dessus.
 
 ## Architecture
 
@@ -128,10 +150,12 @@ mobile, le doigt glissé sur le plateau donne la direction.
 
 Documentation interactive de l'API : http://127.0.0.1:8000/docs
 
+Pour regarder l'IA jouer à votre place : http://127.0.0.1:8000/?ia=appris
+
 ## Tests
 
 ```bash
-pytest                                  # 261 tests, ~1 min
+pytest                                  # 278 tests, ~1 min
 pytest --cov=pacman --cov-report=term   # 97 % de couverture
 ruff check src tests
 ```
@@ -162,6 +186,11 @@ propre plan plutôt que d'itérer sur une liste vide.
 | `POST` | `/api/games/{id}/pause` · `/resume` | mettre en pause / reprendre |
 | `DELETE` | `/api/games/{id}` | abandonner |
 | `GET` · `POST` | `/api/scores` | meilleurs scores |
+
+Le corps de `POST /api/games` accepte `pilot` (`aleatoire`, `heuristique`,
+`appris` ou `recherche`) : la partie est alors jouée par cet agent, et les
+entrées de direction — REST comme WebSocket — sont ignorées. La réponse
+renvoie le nom du pilote, `null` pour un humain.
 
 ### WebSocket
 
@@ -438,7 +467,7 @@ la partie qui décide du résultat.
 |---|---|
 | Écrire vite un socle sans intérêt pédagogique | parsing du labyrinthe, sérialisation de l'API, client canvas |
 | Reproduire fidèlement un système documenté | les 4 personnalités de fantômes et le bug d'adressage de 1980 |
-| Générer les tests | 261 tests, dont ceux qui mesurent le déterminisme |
+| Générer les tests | 278 tests, dont ceux qui mesurent le déterminisme |
 | Auditer | audit sécurité du 23/07 : 3 failles trouvées et fermées |
 | Cadrer une approche avant de coder | mesure du moteur comme environnement d'apprentissage |
 
@@ -525,6 +554,7 @@ sont traitées comme telles :
 - [x] 13 — agent joueur par renforcement : harnais, baselines, Q approximé
 - [x] 14 — agent de recherche en ligne, et rejeu tick par tick de chaque décision
 - [x] 15 — angle mort du protocole levé : fantômes dispersés, la politique tient
+- [x] 16 — l'IA joue en direct dans le client web (`?ia=appris`), avec le modèle final embarqué
 
 ## Limites connues
 

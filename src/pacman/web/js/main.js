@@ -17,11 +17,33 @@ import { GameView } from "./state.js";
 const CLE_NOM = "pacman.nom";
 const CLE_RECORD = "pacman.record";
 
+// `?ia=appris` : on regarde un agent jouer au lieu de jouer soi-meme. Le
+// serveur ignore alors les entrees de direction ; la pause reste au spectateur.
+const PILOTE = new URLSearchParams(location.search).get("ia");
+const PILOTES = {
+  aleatoire: "agent aléatoire",
+  heuristique: "heuristique écrite à la main",
+  appris: "agent appris — Q-learning approximé",
+  recherche: "recherche en ligne — profondeur 3",
+};
+const LIBELLE_IA = PILOTES[PILOTE] ?? "agent inconnu";
+
 const AIDE = `
   <b>Flèches</b> ou <b>WASD</b> pour se déplacer ·
   <b>Espace</b> pour la pause<br>
-  Appuyez sur <span class="touche">Entrée</span> pour commencer.
+  Appuyez sur <span class="touche">Entrée</span> pour commencer.<br>
+  Ou regardez <b>l'IA jouer</b> :
+  <a href="?ia=appris">agent appris</a> ·
+  <a href="?ia=recherche">recherche</a> ·
+  <a href="?ia=heuristique">heuristique</a> ·
+  <a href="?ia=aleatoire">aléatoire</a>
 `;
+const AIDE_SPECTATEUR = `
+  L'IA joue : <b>${LIBELLE_IA}</b> · <b>Espace</b> pour la pause<br>
+  Appuyez sur <span class="touche">Entrée</span> pour lancer une partie ·
+  <a href="/">jouer soi-même</a>
+`;
+const CONSIGNES = PILOTE ? AIDE_SPECTATEUR : AIDE;
 
 class Client {
   constructor() {
@@ -30,7 +52,9 @@ class Client {
     this.sons = new Sounds();
     this.renderer = new Renderer(document.getElementById("board"), this.view);
     this.controls = new Controls(document.getElementById("board"), {
-      onDirection: (direction) => this.link?.input(direction),
+      onDirection: (direction) => {
+        if (!PILOTE) this.link?.input(direction);
+      },
       onPause: () => this.basculerPause(),
       onValider: () => this.valider(),
     });
@@ -65,8 +89,8 @@ class Client {
       this.record = Math.max(this.record, classement[0].score);
       this.hud.setBest(this.record);
     }
-    this.hud.showOverlay("Pac-Man", AIDE + formatScores(classement));
-    this.hud.setStatus("Prêt à jouer");
+    this.hud.showOverlay(PILOTE ? "L'IA joue" : "Pac-Man", CONSIGNES + formatScores(classement));
+    this.hud.setStatus(PILOTE ? `Prêt — ${LIBELLE_IA}` : "Prêt à jouer");
   }
 
   /** Entree ou clic : selon le moment, ca lance, ca reprend ou ca rejoue. */
@@ -87,14 +111,20 @@ class Client {
     this.hud.setStatus("Création de la partie…");
 
     try {
-      const partie = await createGame({ maze: "classic" });
+      const partie = await createGame(PILOTE ? { maze: "classic", pilot: PILOTE } : { maze: "classic" });
       this.gameId = partie.state.id;
       this.renderer.setMaze(partie.maze);
       this.brancher();
     } catch (erreur) {
       this.enCours = false;
-      this.hud.setStatus(`Serveur injoignable — ${erreur.message}`, true);
-      this.hud.showOverlay("Hors service", "Le back-end ne répond pas. Relancez <b>pacman-server</b>.");
+      const inconnu = PILOTE && /422/.test(erreur.message);
+      this.hud.setStatus(inconnu ? "IA inconnue" : `Serveur injoignable — ${erreur.message}`, true);
+      this.hud.showOverlay(
+        inconnu ? "IA inconnue" : "Hors service",
+        inconnu
+          ? 'Aucun agent de ce nom. <a href="/">Retour</a>'
+          : "Le back-end ne répond pas. Relancez <b>pacman-server</b>."
+      );
     }
   }
 
@@ -104,7 +134,7 @@ class Client {
         this.view.applyInit(message);
         this.hud.update(message.state);
         this.hud.hideOverlay();
-        this.hud.setStatus("Bonne chance !");
+        this.hud.setStatus(PILOTE ? `L'IA joue — ${LIBELLE_IA}` : "Bonne chance !");
       },
       onState: (message) => this.surEtat(message),
       onError: (message) => this.hud.setStatus(message, true),
@@ -112,7 +142,7 @@ class Client {
         if (this.terminee) return;
         this.enCours = false;
         this.hud.setStatus("Connexion perdue", true);
-        this.hud.showOverlay("Déconnecté", "La partie s'est interrompue.<br>" + AIDE);
+        this.hud.showOverlay("Déconnecté", "La partie s'est interrompue.<br>" + CONSIGNES);
       },
     }).connect();
   }
@@ -128,7 +158,7 @@ class Client {
       if (evenement.type === "level_start") this.resynchroniser();
     }
 
-    if (message.score > this.record) {
+    if (!PILOTE && message.score > this.record) {
       this.record = message.score;
       this.hud.setBest(this.record);
     }
@@ -167,6 +197,19 @@ class Client {
     this.enCours = false;
     this.link?.close();
     this.hud.setStatus("Partie terminée");
+
+    if (PILOTE) {
+      // Le score d'une IA n'a rien a faire dans le classement des joueurs.
+      this.hud.showOverlay(
+        "Partie de l'IA terminée",
+        `Score <b>${message.score}</b> · niveau <b>${message.level}</b><br>` +
+          `Appuyez sur <span class="touche">Entrée</span> pour une nouvelle partie · ` +
+          `<a href="/">jouer soi-même</a>`
+      );
+      if (this.gameId) deleteGame(this.gameId);
+      this.gameId = null;
+      return;
+    }
 
     localStorage.setItem(CLE_RECORD, String(Math.max(this.record, message.score)));
     const classement = await this.enregistrer(message);

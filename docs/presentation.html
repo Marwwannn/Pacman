@@ -286,7 +286,7 @@ python scripts/campagne_rl.py     # toute la campagne, graines fixées</pre>
 <!-- 15 -->
 <section>
   <div class="etape">Validation</div>
-  <h2>261 tests — qui <em>mesurent</em>,<br>pas qui rassurent</h2>
+  <h2>278 tests — qui <em>mesurent</em>,<br>pas qui rassurent</h2>
   <ul>
     <li>Deux parties de même graine donnent le <b>même score au tick près</b>.</li>
     <li>L'évaluation <b>refuse</b> les graines d'entraînement.</li>
@@ -303,7 +303,7 @@ python scripts/campagne_rl.py     # toute la campagne, graines fixées</pre>
   <h2>Déclaré, total, assumé</h2>
   <ul>
     <li><b>Claude Code</b> (Anthropic — Claude Opus 4.8, puis Claude Opus 5), du 19/07 au 21/08. Aucun autre outil. <b>Chaque commit</b> porte le trailer <code>Co-Authored-By: Claude</code>.</li>
-    <li><b>Ce qu'il a fait</b> : le socle sans intérêt pédagogique, la fidélité à l'arcade, les 261 tests, l'audit sécurité, le cadrage chiffré de l'approche.</li>
+    <li><b>Ce qu'il a fait</b> : le socle sans intérêt pédagogique, la fidélité à l'arcade, les 278 tests, l'audit sécurité, le cadrage chiffré de l'approche.</li>
     <li><b>Ce que j'ai fait</b> : cadrer, arbitrer, éprouver, refuser. Le périmètre (client web, puis agent apprenant), la méthode (renforcement plutôt que non-supervisé), et les bugs que <b>seul un joueur</b> pouvait voir — le jeu tournait à 48 cases/s, puis restait saccadé. Aucun test ne les voyait. Et les <b>deux questions</b> qui ont produit les résultats les plus forts du rendu : « et si on lui donnait la position des fantômes ? » (−18 %, publié tel quel) et « les positions des fantômes sont aléatoires ? » (une seule configuration sur 100 parties — l'angle mort levé).</li>
   </ul>
   <p class="cite" style="margin-top:1rem">« Mesure ce moteur comme environnement d'apprentissage : vitesse, reproductibilité, points de décision. Dis-moi ce que ces chiffres <b>excluent</b> comme approche. »</p>

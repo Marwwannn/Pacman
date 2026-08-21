@@ -31,6 +31,7 @@ from fastapi.staticfiles import StaticFiles
 
 from ..core.maze import MazeError
 from ..core.rules import TICKS_PER_SECOND
+from .pilot import build_pilot
 from .realtime import Broadcaster
 from .schemas import (
     DirectionInput,
@@ -134,23 +135,32 @@ async def create_game(
     """Cree une partie et renvoie le plan avec l'etat initial.
 
     Le plan n'est envoye qu'ici : il est immuable, le client le garde.
+
+    Avec `pilot`, c'est un agent qui joue : la partie avance toute seule et les
+    entrees de direction sont ignorees. C'est la facon de regarder l'IA jouer
+    en direct, dans le meme client que l'humain.
     """
     try:
+        pilot = build_pilot(body.pilot, store.maze(body.maze))
         session = store.create(
             now=time.monotonic(),
             maze_name=body.maze,
             level=body.level,
             lives=body.lives,
             overflow_bug=body.overflow_bug,
+            pilot=pilot,
         )
     except MazeError as exc:
         raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc)) from exc
     except SessionError as exc:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(exc)) from exc
+    except ValueError as exc:  # pilote inconnu
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc)) from exc
 
     return NewGameResponse(
         maze=MazeModel.from_maze(session.game.maze, session.maze_name),
         state=GameStateModel.from_game(session.game, session.id, include_pellets=True),
+        pilot=pilot.name if pilot is not None else None,
     )
 
 

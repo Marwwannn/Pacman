@@ -32,7 +32,7 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 
 [tool.setuptools.package-data]
-pacman = ["mazes/*.txt", "web/*.html", "web/*.css", "web/js/*.js"]
+pacman = ["mazes/*.txt", "web/*.html", "web/*.css", "web/js/*.js", "rl/weights/*.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -41,6 +41,13 @@ class NewGameRequest(BaseModel):
         default=True,
         description="reproduire le bug de ciblage de 1980 pour Pinky et Inky",
     )
+    pilot: str | None = Field(
+        default=None,
+        description=(
+            "agent qui joue a la place de l'humain : aleatoire, heuristique, "
+            "appris ou recherche. Les entrees de direction sont alors ignorees."
+        ),
+    )
 
 
 class TickRequest(BaseModel):
@@ -189,3 +196,5 @@ class NewGameResponse(BaseModel):
 
     maze: MazeModel
     state: GameStateModel
+    #: Nom de l'agent au volant, None quand c'est un humain.
+    pilot: str | None = None

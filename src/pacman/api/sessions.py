@@ -40,15 +40,30 @@ class GameSession:
     #: Boucle de diffusion, creee au premier abonne. Type volontairement libre :
     #: sessions.py ne doit rien savoir du transport.
     broadcaster: object | None = None
+    #: Agent au volant, ou None quand c'est un humain qui joue. Type libre pour
+    #: la meme raison que le diffuseur : seul `steer(game)` est attendu.
+    pilot: object | None = None
 
     def touch(self, now: float) -> None:
         self.last_seen = now
 
     def tick(self, count: int = 1) -> list[Event]:
-        return self.game.run(count)
+        if self.pilot is None:
+            return self.game.run(count)
+        # Le pilote doit pouvoir choisir a CHAQUE case : un rattrapage de
+        # plusieurs ticks d'un coup lui ferait traverser des intersections
+        # sans les voir. D'ou un tick a la fois, le volant entre chaque.
+        events: list[Event] = []
+        for _ in range(count):
+            self.pilot.steer(self.game)
+            events.extend(self.game.tick())
+        return events
 
     def set_direction(self, direction: Direction) -> None:
-        self.game.set_direction(direction)
+        # L'IA tient le volant : les entrees de direction du joueur sont
+        # ignorees. La pause, elle, reste a lui.
+        if self.pilot is None:
+            self.game.set_direction(direction)
 
 
 class SessionStore:
@@ -102,6 +117,7 @@ class SessionStore:
         level: int = 1,
         lives: int = 3,
         overflow_bug: bool = True,
+        pilot: object | None = None,
     ) -> GameSession:
         self.purge(now)
         if len(self._sessions) >= self._max_sessions:
@@ -113,7 +129,9 @@ class SessionStore:
             lives=lives,
             overflow_bug=overflow_bug,
         )
-        session = GameSession(id=uuid4().hex, game=game, maze_name=maze_name, last_seen=now)
+        session = GameSession(
+            id=uuid4().hex, game=game, maze_name=maze_name, last_seen=now, pilot=pilot
+        )
         self._sessions[session.id] = session
         return session
 

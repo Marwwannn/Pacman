@@ -70,6 +70,15 @@ lire une ligne de code — on *voit* l'agent hésiter à une intersection.
   une image par tick.
 - **CLI `pacman-rl`** : `baselines`, `train`, `compare`.
 
+**Regarder l'IA jouer.** Le client a un mode spectateur : `?ia=appris` fait
+jouer le modèle final par le serveur, dans le même jeu, à la même cadence ;
+les trois autres agents sont disponibles de la même façon. Les touches de
+direction sont ignorées, la pause reste au spectateur, et le score de l'IA
+n'entre pas dans le classement. Le pilote côté serveur reprend la discipline
+de l'environnement d'entraînement, et un test vérifie case par case que la
+partie jouée est celle que l'environnement aurait jouée. Pour le rejeu
+commenté, décision par décision, voir §5.8.
+
 ### 2.3 Les intelligences artificielles
 
 | | Nature | Apprend ? | Rôle |
@@ -310,7 +319,7 @@ pour que le lecteur puisse ne pas la partager.
 ## 4. Validation et tests
 
 ```bash
-pytest                                  # 261 tests, ~1 min
+pytest                                  # 278 tests, ~1 min
 pytest --cov=pacman --cov-report=term   # 97 % de couverture
 ruff check src tests
 ```
@@ -590,7 +599,7 @@ lignes mais de cadrer, arbitrer, éprouver et refuser.
 |---|---|
 | Écrire vite un socle sans intérêt pédagogique | parsing du labyrinthe, sérialisation de l'API, rendu canvas |
 | Reproduire fidèlement un système documenté | les 4 personnalités et le bug d'adressage de 1980 |
-| Générer les tests | 261 tests, dont ceux qui mesurent le déterminisme |
+| Générer les tests | 278 tests, dont ceux qui mesurent le déterminisme |
 | Auditer | audit sécurité : 3 failles trouvées et fermées |
 | Cadrer avant de coder | mesure du moteur comme environnement d'apprentissage |
 
@@ -673,7 +682,7 @@ python -m venv .venv
 pip install -e ".[dev]"
 
 pacman-server                   # le jeu : http://127.0.0.1:8000
-pytest                          # 261 tests
+pytest                          # 278 tests
 pacman-rl baselines --ghosts 1  # le plancher et le plafond
 python scripts/campagne_rl.py   # toute la campagne de mesure
 ```
@@ -681,6 +690,8 @@ python scripts/campagne_rl.py   # toute la campagne de mesure
 Python 3.11 minimum. Le jeu et les agents n'ont **aucune dépendance** ;
 FastAPI et Uvicorn ne servent qu'au serveur, `markdown` qu'à produire ce
 document en HTML imprimable.
+
+Regarder l'IA jouer : http://127.0.0.1:8000/?ia=appris une fois le serveur lancé.
 
 ### 7.2 Reproduire les chiffres de ce document
 
