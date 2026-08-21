@@ -36,9 +36,9 @@ l'avenir : c'est sa definition meme, et elle est declaree.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from math import inf
-from typing import Callable
 
 from ..core.entities import GhostMode
 from ..core.game import Game

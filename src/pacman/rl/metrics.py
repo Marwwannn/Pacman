@@ -12,9 +12,9 @@ a chaque tick produirait donc plus de 95 % de decisions nulles.
 from __future__ import annotations
 
 from collections import deque
+from collections.abc import Iterable
 from dataclasses import dataclass
 from math import inf
-from typing import Iterable
 
 from ..core.geometry import Direction, Position
 from ..core.maze import Maze

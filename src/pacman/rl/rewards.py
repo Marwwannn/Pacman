@@ -16,8 +16,8 @@ Le score brut du jeu n'est deliberement pas repris : la vie supplementaire a
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Iterable
 
 from ..core.game import Event
 

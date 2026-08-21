@@ -7,7 +7,9 @@ entrelace avec une entree du joueur.
 
 from __future__ import annotations
 
+import os
 import time
+from pathlib import Path
 from typing import Annotated
 
 from fastapi import (
@@ -15,23 +17,21 @@ from fastapi import (
     Depends,
     FastAPI,
     HTTPException,
-    Path as PathParam,
     Query,
     Request,
     WebSocket,
     WebSocketDisconnect,
     status,
 )
+from fastapi import (
+    Path as PathParam,
+)
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-
-import os
-from pathlib import Path
 
 from ..core.maze import MazeError
 from ..core.rules import TICKS_PER_SECOND
 from .realtime import Broadcaster
-from .scores import ScoreBoard, ScoreEntry, ScoreSubmission
 from .schemas import (
     DirectionInput,
     GameStateModel,
@@ -40,6 +40,7 @@ from .schemas import (
     NewGameResponse,
     TickRequest,
 )
+from .scores import ScoreBoard, ScoreEntry, ScoreSubmission
 from .sessions import GameSession, SessionError, SessionStore
 
 app = FastAPI(

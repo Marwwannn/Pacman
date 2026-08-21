@@ -33,7 +33,6 @@ from pacman.rl.rewards import RewardConfig
 from pacman.rl.search import SearchAgent
 from pacman.rl.training import Hyper, train
 
-
 #: Plan construit expres : le labyrinthe classique n'a aucune impasse, donc il
 #: ne permet pas d'eprouver le pilotage automatique des culs-de-sac.
 MAZE_IMPASSE = """\
