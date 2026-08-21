@@ -1,0 +1,189 @@
+{
+  "parties": 100,
+  "fantomes": 4,
+  "profondeur_recherche": 3,
+  "conditions": {
+    "reference": {
+      "configurations_distinctes": 1,
+      "agents": {
+        "aleatoire": {
+          "agent": "aleatoire",
+          "parties": 100,
+          "score_median": 470.0,
+          "score_moyen": 495.2,
+          "score_ecart_type": 335.0,
+          "score_min": 0,
+          "score_max": 1700,
+          "retour_median": -50.0,
+          "taux_victoire": 0.0,
+          "taux_mort": 1.0,
+          "decisions_moyennes": 16.4,
+          "pastilles_restantes_medianes": 201.0,
+          "appris": false
+        },
+        "heuristique": {
+          "agent": "heuristique",
+          "parties": 100,
+          "score_median": 2340.0,
+          "score_moyen": 2911.7,
+          "score_ecart_type": 1951.5,
+          "score_min": 50,
+          "score_max": 10330,
+          "retour_median": 1810.0,
+          "taux_victoire": 0.0,
+          "taux_mort": 1.0,
+          "decisions_moyennes": 36.3,
+          "pastilles_restantes_medianes": 122.5,
+          "appris": false
+        },
+        "appris": {
+          "agent": "q-approxime",
+          "parties": 100,
+          "score_median": 2895.0,
+          "score_moyen": 2923.8,
+          "score_ecart_type": 1170.9,
+          "score_min": 560,
+          "score_max": 5800,
+          "retour_median": 2353.0,
+          "taux_victoire": 0.04,
+          "taux_mort": 0.96,
+          "decisions_moyennes": 41.8,
+          "pastilles_restantes_medianes": 70.0,
+          "appris": true
+        },
+        "recherche": {
+          "agent": "recherche",
+          "parties": 100,
+          "score_median": 4990.0,
+          "score_moyen": 5015.2,
+          "score_ecart_type": 1814.9,
+          "score_min": 0,
+          "score_max": 10690,
+          "retour_median": 5399.0,
+          "taux_victoire": 0.94,
+          "taux_mort": 0.07,
+          "decisions_moyennes": 85.1,
+          "pastilles_restantes_medianes": 0.0,
+          "appris": false
+        }
+      }
+    },
+    "disperse": {
+      "configurations_distinctes": 100,
+      "agents": {
+        "aleatoire": {
+          "agent": "aleatoire",
+          "parties": 100,
+          "score_median": 340.0,
+          "score_moyen": 423.6,
+          "score_ecart_type": 363.5,
+          "score_min": 0,
+          "score_max": 2350,
+          "retour_median": -175.0,
+          "taux_victoire": 0.0,
+          "taux_mort": 1.0,
+          "decisions_moyennes": 14.1,
+          "pastilles_restantes_medianes": 211.0,
+          "appris": false
+        },
+        "heuristique": {
+          "agent": "heuristique",
+          "parties": 100,
+          "score_median": 2585.0,
+          "score_moyen": 2836.1,
+          "score_ecart_type": 1919.0,
+          "score_min": 70,
+          "score_max": 9250,
+          "retour_median": 2050.0,
+          "taux_victoire": 0.0,
+          "taux_mort": 1.0,
+          "decisions_moyennes": 29.1,
+          "pastilles_restantes_medianes": 136.5,
+          "appris": false
+        },
+        "appris": {
+          "agent": "q-approxime",
+          "parties": 100,
+          "score_median": 3025.0,
+          "score_moyen": 2870.2,
+          "score_ecart_type": 1417.3,
+          "score_min": 0,
+          "score_max": 6820,
+          "retour_median": 2499.0,
+          "taux_victoire": 0.0,
+          "taux_mort": 1.0,
+          "decisions_moyennes": 34.1,
+          "pastilles_restantes_medianes": 87.5,
+          "appris": true
+        },
+        "recherche": {
+          "agent": "recherche",
+          "parties": 100,
+          "score_median": 5890.0,
+          "score_moyen": 5970.8,
+          "score_ecart_type": 1673.2,
+          "score_min": 0,
+          "score_max": 10800,
+          "retour_median": 6305.5,
+          "taux_victoire": 0.94,
+          "taux_mort": 0.07,
+          "decisions_moyennes": 86.3,
+          "pastilles_restantes_medianes": 0.0,
+          "appris": false
+        }
+      }
+    }
+  },
+  "ecarts": {
+    "aleatoire": {
+      "reference": 470.0,
+      "disperse": 340.0,
+      "ecart": -130.0,
+      "variation": -0.277,
+      "ic95": [
+        -260.0,
+        15.0
+      ],
+      "significatif": false,
+      "appris": false
+    },
+    "heuristique": {
+      "reference": 2340.0,
+      "disperse": 2585.0,
+      "ecart": 245.0,
+      "variation": 0.105,
+      "ic95": [
+        -380.0,
+        965.0
+      ],
+      "significatif": false,
+      "appris": false
+    },
+    "appris": {
+      "reference": 2895.0,
+      "disperse": 3025.0,
+      "ecart": 130.0,
+      "variation": 0.045,
+      "ic95": [
+        -300.0,
+        440.0
+      ],
+      "significatif": false,
+      "appris": true
+    },
+    "recherche": {
+      "reference": 4990.0,
+      "disperse": 5890.0,
+      "ecart": 900.0,
+      "variation": 0.18,
+      "ic95": [
+        455.0,
+        1400.0
+      ],
+      "significatif": true,
+      "appris": false
+    }
+  },
+  "tirages_bootstrap": 2000,
+  "verdict": "l'agent appris tient quand les fantomes changent de depart (+130 points, IC95 [-300, +440]) : sa politique est topologique, pas un plan de maison memorise"
+}

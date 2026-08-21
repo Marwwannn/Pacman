@@ -744,6 +744,102 @@ class TestAgentDeRecherche:
         assert longue.score_median != courte.score_median
 
 
+class TestDepartDesFantomes:
+    """L'angle mort du protocole : les fantomes partaient toujours des memes cases.
+
+    Le nom `randomize_ghosts` promettait plus qu'il ne tenait — il ne reseme que
+    l'errance en mode effraye. La configuration de depart, elle, ne bougeait
+    jamais. Ces tests fixent les deux faits : ce que la configuration d'origine
+    fait vraiment, et ce que la dispersion change.
+    """
+
+    def test_la_configuration_d_origine_est_unique(self):
+        """Le constat qui a motive tout le reste, ecrit noir sur blanc.
+
+        Une randomisation se verifie en COMPTANT les valeurs distinctes
+        obtenues, jamais en relisant le code cense la produire : c'est ce
+        comptage qui a revele que les quatre fantomes ne bougeaient pas.
+        """
+        env = PacmanEnv(EnvConfig(ghosts=4))
+        configurations = set()
+        for index in range(40):
+            game = env.reset(EVALUATION_SEEDS + index)
+            configurations.add(tuple(sorted((g.name, g.start) for g in game.ghosts)))
+        assert len(configurations) == 1
+
+    def test_disperser_donne_une_configuration_par_partie(self):
+        env = PacmanEnv(EnvConfig(ghosts=4, randomize_ghost_starts=True))
+        configurations = set()
+        for index in range(40):
+            game = env.reset(EVALUATION_SEEDS + index)
+            configurations.add(tuple(sorted((g.name, g.start) for g in game.ghosts)))
+        assert len(configurations) == 40
+
+    def test_les_fantomes_disperses_sortent_de_la_maison(self, classic_maze):
+        env = PacmanEnv(EnvConfig(ghosts=4, randomize_ghost_starts=True))
+        for index in range(20):
+            game = env.reset(EVALUATION_SEEDS + index)
+            for ghost in game.ghosts:
+                assert not classic_maze.in_house(ghost.start)
+                # Hors maison, plus rien a attendre : un fantome qui resterait en
+                # mode HOUSE irait d'abord vers la porte, ce qui ramenerait la
+                # partie a la configuration qu'on cherche justement a quitter.
+                assert ghost.mode is not GhostMode.HOUSE
+
+    def test_les_fantomes_disperses_ne_naissent_pas_sur_pac_man(self):
+        """Un fantome colle au depart tuerait la partie pour rien.
+
+        Le seuil n'est pas choisi au jugé : dans la configuration d'origine,
+        Blinky demarre deja a 4 cases de Pac-Man dans le pire cas.
+        """
+        config = EnvConfig(ghosts=4, randomize_ghost_starts=True)
+        env = PacmanEnv(config)
+        for index in range(30):
+            game = env.reset(EVALUATION_SEEDS + index)
+            depart = game.pacman.start
+            for ghost in game.ghosts:
+                assert env.metrics.distance(depart, ghost.start) >= config.ghost_start_min_distance
+
+    def test_disperser_ne_deplace_pas_le_depart_de_pac_man(self):
+        """La garde qui protege les chiffres deja publies.
+
+        La dispersion tire ses cases APRES le depart de Pac-Man, jamais avant :
+        si elle consommait le generateur en premier, toute la campagne mesuree
+        changerait de valeur en silence.
+        """
+        origine = PacmanEnv(EnvConfig(ghosts=4))
+        disperse = PacmanEnv(EnvConfig(ghosts=4, randomize_ghost_starts=True))
+        for index in range(20):
+            graine = EVALUATION_SEEDS + index
+            assert origine.reset(graine).pacman.start == disperse.reset(graine).pacman.start
+
+    def test_une_meme_graine_disperse_les_memes_fantomes(self):
+        config = EnvConfig(ghosts=4, randomize_ghost_starts=True)
+        premier = PacmanEnv(config).reset(EVALUATION_SEEDS)
+        second = PacmanEnv(config).reset(EVALUATION_SEEDS)
+        assert [(g.name, g.start) for g in premier.ghosts] == [
+            (g.name, g.start) for g in second.ghosts
+        ]
+
+    def test_la_dispersion_ne_change_pas_le_nombre_de_pastilles(self):
+        """Un fantome ne mange pas : sa case ne doit rien retirer du plateau.
+
+        Sans quoi le score deviendrait comparable d'une condition a l'autre
+        seulement en apparence.
+        """
+        origine = PacmanEnv(EnvConfig(ghosts=4)).reset(EVALUATION_SEEDS)
+        disperse = PacmanEnv(EnvConfig(ghosts=4, randomize_ghost_starts=True)).reset(
+            EVALUATION_SEEDS
+        )
+        assert disperse.remaining_pellets == origine.remaining_pellets
+
+    def test_un_seuil_infranchissable_est_refuse_plutot_que_contourne(self):
+        """Mieux vaut une erreur qu'un placement silencieusement trop proche."""
+        env = PacmanEnv(EnvConfig(ghosts=4, randomize_ghost_starts=True, ghost_start_min_distance=999))
+        with pytest.raises(ValueError, match="pas assez de cases"):
+            env.reset(EVALUATION_SEEDS)
+
+
 class TestReproductibiliteDeLEvaluation:
     """Le meme agent, les memes graines : le meme chiffre, quoi qu'il ait vecu avant."""
 

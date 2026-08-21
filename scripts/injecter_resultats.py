@@ -18,6 +18,7 @@ from pathlib import Path
 RACINE = Path(__file__).resolve().parent.parent
 CAMPAGNE = RACINE / "results" / "campagne.json"
 COMPARATIF = RACINE / "results" / "descripteurs.json"
+FANTOMES = RACINE / "results" / "fantomes_ailleurs.json"
 DOCUMENTATION = RACINE / "docs" / "documentation.md"
 PRESENTATION = RACINE / "docs" / "presentation.html"
 LISEZMOI = RACINE / "README.md"
@@ -158,7 +159,81 @@ l'exploration encore active, ce qui explique qu'il reste sous le score final.
 {courbe}
 
 {descripteurs(campagne)}
+{fantomes_ailleurs()}
 {FIN}"""
+
+
+def fantomes_ailleurs() -> str:
+    """Section 5.7 : la politique tient-elle si les fantomes changent de depart ?
+
+    Rien n'est ecrit si la mesure n'a pas ete faite — un document qui parle
+    d'un resultat absent est pire qu'un document qui n'en parle pas.
+    """
+    if not FANTOMES.exists():
+        return ""
+    mesure = json.loads(FANTOMES.read_text(encoding="utf-8"))
+    ecarts = mesure["ecarts"]
+    conditions = mesure["conditions"]
+
+    lignes = "\n".join(
+        f"| {'**' if e['appris'] else ''}{nom}{'**' if e['appris'] else ''} "
+        f"| {e['reference']:.0f} | {e['disperse']:.0f} | {e['ecart']:+.0f} "
+        f"| [{e['ic95'][0]:+.0f}, {e['ic95'][1]:+.0f}] "
+        f"| {'**significatif**' if e['significatif'] else 'dans le bruit'} |"
+        for nom, e in ecarts.items()
+    )
+    appris = ecarts["appris"]
+    recherche = ecarts["recherche"]
+
+    return f"""### 5.7 Les fantômes partaient toujours des mêmes cases
+
+Un angle mort du protocole, trouvé en **comptant** ce que les graines faisaient
+varier au lieu de relire le code censé le produire : sur
+{mesure['parties']} parties, l'évaluation ne produisait
+**{conditions['reference']['configurations_distinctes']} seule configuration de
+départ des fantômes**. La graine ne resemait que la case de Pac-Man et l'errance
+en mode effrayé. La garde sur les graines protège donc contre la mémorisation
+d'une *partie*, pas contre la dépendance à une *configuration* — et rien dans
+les chiffres précédents ne permettait de trancher.
+
+Le test est court et **ne réentraîne rien** : les mêmes poids sont réévalués
+avec les quatre fantômes tirés au sort hors de la maison
+({conditions['disperse']['configurations_distinctes']} configurations sur
+{mesure['parties']} parties). Cette condition ne joue pas la même partie — les
+quatre fantômes y sont actifs dès le premier tick. On l'attendait plus dure ;
+elle est en réalité plus **facile**, parce que dispersés ils partent chacun vers
+son coin au lieu de sortir groupés du centre. C'est exactement pourquoi les
+agents qui n'ont rien appris servent de témoins : ils absorbent la variation de
+difficulté, quel qu'en soit le sens.
+
+| Agent | Référence | Dispersés | Écart | IC 95 % | |
+|---|---:|---:|---:|---|---|
+{lignes}
+
+**L'agent appris tient** : {appris['ecart']:+.0f} points, intervalle
+[{appris['ic95'][0]:+.0f}, {appris['ic95'][1]:+.0f}] — il contient zéro, donc
+l'écart est indiscernable du bruit d'échantillonnage. Sa politique ne dépend pas
+de la maison centrale : elle est **topologique**, comme ses descripteurs le
+laissaient espérer sans que personne ne l'ait vérifié. C'était la seule façon de
+le savoir.
+
+Trois des quatre écarts sont du bruit. Le seul qui sorte est celui de la
+**recherche** ({recherche['ecart']:+.0f} points, intervalle
+[{recherche['ic95'][0]:+.0f}, {recherche['ic95'][1]:+.0f}]), et il s'explique :
+elle replanifie depuis l'état réel à chaque intersection, donc des chasseurs
+étalés dans le labyrinthe lui sont franchement plus simples qu'une vague sortant
+du centre.
+
+*Une nuance à ne pas cacher* : le taux de victoire de l'agent appris passe de
+{conditions['reference']['agents']['appris']['taux_victoire']:.0%} à
+{conditions['disperse']['agents']['appris']['taux_victoire']:.0%}. Sur
+{mesure['parties']} parties cela représente une poignée de parties, trop peu
+pour en conclure quoi que ce soit — mais assez pour ne pas prétendre que la
+condition dispersée lui est en tout point équivalente.
+
+*(mesure : `python scripts/fantomes_ailleurs.py` → `results/fantomes_ailleurs.json`,
+intervalles par bootstrap sur {mesure['tirages_bootstrap']} tirages, graine fixe)*
+"""
 
 
 def profondeurs(etapes: dict) -> str:

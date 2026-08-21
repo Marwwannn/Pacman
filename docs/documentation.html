@@ -811,9 +811,93 @@ question « faut-il donner plus d'information à l'agent ? » n'a pas de répons
 évidente : plus de descripteurs, c'est plus de poids à estimer sur le même
 budget d'épisodes — et un modèle linéaire ne peut de toute façon pas composer
 ces informations entre elles.</p>
+<h3 id="57-les-fantomes-partaient-toujours-des-memes-cases">5.7 Les fantômes partaient toujours des mêmes cases</h3>
+<p>Un angle mort du protocole, trouvé en <strong>comptant</strong> ce que les graines faisaient
+varier au lieu de relire le code censé le produire : sur
+100 parties, l'évaluation ne produisait
+<strong>1 seule configuration de
+départ des fantômes</strong>. La graine ne resemait que la case de Pac-Man et l'errance
+en mode effrayé. La garde sur les graines protège donc contre la mémorisation
+d'une <em>partie</em>, pas contre la dépendance à une <em>configuration</em> — et rien dans
+les chiffres précédents ne permettait de trancher.</p>
+<p>Le test est court et <strong>ne réentraîne rien</strong> : les mêmes poids sont réévalués
+avec les quatre fantômes tirés au sort hors de la maison
+(100 configurations sur
+100 parties). Cette condition ne joue pas la même partie — les
+quatre fantômes y sont actifs dès le premier tick. On l'attendait plus dure ;
+elle est en réalité plus <strong>facile</strong>, parce que dispersés ils partent chacun vers
+son coin au lieu de sortir groupés du centre. C'est exactement pourquoi les
+agents qui n'ont rien appris servent de témoins : ils absorbent la variation de
+difficulté, quel qu'en soit le sens.</p>
+<table>
+<thead>
+<tr>
+<th>Agent</th>
+<th style="text-align: right;">Référence</th>
+<th style="text-align: right;">Dispersés</th>
+<th style="text-align: right;">Écart</th>
+<th>IC 95 %</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>aleatoire</td>
+<td style="text-align: right;">470</td>
+<td style="text-align: right;">340</td>
+<td style="text-align: right;">-130</td>
+<td>[-260, +15]</td>
+<td>dans le bruit</td>
+</tr>
+<tr>
+<td>heuristique</td>
+<td style="text-align: right;">2340</td>
+<td style="text-align: right;">2585</td>
+<td style="text-align: right;">+245</td>
+<td>[-380, +965]</td>
+<td>dans le bruit</td>
+</tr>
+<tr>
+<td><strong>appris</strong></td>
+<td style="text-align: right;">2895</td>
+<td style="text-align: right;">3025</td>
+<td style="text-align: right;">+130</td>
+<td>[-300, +440]</td>
+<td>dans le bruit</td>
+</tr>
+<tr>
+<td>recherche</td>
+<td style="text-align: right;">4990</td>
+<td style="text-align: right;">5890</td>
+<td style="text-align: right;">+900</td>
+<td>[+455, +1400]</td>
+<td><strong>significatif</strong></td>
+</tr>
+</tbody>
+</table>
+<p><strong>L'agent appris tient</strong> : +130 points, intervalle
+[-300, +440] — il contient zéro, donc
+l'écart est indiscernable du bruit d'échantillonnage. Sa politique ne dépend pas
+de la maison centrale : elle est <strong>topologique</strong>, comme ses descripteurs le
+laissaient espérer sans que personne ne l'ait vérifié. C'était la seule façon de
+le savoir.</p>
+<p>Trois des quatre écarts sont du bruit. Le seul qui sorte est celui de la
+<strong>recherche</strong> (+900 points, intervalle
+[+455, +1400]), et il s'explique :
+elle replanifie depuis l'état réel à chaque intersection, donc des chasseurs
+étalés dans le labyrinthe lui sont franchement plus simples qu'une vague sortant
+du centre.</p>
+<p><em>Une nuance à ne pas cacher</em> : le taux de victoire de l'agent appris passe de
+4% à
+0%. Sur
+100 parties cela représente une poignée de parties, trop peu
+pour en conclure quoi que ce soit — mais assez pour ne pas prétendre que la
+condition dispersée lui est en tout point équivalente.</p>
+<p><em>(mesure : <code>python scripts/fantomes_ailleurs.py</code> → <code>results/fantomes_ailleurs.json</code>,
+intervalles par bootstrap sur 2000 tirages, graine fixe)</em></p>
 <!-- FIN RESULTATS -->
 
-<h3 id="57-voir-lagent-decider">5.7 Voir l'agent décider</h3>
+<h3 id="58-voir-lagent-decider">5.8 Voir l'agent décider</h3>
 <p>Les poids du §5.4 disent ce que l'agent a appris <em>en moyenne</em>. Ils ne disent
 pas pourquoi il a tourné à gauche à la trente-deuxième intersection.</p>
 <pre><code class="language-bash">python scripts/exporter_decisions.py     # puis ouvrir docs/decisions.html
@@ -831,7 +915,7 @@ du chiffre affiché.</p>
 <p>C'est le seul des quatre agents dont on puisse ouvrir la décision de cette
 façon, et c'est exactement ce qui a été acheté en refusant le réseau de
 neurones (§3.4).</p>
-<h3 id="58-apprendre-ou-recalculer">5.8 Apprendre ou recalculer</h3>
+<h3 id="59-apprendre-ou-recalculer">5.9 Apprendre ou recalculer</h3>
 <p>L'agent de recherche ne sait rien, n'a rien appris, n'a aucun poids — et il
 gagne largement (§5.2). Le résultat n'est pas décevant pour l'apprentissage :
 il est <strong>la mesure de ce que l'apprentissage achète</strong>.</p>
@@ -1022,8 +1106,10 @@ les poids publiés donnent bien les chiffres publiés.</p>
   cela veut dire que l'agent hérite de l'analyse humaine du problème — il
   n'apprend pas <em>quoi regarder</em>, seulement <em>combien ça compte</em>.</li>
 <li><strong>Un seul labyrinthe est mesuré.</strong> Les poids appris devraient se transférer,
-  puisque les features sont topologiques et non positionnelles, mais ce
-  transfert n'a pas été mesuré.</li>
+  puisque les features sont topologiques et non positionnelles. Le §5.7 en
+  vérifie une moitié — déplacer les quatre fantômes ne dégrade pas la politique —
+  mais changer de <em>plan</em> reste non mesuré : c'est une autre question, et elle
+  demanderait un second labyrinthe.</li>
 <li><strong>Le rendu visuel n'a pas été inspecté image par image</strong> ; il a été validé
   en jouant.</li>
 </ul>

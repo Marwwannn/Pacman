@@ -57,6 +57,10 @@ class EvalReport:
     death_rate: float
     decisions_mean: float
     pellets_left_median: float
+    #: Scores partie par partie, dans l'ordre des graines. Absents de
+    #: `as_dict()` — ils ne sont pas un resultat a publier mais la matiere
+    #: brute qui permet de dire si un ecart entre deux mesures sort du bruit.
+    scores: tuple[int, ...] = ()
 
     def as_dict(self) -> dict:
         return {
@@ -125,4 +129,5 @@ def evaluate(
         death_rate=sum(1 for item in results if item.get("died")) / len(results),
         decisions_mean=sum(item["decisions"] for item in results) / len(results),
         pellets_left_median=median(item["remaining_pellets"] for item in results),
+        scores=tuple(scores),
     )

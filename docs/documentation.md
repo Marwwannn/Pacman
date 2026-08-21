@@ -440,11 +440,64 @@ question « faut-il donner plus d'information à l'agent ? » n'a pas de répons
 budget d'épisodes — et un modèle linéaire ne peut de toute façon pas composer
 ces informations entre elles.
 
+### 5.7 Les fantômes partaient toujours des mêmes cases
+
+Un angle mort du protocole, trouvé en **comptant** ce que les graines faisaient
+varier au lieu de relire le code censé le produire : sur
+100 parties, l'évaluation ne produisait
+**1 seule configuration de
+départ des fantômes**. La graine ne resemait que la case de Pac-Man et l'errance
+en mode effrayé. La garde sur les graines protège donc contre la mémorisation
+d'une *partie*, pas contre la dépendance à une *configuration* — et rien dans
+les chiffres précédents ne permettait de trancher.
+
+Le test est court et **ne réentraîne rien** : les mêmes poids sont réévalués
+avec les quatre fantômes tirés au sort hors de la maison
+(100 configurations sur
+100 parties). Cette condition ne joue pas la même partie — les
+quatre fantômes y sont actifs dès le premier tick. On l'attendait plus dure ;
+elle est en réalité plus **facile**, parce que dispersés ils partent chacun vers
+son coin au lieu de sortir groupés du centre. C'est exactement pourquoi les
+agents qui n'ont rien appris servent de témoins : ils absorbent la variation de
+difficulté, quel qu'en soit le sens.
+
+| Agent | Référence | Dispersés | Écart | IC 95 % | |
+|---|---:|---:|---:|---|---|
+| aleatoire | 470 | 340 | -130 | [-260, +15] | dans le bruit |
+| heuristique | 2340 | 2585 | +245 | [-380, +965] | dans le bruit |
+| **appris** | 2895 | 3025 | +130 | [-300, +440] | dans le bruit |
+| recherche | 4990 | 5890 | +900 | [+455, +1400] | **significatif** |
+
+**L'agent appris tient** : +130 points, intervalle
+[-300, +440] — il contient zéro, donc
+l'écart est indiscernable du bruit d'échantillonnage. Sa politique ne dépend pas
+de la maison centrale : elle est **topologique**, comme ses descripteurs le
+laissaient espérer sans que personne ne l'ait vérifié. C'était la seule façon de
+le savoir.
+
+Trois des quatre écarts sont du bruit. Le seul qui sorte est celui de la
+**recherche** (+900 points, intervalle
+[+455, +1400]), et il s'explique :
+elle replanifie depuis l'état réel à chaque intersection, donc des chasseurs
+étalés dans le labyrinthe lui sont franchement plus simples qu'une vague sortant
+du centre.
+
+*Une nuance à ne pas cacher* : le taux de victoire de l'agent appris passe de
+4% à
+0%. Sur
+100 parties cela représente une poignée de parties, trop peu
+pour en conclure quoi que ce soit — mais assez pour ne pas prétendre que la
+condition dispersée lui est en tout point équivalente.
+
+*(mesure : `python scripts/fantomes_ailleurs.py` → `results/fantomes_ailleurs.json`,
+intervalles par bootstrap sur 2000 tirages, graine fixe)*
+
 <!-- FIN RESULTATS -->
 
 
 
-### 5.7 Voir l'agent décider
+
+### 5.8 Voir l'agent décider
 
 Les poids du §5.4 disent ce que l'agent a appris *en moyenne*. Ils ne disent
 pas pourquoi il a tourné à gauche à la trente-deuxième intersection.
@@ -469,7 +522,7 @@ C'est le seul des quatre agents dont on puisse ouvrir la décision de cette
 façon, et c'est exactement ce qui a été acheté en refusant le réseau de
 neurones (§3.4).
 
-### 5.8 Apprendre ou recalculer
+### 5.9 Apprendre ou recalculer
 
 L'agent de recherche ne sait rien, n'a rien appris, n'a aucun poids — et il
 gagne largement (§5.2). Le résultat n'est pas décevant pour l'apprentissage :
@@ -612,8 +665,10 @@ les poids publiés donnent bien les chiffres publiés.
   cela veut dire que l'agent hérite de l'analyse humaine du problème — il
   n'apprend pas *quoi regarder*, seulement *combien ça compte*.
 - **Un seul labyrinthe est mesuré.** Les poids appris devraient se transférer,
-  puisque les features sont topologiques et non positionnelles, mais ce
-  transfert n'a pas été mesuré.
+  puisque les features sont topologiques et non positionnelles. Le §5.7 en
+  vérifie une moitié — déplacer les quatre fantômes ne dégrade pas la politique —
+  mais changer de *plan* reste non mesuré : c'est une autre question, et elle
+  demanderait un second labyrinthe.
 - **Le rendu visuel n'a pas été inspecté image par image** ; il a été validé
   en jouant.
 

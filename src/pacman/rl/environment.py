@@ -22,6 +22,7 @@ import random
 from dataclasses import dataclass, field
 from typing import Any
 
+from ..core.entities import GhostMode
 from ..core.game import Game, GameState
 from ..core.geometry import Direction, Position
 from ..core.maze import Maze
@@ -41,7 +42,19 @@ class EnvConfig:
     #: Curriculum : 1 fantome pour demarrer, 4 pour le jeu complet.
     ghosts: int = 4
     randomize_start: bool = True
+    #: Reseme l'errance des fantomes en mode effraye. Attention au nom : cela ne
+    #: deplace PAS leur case de depart, qui reste la meme a chaque partie.
     randomize_ghosts: bool = True
+    #: Deplace les quatre fantomes sur des cases tirees au sort, hors maison et
+    #: donc actifs des le premier tick. Faux par defaut : la configuration
+    #: d'origine est celle sous laquelle tous les chiffres publies ont ete
+    #: mesures. Sert a eprouver si une politique depend de la maison centrale.
+    randomize_ghost_starts: bool = False
+    #: Distance minimale entre le depart de Pac-Man et celui d'un fantome.
+    #: Calibree sur la configuration d'origine, ou Blinky demarre deja a 4 cases
+    #: dans le pire cas : en dessous, la partie serait perdue d'avance pour une
+    #: raison qui n'a rien a voir avec la politique.
+    ghost_start_min_distance: int = 4
     #: Garde-fou : un agent qui tourne en rond ne doit pas bloquer une session.
     max_ticks: int = 12_000
     #: Terminer des le niveau fini plutot que d'enchainer les niveaux.
@@ -122,17 +135,58 @@ class PacmanEnv:
             for index, ghost in enumerate(self.game.ghosts):
                 ghost.seed_rng(self.seed * 1_000 + index * 7 + 1)
 
-        if not self.config.randomize_start:
-            return
+        if self.config.randomize_start:
+            start = rng.choice(sorted(self.metrics.walkable, key=lambda p: (p.y, p.x)))
+            pacman = self.game.pacman
+            pacman.start = start
+            pacman.reset()
+            # Sans cela, la case de depart porterait une pastille que la partie
+            # d'origine n'a pas, et le total de pastilles varierait avec la graine.
+            self.game.pellets.discard(start)
+            self.game.power_pellets.discard(start)
 
-        start = rng.choice(sorted(self.metrics.walkable, key=lambda p: (p.y, p.x)))
-        pacman = self.game.pacman
-        pacman.start = start
-        pacman.reset()
-        # Sans cela, la case de depart porterait une pastille que la partie
-        # d'origine n'a pas, et le total de pastilles varierait avec la graine.
-        self.game.pellets.discard(start)
-        self.game.power_pellets.discard(start)
+        # Apres le tirage de Pac-Man, jamais avant : la distance minimale se
+        # mesure depuis SA case, et l'ordre des tirages doit rester celui sous
+        # lequel les chiffres publies ont ete mesures.
+        if self.config.randomize_ghost_starts:
+            self._scatter_ghost_starts(rng)
+
+    def _scatter_ghost_starts(self, rng: random.Random) -> None:
+        """Sort les fantomes de la maison et les repartit sur des cases tirees au sort.
+
+        Repond a un angle mort du protocole : les graines ne resemaient que le
+        depart de Pac-Man et l'errance en mode effraye, si bien que les quatre
+        fantomes partaient des MEMES cases a l'entrainement comme a
+        l'evaluation. La garde sur les graines protege contre la memorisation
+        d'une partie, pas contre la dependance a cette configuration.
+
+        Hors maison, un fantome n'a plus de quota de pastilles a attendre : il
+        entre directement dans l'alternance scatter/chase, comme Blinky le fait
+        deja dans la configuration d'origine. Les quatre sont donc actifs des le
+        premier tick, ce qui rend la partie plus dure en soi — c'est pourquoi la
+        mesure ne vaut que comparee entre agents, un agent qui n'a rien appris
+        servant de temoin.
+        """
+        depart = self.game.pacman.start
+        minimum = self.config.ghost_start_min_distance
+        cases = sorted(
+            (
+                case
+                for case in self.metrics.walkable
+                if case != depart and self.metrics.distance(depart, case) >= minimum
+            ),
+            key=lambda p: (p.y, p.x),
+        )
+        if len(cases) < len(self.game.ghosts):
+            raise ValueError(
+                f"pas assez de cases a {minimum} cases ou plus de {depart} pour "
+                f"placer {len(self.game.ghosts)} fantomes ({len(cases)} disponibles)"
+            )
+
+        for ghost, case in zip(self.game.ghosts, rng.sample(cases, len(self.game.ghosts))):
+            ghost.start = case
+            ghost.reset()
+            ghost.set_mode(GhostMode.SCATTER, reverse=False)
 
     # ================================================================ interaction
 
