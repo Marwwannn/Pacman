@@ -784,8 +784,9 @@ l'exploration encore active, ce qui explique qu'il reste sous le score final.</p
 </tbody>
 </table>
 <h3 id="56-les-positions-aident-elles">5.6 Les positions aident-elles ?</h3>
-<p>Même curriculum, mêmes graines, mêmes hyperparamètres : seul le jeu de
-descripteurs change.</p>
+<p>L'expérience a été <strong>demandée par l'auteur</strong> (14/08) : « donne à l'agent la
+position de chaque fantôme et de la nourriture ». Même curriculum, mêmes
+graines, mêmes hyperparamètres : seul le jeu de descripteurs change.</p>
 <table>
 <thead>
 <tr>
@@ -826,8 +827,10 @@ question « faut-il donner plus d'information à l'agent ? » n'a pas de répons
 budget d'épisodes — et un modèle linéaire ne peut de toute façon pas composer
 ces informations entre elles.</p>
 <h3 id="57-les-fantomes-partaient-toujours-des-memes-cases">5.7 Les fantômes partaient toujours des mêmes cases</h3>
-<p>Un angle mort du protocole, trouvé en <strong>comptant</strong> ce que les graines faisaient
-varier au lieu de relire le code censé le produire : sur
+<p>Un angle mort du protocole, trouvé sur <strong>une question de l'auteur</strong> en
+relecture — « les positions des fantômes sont aléatoires ? » — à laquelle la
+réponse a été cherchée en <strong>comptant</strong> ce que les graines faisaient varier, au
+lieu de relire le code censé le produire : sur
 100 parties, l'évaluation ne produisait
 <strong>1 seule configuration de
 départ des fantômes</strong>. La graine ne resemait que la case de Pac-Man et l'errance
@@ -1036,6 +1039,22 @@ que sur le rythme des pas. Puis balayage mesuré du seuil de rattrapage.</p>
 <p>« Ce test itère sur une liste vide, prouve-le ou change de plan. »</p>
 </blockquote>
 <p>A mené au constat mesuré de l'absence d'impasse et au plan construit exprès.</p>
+<blockquote>
+<p>« Donne à l'agent la position de chaque fantôme et de la nourriture. »</p>
+</blockquote>
+<p>Le jeu de descripteurs <code>positions</code>, et le résultat négatif du §5.6 — moins bon
+de 18 %, publié tel quel.</p>
+<blockquote>
+<p>« Les positions des fantômes sont aléatoires ? »</p>
+</blockquote>
+<p>Non : une seule configuration de départ sur 100 parties, à l'entraînement
+comme à l'évaluation. Trois semaines de conception ne l'avaient pas vu ; une
+question l'a trouvé. Le §5.7 en est la réponse mesurée.</p>
+<blockquote>
+<p>« Relis le sujet et audite tout le projet contre lui. »</p>
+</blockquote>
+<p>Le jour du rendu : PDF manquant, CI absente, prérequis absents, critère des
+70 % jamais chiffré. Quatre écarts fermés dans la journée.</p>
 <h3 id="64-ce-qui-a-ete-decide-corrige-ou-refuse-cote-humain">6.4 Ce qui a été décidé, corrigé ou refusé côté humain</h3>
 <ul>
 <li><strong>Le périmètre</strong> : le sujet initial était le back-end seul ; le client web
@@ -1044,6 +1063,9 @@ que sur le rythme des pas. Puis balayage mesuré du seuil de rattrapage.</p>
 <li><strong>Les bugs trouvés en jouant, pas par les tests</strong> : le jeu tournait à
   48 cases/s (injouable) puis restait saccadé. Aucun test ne pouvait le voir —
   seul un humain, manette en main.</li>
+<li><strong>Les deux résultats les plus importants du rendu viennent de questions
+  humaines</strong> (§5.6 et §5.7), pas d'une initiative de l'outil. L'outil a
+  mesuré ; la question qui valait la peine d'être posée est l'apport humain.</li>
 <li><strong>Ce qui a été refusé</strong> : des élargissements de périmètre sans raison, et un
   test « vert » qui ne prouvait rien.</li>
 </ul>

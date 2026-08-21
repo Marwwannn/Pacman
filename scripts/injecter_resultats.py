@@ -187,8 +187,10 @@ def fantomes_ailleurs() -> str:
 
     return f"""### 5.7 Les fantômes partaient toujours des mêmes cases
 
-Un angle mort du protocole, trouvé en **comptant** ce que les graines faisaient
-varier au lieu de relire le code censé le produire : sur
+Un angle mort du protocole, trouvé sur **une question de l'auteur** en
+relecture — « les positions des fantômes sont aléatoires ? » — à laquelle la
+réponse a été cherchée en **comptant** ce que les graines faisaient varier, au
+lieu de relire le code censé le produire : sur
 {mesure['parties']} parties, l'évaluation ne produisait
 **{conditions['reference']['configurations_distinctes']} seule configuration de
 départ des fantômes**. La graine ne resemait que la case de Pac-Man et l'errance
@@ -301,8 +303,9 @@ def descripteurs(campagne: dict) -> str:
 
     return f"""### 5.6 Les positions aident-elles ?
 
-Même curriculum, mêmes graines, mêmes hyperparamètres : seul le jeu de
-descripteurs change.
+L'expérience a été **demandée par l'auteur** (14/08) : « donne à l'agent la
+position de chaque fantôme et de la nourriture ». Même curriculum, mêmes
+graines, mêmes hyperparamètres : seul le jeu de descripteurs change.
 
 | Descripteurs | Poids | Médiane 1F | Médiane 4F | Écart-type 4F | Victoires 4F | Entraînement |
 |---|---:|---:|---:|---:|---:|---:|

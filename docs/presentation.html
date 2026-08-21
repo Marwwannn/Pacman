@@ -304,7 +304,7 @@ python scripts/campagne_rl.py     # toute la campagne, graines fixées</pre>
   <ul>
     <li><b>Claude Code</b> (Anthropic), du 19/07 au 21/08. Aucun autre outil. <b>Chaque commit</b> porte le trailer <code>Co-Authored-By: Claude</code>.</li>
     <li><b>Ce qu'il a fait</b> : le socle sans intérêt pédagogique, la fidélité à l'arcade, les 261 tests, l'audit sécurité, le cadrage chiffré de l'approche.</li>
-    <li><b>Ce que j'ai fait</b> : cadrer, arbitrer, éprouver, refuser. Le périmètre (client web, puis agent apprenant), la méthode (renforcement plutôt que non-supervisé), et les bugs que <b>seul un joueur</b> pouvait voir — le jeu tournait à 48 cases/s, puis restait saccadé. Aucun test ne les voyait.</li>
+    <li><b>Ce que j'ai fait</b> : cadrer, arbitrer, éprouver, refuser. Le périmètre (client web, puis agent apprenant), la méthode (renforcement plutôt que non-supervisé), et les bugs que <b>seul un joueur</b> pouvait voir — le jeu tournait à 48 cases/s, puis restait saccadé. Aucun test ne les voyait. Et les <b>deux questions</b> qui ont produit les résultats les plus forts du rendu : « et si on lui donnait la position des fantômes ? » (−18 %, publié tel quel) et « les positions des fantômes sont aléatoires ? » (une seule configuration sur 100 parties — l'angle mort levé).</li>
   </ul>
   <p class="cite" style="margin-top:1rem">« Mesure ce moteur comme environnement d'apprentissage : vitesse, reproductibilité, points de décision. Dis-moi ce que ces chiffres <b>excluent</b> comme approche. »</p>
   <p style="margin-top:.8rem">→ a produit les 34 points de décision, donc toute la conception de l'environnement.</p>

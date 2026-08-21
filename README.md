@@ -439,6 +439,16 @@ la partie qui décide du résultat.
   au constat mesuré que le labyrinthe classique n'a **aucune** impasse, et au
   plan 11×7 construit exprès pour éprouver le cas.
 - « On part sur de l'apprentissage par renforcement. »
+- « Donne à l'agent la position de chaque fantôme et de la nourriture. » → le
+  jeu de descripteurs `positions`, et le résultat **négatif** du §5.6 de la
+  documentation : −18 %, publié tel quel.
+- « Les positions des fantômes sont aléatoires ? » → non : **une seule
+  configuration** sur 100 parties, à l'entraînement comme à l'évaluation.
+  Trois semaines de conception ne l'avaient pas vu ; une question l'a trouvé.
+  Le §5.7 de la documentation en est la réponse mesurée.
+- « Relis le sujet et audite tout le projet contre lui. » → le jour du rendu :
+  PDF manquant, CI absente, prérequis absents, critère des 70 % jamais
+  chiffré. Quatre écarts fermés dans la journée.
 
 ### Ce qui a été décidé, corrigé ou refusé côté humain
 
@@ -450,6 +460,10 @@ la partie qui décide du résultat.
 - **Les bugs trouvés en jouant**, pas par les tests : le jeu tournait à
   48 cases/s (injouable) puis restait saccadé. Aucun test ne pouvait le voir,
   seul un humain manette en main.
+- **Les deux résultats les plus importants du rendu viennent de questions
+  humaines**, pas d'une initiative de l'outil : l'expérience `positions`
+  (§5.6) et l'angle mort des fantômes (§5.7). L'outil a mesuré ; la question
+  qui valait la peine d'être posée, c'est l'apport humain.
 - **Ce qui a été refusé** : des propositions de l'outil ont été écartées quand
   elles élargissaient le périmètre sans raison, et un test « vert » a été
   rejeté parce qu'il ne prouvait rien.

@@ -443,8 +443,9 @@ l'exploration encore active, ce qui explique qu'il reste sous le score final.
 
 ### 5.6 Les positions aident-elles ?
 
-Même curriculum, mêmes graines, mêmes hyperparamètres : seul le jeu de
-descripteurs change.
+L'expérience a été **demandée par l'auteur** (14/08) : « donne à l'agent la
+position de chaque fantôme et de la nourriture ». Même curriculum, mêmes
+graines, mêmes hyperparamètres : seul le jeu de descripteurs change.
 
 | Descripteurs | Poids | Médiane 1F | Médiane 4F | Écart-type 4F | Victoires 4F | Entraînement |
 |---|---:|---:|---:|---:|---:|---:|
@@ -461,8 +462,10 @@ ces informations entre elles.
 
 ### 5.7 Les fantômes partaient toujours des mêmes cases
 
-Un angle mort du protocole, trouvé en **comptant** ce que les graines faisaient
-varier au lieu de relire le code censé le produire : sur
+Un angle mort du protocole, trouvé sur **une question de l'auteur** en
+relecture — « les positions des fantômes sont aléatoires ? » — à laquelle la
+réponse a été cherchée en **comptant** ce que les graines faisaient varier, au
+lieu de relire le code censé le produire : sur
 100 parties, l'évaluation ne produisait
 **1 seule configuration de
 départ des fantômes**. La graine ne resemait que la case de Pac-Man et l'errance
@@ -512,6 +515,7 @@ condition dispersée lui est en tout point équivalente.
 intervalles par bootstrap sur 2000 tirages, graine fixe)*
 
 <!-- FIN RESULTATS -->
+
 
 
 
@@ -610,6 +614,22 @@ que sur le rythme des pas. Puis balayage mesuré du seuil de rattrapage.
 
 A mené au constat mesuré de l'absence d'impasse et au plan construit exprès.
 
+> « Donne à l'agent la position de chaque fantôme et de la nourriture. »
+
+Le jeu de descripteurs `positions`, et le résultat négatif du §5.6 — moins bon
+de 18 %, publié tel quel.
+
+> « Les positions des fantômes sont aléatoires ? »
+
+Non : une seule configuration de départ sur 100 parties, à l'entraînement
+comme à l'évaluation. Trois semaines de conception ne l'avaient pas vu ; une
+question l'a trouvé. Le §5.7 en est la réponse mesurée.
+
+> « Relis le sujet et audite tout le projet contre lui. »
+
+Le jour du rendu : PDF manquant, CI absente, prérequis absents, critère des
+70 % jamais chiffré. Quatre écarts fermés dans la journée.
+
 ### 6.4 Ce qui a été décidé, corrigé ou refusé côté humain
 
 - **Le périmètre** : le sujet initial était le back-end seul ; le client web
@@ -618,6 +638,9 @@ A mené au constat mesuré de l'absence d'impasse et au plan construit exprès.
 - **Les bugs trouvés en jouant, pas par les tests** : le jeu tournait à
   48 cases/s (injouable) puis restait saccadé. Aucun test ne pouvait le voir —
   seul un humain, manette en main.
+- **Les deux résultats les plus importants du rendu viennent de questions
+  humaines** (§5.6 et §5.7), pas d'une initiative de l'outil. L'outil a
+  mesuré ; la question qui valait la peine d'être posée est l'apport humain.
 - **Ce qui a été refusé** : des élargissements de périmètre sans raison, et un
   test « vert » qui ne prouvait rien.
 
