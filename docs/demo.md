@@ -17,8 +17,12 @@ cd C:\Users\marwy\Documents\MasterTRIED\IA_PO\Projet
   à l'écran.
 - Notifications Windows coupées (Paramètres → Système → Notifications, ou mode
   « Ne pas déranger »).
-- Enregistreur : **Win + G** (Xbox Game Bar, intégré à Windows 11) ou OBS. Tester
-  10 secondes avant, vérifier que le micro capte.
+- Enregistreur : l'**Outil Capture d'écran** de Windows 11 (`Win + Maj + S`,
+  puis le bouton caméra), en sélectionnant **tout l'écran**, micro activé. Il
+  filme l'écran entier, donc les passages du terminal au navigateur. **Pas la
+  Game Bar (`Win + G`)** : elle n'enregistre qu'une seule fenêtre et perd le
+  navigateur au premier changement. Tester 10 secondes avant, vérifier que le
+  micro capte.
 - Une prise d'essai complète avant la vraie : la première est toujours trop
   longue.
 
@@ -141,3 +145,14 @@ résultats négatifs publiés, un angle mort levé. Merci. »
 
 Le montage n'est pas interdit : une coupe entre deux séquences vaut mieux
 qu'une hésitation de vingt secondes.
+
+## Après l'enregistrement
+
+1. Regarder la vidéo une fois en entier : durée ≤ 5 min, son audible, texte
+   lisible en plein écran.
+2. La mettre en ligne — **YouTube en « non répertorié »** (le lien suffit, la
+   vidéo n'apparaît pas dans les recherches) ou Google Drive en partage par
+   lien. Ne pas la commiter dans le dépôt : un MP4 de cinq minutes dépasse vite
+   la limite de taille de GitHub.
+3. Coller le lien dans le README, section « Exemples d'utilisation », et dans
+   le courriel au professeur.
