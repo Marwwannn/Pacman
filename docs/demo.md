@@ -12,7 +12,7 @@ jusqu'à 5 minutes.
 | | Ce qu'on fait | Ce qu'on dit |
 |---|---|---|
 | **1. Le jeu** (1 min) | `pacman-server`, ouvrir http://127.0.0.1:8000, jouer 30 s, `Ctrl+C` | « Le serveur Python calcule tout ; le navigateur ne fait qu'afficher. » |
-| **2. L'IA joue** (1 min) | dans le navigateur, ouvrir **http://127.0.0.1:8000/?ia=appris**, Entrée, laisser jouer 40 s ; puis `?ia=recherche` 20 s | « Là, c'est le modèle que j'ai entraîné qui joue, en direct — le serveur décide à chaque croisement, je ne touche à rien. Il bat les règles écrites à la main sur le score, mais il gagne rarement : douze poids ne planifient pas la fin du niveau. L'agent de recherche, qui simule les coups, gagne 94 % — la différence, c'est l'anticipation. » |
+| **2. L'IA joue** (1 min) | dans le navigateur, ouvrir **http://127.0.0.1:8000/?ia=appris** (la partie démarre seule), laisser jouer 40 s ; puis `?ia=recherche` 20 s | « Là, c'est le modèle que j'ai entraîné qui joue, en direct — le serveur décide à chaque croisement, je ne touche à rien. Il bat les règles écrites à la main sur le score, mais il gagne rarement : douze poids ne planifient pas la fin du niveau. L'agent de recherche, qui simule les coups, gagne 94 % — la différence, c'est l'anticipation. » |
 | **3. L'IA réfléchit** (1 min) | ouvrir `docs/decisions.html`, lecture 20 s, pause sur un croisement | « On rejoue une partie de l'IA. À chaque croisement, on voit ce qu'elle a envisagé et pourquoi elle a choisi. » |
 
 Rien d'autre à lancer. Une hésitation ne se recommence pas.

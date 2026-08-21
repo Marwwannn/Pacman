@@ -121,13 +121,14 @@
   <div class="etape">Démonstration</div>
   <h2>Ce qui tourne</h2>
   <pre>pacman-server            # le jeu, sur http://127.0.0.1:8000
+                         # l'IA joue en direct : http://127.0.0.1:8000/?ia=appris
 
 pacman-rl baselines --ghosts 1     # le plancher et le plafond
 pacman-rl compare --ghosts 4 --weights results/poids_4fantomes.json
 python scripts/exporter_decisions.py   # docs/decisions.html : le raisonnement, coup par coup
 
 python scripts/campagne_rl.py     # toute la campagne, graines fixées</pre>
-  <p>Trois choses à montrer : <b>on joue</b> (le terrain est réel), <b>l'agent joue</b> (on le voit hésiter aux intersections), <b>les chiffres tombent</b> (100 parties sur graines jamais vues).</p>
+  <p>Trois choses à montrer : <b>on joue</b> (le terrain est réel), <b>l'agent joue en direct</b> (<code>?ia=appris</code> : le modèle final au volant, on le voit hésiter aux intersections), <b>les chiffres tombent</b> (100 parties sur graines jamais vues).</p>
 </section>
 
 <!-- 6 -->

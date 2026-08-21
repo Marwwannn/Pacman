@@ -80,6 +80,10 @@ class Client {
 
     this.hud.setBest(this.record);
     await this.ecranTitre();
+    // Un spectateur a deja dit ce qu'il voulait en ouvrant `?ia=...` : la
+    // partie demarre seule. Les bruitages restent muets tant qu'aucune touche
+    // n'a ete pressee — le navigateur l'impose, et `Sounds.play` le sait.
+    if (PILOTE) this.nouvellePartie();
     requestAnimationFrame((t) => this.boucle(t));
   }
 

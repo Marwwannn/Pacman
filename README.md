@@ -49,12 +49,18 @@ Une fois le projet installé (deux minutes, section suivante) :
 pacman-server
 ```
 
-puis ouvrir **http://127.0.0.1:8000/?ia=appris** et appuyer sur Entrée. Le
-serveur fait jouer le **modèle final** — l'agent appris du comparatif, dont les
-poids sont embarqués dans le paquet — et le navigateur affiche la partie comme
-pour un joueur humain. Les touches de direction sont ignorées ; `Espace` met en
-pause. L'écran d'accueil propose aussi les trois autres agents :
-`?ia=recherche`, `?ia=heuristique`, `?ia=aleatoire`.
+puis ouvrir **http://127.0.0.1:8000/?ia=appris** : la partie démarre toute
+seule. Le serveur fait jouer le **modèle final** — l'agent appris du comparatif,
+dont les poids sont embarqués dans le paquet — et le navigateur affiche la
+partie comme pour un joueur humain. Les touches de direction sont ignorées ;
+`Espace` met en pause. L'écran d'accueil du jeu (http://127.0.0.1:8000)
+propose aussi les trois autres agents : `?ia=recherche`, `?ia=heuristique`,
+`?ia=aleatoire`.
+
+![L'agent appris joue en direct dans le navigateur](docs/captures/ia_en_direct.png)
+
+*Si le serveur tournait déjà avant une mise à jour du dépôt, le navigateur peut
+garder l'ancien client en cache : `Ctrl+F5` sur la page le recharge.*
 
 L'agent que l'on regarde est **exactement celui qui a été mesuré** : le pilote
 côté serveur reprend la discipline de l'environnement d'entraînement (décider
