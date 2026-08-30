@@ -1,10 +1,10 @@
-# Pac-Man — un terrain de mesure pour l'intelligence artificielle
+# Pac-Man : un terrain de mesure pour l'intelligence artificielle
 
 Projet libre d'Intelligence Artificielle, Master 1 (module IA_PO, 2025-2026).
 
 **Le problème.** Comparer des approches d'IA demande un terrain qui ne triche
 pas : reproductible, rapide, et dont on connaît les règles exactes. Les
-environnements tout faits sont des boîtes noires — on y mesure un agent sans
+environnements tout faits sont des boîtes noires : on y mesure un agent sans
 jamais pouvoir expliquer ce que l'environnement lui a fait. Ce projet
 construit donc le terrain **et** les agents, et les mesure ensemble.
 
@@ -24,15 +24,15 @@ jeu est jouable par n'importe qui dans un navigateur, ce qui rend le
 comportement de l'IA lisible sans lire une ligne de code.
 
 Le partage est net : le back-end simule, le front affiche. Le client ne
-contient aucune règle du jeu — il envoie des intentions et dessine l'état
+contient aucune règle du jeu : il envoie des intentions et dessine l'état
 que le serveur lui diffuse.
 
 **Où est l'IA dans le dépôt.** En lignes de Python, les modules d'intelligence
-artificielle — `ai/` (les fantômes), `rl/` (agents, environnement, protocole
-d'évaluation) et les quatre scripts de mesure — pèsent **47 % du code** ;
+artificielle, `ai/` (les fantômes), `rl/` (agents, environnement, protocole
+d'évaluation) et les quatre scripts de mesure, pèsent **47 % du code** ;
 36 % si l'on compte le client web en JavaScript. Le reste est le moteur et
 l'API, qui n'ont pas été écrits pour eux-mêmes mais **comme banc d'essai** :
-déterministes, clonables, sans horloge — trois propriétés dont aucun agent ne
+déterministes, clonables, sans horloge : trois propriétés dont aucun agent ne
 peut se passer et que les tests gardent en premier. Le chiffre se recalcule
 avec `wc -l` sur ces dossiers ; il n'est pas plus flatteur que ça.
 
@@ -50,8 +50,8 @@ pacman-server
 ```
 
 puis ouvrir **http://127.0.0.1:8000/?ia=appris** : la partie démarre toute
-seule. Le serveur fait jouer le **modèle final** — l'agent appris du comparatif,
-dont les poids sont embarqués dans le paquet — et le navigateur affiche la
+seule. Le serveur fait jouer le **modèle final** : l'agent appris du comparatif,
+dont les poids sont embarqués dans le paquet, et le navigateur affiche la
 partie comme pour un joueur humain. Les touches de direction sont ignorées ;
 `Espace` met en pause. L'écran d'accueil du jeu (http://127.0.0.1:8000)
 propose aussi les trois autres agents : `?ia=recherche`, `?ia=heuristique`,
@@ -174,7 +174,7 @@ les propriétés dont tout le reste dépend**. Deux parties lancées avec la mê
 graine donnent le même score au tick près (déterminisme), l'évaluation refuse
 les graines vues à l'entraînement, et chaque pas de l'agent se termine sur une
 vraie intersection. Quand une propriété n'est pas éprouvable sur le
-labyrinthe classique — il ne contient aucune impasse — le test construit son
+labyrinthe classique (il ne contient aucune impasse), le test construit son
 propre plan plutôt que d'itérer sur une liste vide.
 
 ## API
@@ -195,12 +195,12 @@ propre plan plutôt que d'itérer sur une liste vide.
 
 Le corps de `POST /api/games` accepte `pilot` (`aleatoire`, `heuristique`,
 `appris` ou `recherche`) : la partie est alors jouée par cet agent, et les
-entrées de direction — REST comme WebSocket — sont ignorées. La réponse
+entrées de direction (REST comme WebSocket) sont ignorées. La réponse
 renvoie le nom du pilote, `null` pour un humain.
 
 ### WebSocket
 
-`ws://host/ws/games/{id}` — le serveur fait tourner la partie à 60 ticks/s et
+`ws://host/ws/games/{id}` : le serveur fait tourner la partie à 60 ticks/s et
 diffuse une image par tick.
 
 À la connexion, le client reçoit un message `init` avec le plan et l'état
@@ -222,7 +222,7 @@ jouer la partie deux fois plus vite. Sans aucun abonné, plus rien ne tourne.
 
 Le client affiche à la fréquence de l'écran et avance à vitesse constante
 vers la case que le serveur lui donne. Le moteur, lui, progresse par paliers
-irréguliers — une entité à 0,16 case par tick n'avance qu'un tick sur six.
+irréguliers : une entité à 0,16 case par tick n'avance qu'un tick sur six.
 Sans ce lissage, l'œil voit chaque palier.
 
 La cadence ne fixe pas la vitesse : `SPEED_UNIT` traduit les vitesses,
@@ -285,7 +285,7 @@ complètes par seconde en simulation).
 
 ### Pourquoi le renforcement
 
-Le non-supervisé strict — clustering, autoencodeur — ne produit pas de
+Le non-supervisé strict (clustering, autoencodeur) ne produit pas de
 politique. Il peut construire une **représentation** de l'état, jamais décider
 quoi faire. Or la tâche demandée est bien de décider. L'apprentissage se fait
 donc par renforcement, sur des descripteurs construits à la main à partir de
@@ -297,7 +297,7 @@ la structure du labyrinthe.
 du labyrinthe classique, **34 seulement** offrent un vrai choix : 89 % du plan
 est un couloir où la direction est imposée. Décider à chaque tick produirait
 2 440 décisions sans conséquence par partie. L'environnement traverse donc les
-couloirs lui-même et ne rend la main qu'aux intersections — l'horizon tombe de
+couloirs lui-même et ne rend la main qu'aux intersections : l'horizon tombe de
 ~2 500 pas à ~100, sans rien perdre.
 
 **Le déterminisme du moteur est traité comme un piège.** Même labyrinthe,
@@ -305,7 +305,7 @@ mêmes fantômes, même départ, générateurs jamais resemés : un agent y mém
 une suite de coups qui donne un score flatteur à l'entraînement et s'effondre
 au moindre changement. Chaque épisode part donc d'une graine qui décale le
 départ de Pac-Man et l'errance des fantômes, et **l'évaluation se fait sur une
-plage de graines disjointe** de celle de l'entraînement — la fonction
+plage de graines disjointe** de celle de l'entraînement : la fonction
 `evaluate` refuse d'ailleurs les graines d'entraînement.
 
 ### Récompenses
@@ -330,17 +330,17 @@ y crée une marche que rien dans l'état ne permet de prédire.
 Un score d'agent entraîné ne veut rien dire seul. Il faut un plancher et un
 plafond raisonnable, mesurés dans les mêmes conditions :
 
-- **aléatoire** — tire une direction au sort à chaque intersection ;
-- **heuristique** — règles écrites à la main : fuir, chasser les fantômes
+- **aléatoire** : tire une direction au sort à chaque intersection ;
+- **heuristique** : règles écrites à la main : fuir, chasser les fantômes
   effrayés, sinon aller à la pastille la plus proche ;
-- **recherche** — n'apprend rien : à chaque intersection il **clone la
+- **recherche** : n'apprend rien : à chaque intersection il **clone la
   partie**, joue chaque coup, laisse le moteur dérouler la suite, et garde la
   meilleure issue. Le moteur étant déterministe, cette simulation est
-  **exacte** — ni nœud de hasard, ni espérance à estimer, ce qui la distingue
+  **exacte**, ni nœud de hasard, ni espérance à estimer, ce qui la distingue
   d'un expectimax ou d'un MCTS. Il gagne largement, et c'est justement la
   discussion : il paie à *chaque* coup ce que l'agent entraîné a payé une fois
   pour toutes, et il s'effondre sans simulateur gratuit ;
-- **Q approximé** — `Q(s,a) = w · f(s,a)` sur des descripteurs bornés dans
+- **Q approximé** : `Q(s,a) = w · f(s,a)` sur des descripteurs bornés dans
   [0, 1]. Le tabulaire est exclu (2^244 configurations pour les seules
   pastilles), le réseau profond aussi (dix à cent fois plus d'épisodes pour une
   boîte noire). Douze poids s'entraînent en quelques minutes **et se lisent** :
@@ -359,7 +359,7 @@ mesure :
 Les positions sont exprimées **dans le repère de Pac-Man**, jamais en
 coordonnées absolues : dans un modèle linéaire, un poids sur `x` voudrait dire
 « préfère la droite du plan », ce qui ne généralise à rien. Les fantômes sont
-rangés du plus proche au plus lointain — sans cet ordre, échanger deux
+rangés du plus proche au plus lointain, sans cet ordre, échanger deux
 fantômes changerait le vecteur et l'agent apprendrait quatre fois la même
 chose.
 
@@ -414,7 +414,7 @@ Les quatre agents à quatre fantômes, sur 100 parties de graines jamais vues, �
 | q-approxime | 2895 | 1171 | 560 | 5800 | 4% | 96% |
 | recherche | 4990 | 1815 | 0 | 10690 | 94% | 7% |
 
-L'agent **appris** dépasse l'heuristique écrite à la main. L'agent de **recherche** les dépasse tous les deux — sans avoir rien appris, mais en payant à chaque coup ce que l'agent entraîné a payé une seule fois.
+L'agent **appris** dépasse l'heuristique écrite à la main. L'agent de **recherche** les dépasse tous les deux, sans avoir rien appris, mais en payant à chaque coup ce que l'agent entraîné a payé une seule fois.
 <!-- FIN RESULTATS -->
 
 Détail complet, courbe d'apprentissage, poids appris et comparatif des jeux de
@@ -431,8 +431,8 @@ lit** : le labyrinthe à cet instant, les directions envisagées, ce que chacune
 valait, et la décomposition `poids × descripteur` qui a tranché.
 
 Un détail que la page rend visible et qu'aucun tableau ne montrerait : les
-termes **identiques pour toutes les directions** — le biais, l'avancement dans
-le niveau — peuvent peser très lourd sans jamais rien choisir. Ils sont donc
+termes **identiques pour toutes les directions** (le biais, l'avancement dans
+le niveau) peuvent peser très lourd sans jamais rien choisir. Ils sont donc
 sortis du chiffre affiché. Ce qui reste est ce qui décide vraiment.
 
 C'est le seul agent dont on puisse faire ça, et c'est la raison d'avoir
@@ -458,13 +458,13 @@ plus près de ce qui s'est réellement passé.
 
 ### Ce qui a été utilisé
 
-**Claude Code** (Anthropic, modèles **Claude Opus 4.8** puis **Claude Opus 5** — le modèle exact figure dans le trailer de chaque commit), en ligne de commande,
+**Claude Code** (Anthropic, modèles **Claude Opus 4.8** puis **Claude Opus 5** : le modèle exact figure dans le trailer de chaque commit), en ligne de commande,
 du 19/07/2026 au 21/08/2026. Aucun autre outil d'IA générative.
 
 L'usage est **total et assumé** : **chaque commit** du dépôt porte le trailer
 `Co-Authored-By: Claude` (vérifiable : `git log --format='%(trailers)'`), et
 il n'y a pas de fichier écrit sans l'outil. Le rôle humain n'a pas été d'écrire les lignes mais de **cadrer,
-arbitrer, éprouver et refuser** — ce qui, sur un projet de cette taille, est
+arbitrer, éprouver et refuser** : ce qui, sur un projet de cette taille, est
 la partie qui décide du résultat.
 
 ### Pourquoi
@@ -510,7 +510,7 @@ la partie qui décide du résultat.
   client web, puis de l'agent apprenant, sont des décisions prises en cours de
   route.
 - **L'approche d'IA** : renforcement plutôt que non-supervisé strict, après
-  cadrage — un clustering ne produit pas de politique.
+  cadrage : un clustering ne produit pas de politique.
 - **Les bugs trouvés en jouant**, pas par les tests : le jeu tournait à
   48 cases/s (injouable) puis restait saccadé. Aucun test ne pouvait le voir,
   seul un humain manette en main.
@@ -537,7 +537,7 @@ sont traitées comme telles :
 
 - le nom de labyrinthe est validé contre un motif strict, sans séparateur ni
   point ;
-- aucune origine tierce n'est autorisée par défaut — le client étant servi par
+- aucune origine tierce n'est autorisée par défaut : le client étant servi par
   ce même serveur, `PACMAN_ALLOWED_ORIGINS` n'est utile qu'à un front séparé ;
 - un message WebSocket illisible est signalé, jamais fatal à la partie ;
 - les noms du classement, saisis par les joueurs, sont nettoyés à l'entrée et
@@ -545,22 +545,22 @@ sont traitées comme telles :
 
 ## Feuille de route
 
-- [x] 1 — structure du projet
-- [x] 2 — modèle : géométrie et labyrinthe
-- [x] 3 — entités (Pac-Man, fantômes)
-- [x] 4 — IA des fantômes (4 personnalités)
-- [x] 5 — boucle de jeu, score, vies, modes
-- [x] 6 — pathfinding BFS / A*
-- [x] 7 — tests unitaires
-- [x] 8 — API REST
-- [x] 9 — WebSocket temps réel
-- [x] 10 — fruits, meilleurs scores, polish
-- [x] 11 — client web : rendu canvas, entrées, son, classement
-- [x] 12 — audit sécurité et durcissement des entrées
-- [x] 13 — agent joueur par renforcement : harnais, baselines, Q approximé
-- [x] 14 — agent de recherche en ligne, et rejeu tick par tick de chaque décision
-- [x] 15 — angle mort du protocole levé : fantômes dispersés, la politique tient
-- [x] 16 — l'IA joue en direct dans le client web (`?ia=appris`), avec le modèle final embarqué
+- [x] 1 : structure du projet
+- [x] 2 : modèle : géométrie et labyrinthe
+- [x] 3 : entités (Pac-Man, fantômes)
+- [x] 4 : IA des fantômes (4 personnalités)
+- [x] 5 : boucle de jeu, score, vies, modes
+- [x] 6 : pathfinding BFS / A*
+- [x] 7 : tests unitaires
+- [x] 8 : API REST
+- [x] 9 : WebSocket temps réel
+- [x] 10 : fruits, meilleurs scores, polish
+- [x] 11 : client web : rendu canvas, entrées, son, classement
+- [x] 12 : audit sécurité et durcissement des entrées
+- [x] 13 : agent joueur par renforcement : harnais, baselines, Q approximé
+- [x] 14 : agent de recherche en ligne, et rejeu tick par tick de chaque décision
+- [x] 15 : angle mort du protocole levé : fantômes dispersés, la politique tient
+- [x] 16 : l'IA joue en direct dans le client web (`?ia=appris`), avec le modèle final embarqué
 
 ## Limites connues
 
@@ -579,7 +579,7 @@ sont traitées comme telles :
 ## Pistes d'amélioration
 
 - **Un réseau à la place du modèle linéaire**, pour *croiser* les
-  descripteurs au lieu de les additionner — c'est la limite que le jeu
+  descripteurs au lieu de les additionner : c'est la limite que le jeu
   `positions` a rendue visible (−18 % avec plus d'information).
 - **Une recherche à budget de simulations (MCTS)** plutôt qu'à profondeur
   fixe : la profondeur 3 coûte 4 minutes pour 100 parties, un budget
@@ -588,16 +588,18 @@ sont traitées comme telles :
 - Descripteurs *appris* plutôt qu'écrits : le non-supervisé retrouverait ici
   sa vraie place, en amont de la politique et non à sa place.
 - Niveaux multiples et vitesses croissantes, mode multijoueur, et fantômes
-  « chasseurs » exploitant `pathfinding` — ils cesseraient d'être myopes,
+  « chasseurs » exploitant `pathfinding` : ils cesseraient d'être myopes,
   donc battables.
 
 ## Documentation
 
 - **Documentation technique** (contexte, architecture, choix, métriques,
   usage de l'IA) : [`docs/documentation.md`](docs/documentation.md), et sa
-  version **PDF** [`docs/documentation.pdf`](docs/documentation.pdf) — les deux
+  version **PDF** [`docs/documentation.pdf`](docs/documentation.pdf) : les deux
   sont produites par `python scripts/documentation_html.py`.
-- **Support oral** : [`docs/presentation.html`](docs/presentation.html)
-  (26 diapositives, navigation au clavier, imprimable).
+- **Support oral** : [`docs/presentation.pptx`](docs/presentation.pptx)
+  (17 diapositives avec captures du jeu, produit par
+  `python scripts/generer_presentation.py` depuis `results/*.json` :
+  aucun chiffre recopié à la main ; s'importe tel quel dans Google Slides).
 - **Script de la démo** : [`docs/demo.md`](docs/demo.md), chaque commande
   chronométrée.

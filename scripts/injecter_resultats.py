@@ -1,6 +1,6 @@
 """Injecte les mesures de `results/campagne.json` dans les documents du rendu.
 
-Aucun chiffre du README, de la documentation ou du support oral n'est recopie
+Aucun chiffre du README ou de la documentation n'est recopie
 a la main : ils sont tous ecrits ici, depuis le JSON produit par la campagne.
 Un chiffre recopie se desynchronise au premier reentrainement, et personne ne
 s'en apercoit.
@@ -20,7 +20,6 @@ CAMPAGNE = RACINE / "results" / "campagne.json"
 COMPARATIF = RACINE / "results" / "descripteurs.json"
 FANTOMES = RACINE / "results" / "fantomes_ailleurs.json"
 DOCUMENTATION = RACINE / "docs" / "documentation.md"
-PRESENTATION = RACINE / "docs" / "presentation.html"
 LISEZMOI = RACINE / "README.md"
 
 DEBUT = "<!-- RESULTATS -->"
@@ -30,8 +29,8 @@ FIN = "<!-- FIN RESULTATS -->"
 #: la valeur vient du run : c'est la lecture qui est humaine, pas le chiffre.
 LECTURES = {
     "biais": (
-        "constante — **sans effet sur les decisions** (identique pour toutes les actions)",
-        "constante — **sans effet sur les decisions** (identique pour toutes les actions)",
+        "constante, **sans effet sur les decisions** (identique pour toutes les actions)",
+        "constante, **sans effet sur les decisions** (identique pour toutes les actions)",
     ),
     "mange_pastille": (
         "va chercher la pastille",
@@ -63,12 +62,12 @@ tableau se lisent a l'envers :
 - Deux descripteurs peuvent etre **colineaires**. Sur une case qui porte une
   pastille, `mange_pastille` vaut 1 *et* `proximite_pastille` vaut 1 : les
   deux poids se partagent le credit, et seule leur **somme** a un sens. Ici
-  elle reste positive — l'agent va bien manger.
+  elle reste positive : l'agent va bien manger.
 
 Ce que le tableau dit vraiment : l'agent a appris **la peur avant la
 gourmandise**. Fuir les chasseurs et l'encerclement pese plus lourd que
 n'importe quelle pastille, et chasser une proie effrayee pese plus encore. Ce
-sont exactement les trois priorites de l'heuristique ecrite a la main — sauf
+sont exactement les trois priorites de l'heuristique ecrite a la main, sauf
 que personne ne les lui a dites.
 """
 
@@ -114,11 +113,11 @@ def markdown(campagne: dict) -> str:
 
     return f"""{DEBIT_MESURES.format(episodes=episodes, parties=parties)}
 
-### 5.1 Un fantôme — l'agent atteint-il le plafond ?
+### 5.1 Un fantôme : l'agent atteint-il le plafond ?
 
 {tableau(etapes["baselines_1f"] + [appris_1f])}
 
-### 5.2 Quatre fantômes — le jeu complet
+### 5.2 Quatre fantômes : le jeu complet
 
 {tableau(etapes["comparatif_4f"])}
 
@@ -126,7 +125,7 @@ Et le témoin, entraîné directement à quatre fantômes sans passer par un :
 
 {tableau([direct_4f])}
 
-Le curriculum **n'améliore donc pas le score** — il n'apporte qu'un peu de
+Le curriculum **n'améliore donc pas le score** : il n'apporte qu'un peu de
 régularité et quelques victoires. La recommandation initiale était bonne comme
 méthode (elle sépare « l'agent n'apprend pas » de « le problème est trop
 dur ») ; elle ne l'était pas comme gain de performance, et c'est la mesure qui
@@ -151,7 +150,7 @@ faible. C'est l'intérêt d'un modèle linéaire : **on lit la politique**.
 
 ### 5.5 La courbe d'apprentissage (1 fantôme)
 
-Score médian par fenêtre de 500 épisodes, pendant l'entraînement — donc avec
+Score médian par fenêtre de 500 épisodes, pendant l'entraînement, donc avec
 l'exploration encore active, ce qui explique qu'il reste sous le score final.
 
 | Épisode | ε | Score médian |
@@ -166,7 +165,7 @@ l'exploration encore active, ce qui explique qu'il reste sous le score final.
 def fantomes_ailleurs() -> str:
     """Section 5.7 : la politique tient-elle si les fantomes changent de depart ?
 
-    Rien n'est ecrit si la mesure n'a pas ete faite — un document qui parle
+    Rien n'est ecrit si la mesure n'a pas ete faite : un document qui parle
     d'un resultat absent est pire qu'un document qui n'en parle pas.
     """
     if not FANTOMES.exists():
@@ -188,20 +187,20 @@ def fantomes_ailleurs() -> str:
     return f"""### 5.7 Les fantômes partaient toujours des mêmes cases
 
 Un angle mort du protocole, trouvé sur **une question de l'auteur** en
-relecture — « les positions des fantômes sont aléatoires ? » — à laquelle la
+relecture (« les positions des fantômes sont aléatoires ? ») à laquelle la
 réponse a été cherchée en **comptant** ce que les graines faisaient varier, au
 lieu de relire le code censé le produire : sur
 {mesure['parties']} parties, l'évaluation ne produisait
 **{conditions['reference']['configurations_distinctes']} seule configuration de
 départ des fantômes**. La graine ne resemait que la case de Pac-Man et l'errance
 en mode effrayé. La garde sur les graines protège donc contre la mémorisation
-d'une *partie*, pas contre la dépendance à une *configuration* — et rien dans
+d'une *partie*, pas contre la dépendance à une *configuration*, et rien dans
 les chiffres précédents ne permettait de trancher.
 
 Le test est court et **ne réentraîne rien** : les mêmes poids sont réévalués
 avec les quatre fantômes tirés au sort hors de la maison
 ({conditions['disperse']['configurations_distinctes']} configurations sur
-{mesure['parties']} parties). Cette condition ne joue pas la même partie — les
+{mesure['parties']} parties). Cette condition ne joue pas la même partie : les
 quatre fantômes y sont actifs dès le premier tick. On l'attendait plus dure ;
 elle est en réalité plus **facile**, parce que dispersés ils partent chacun vers
 son coin au lieu de sortir groupés du centre. C'est exactement pourquoi les
@@ -213,7 +212,7 @@ difficulté, quel qu'en soit le sens.
 {lignes}
 
 **L'agent appris tient** : {appris['ecart']:+.0f} points, intervalle
-[{appris['ic95'][0]:+.0f}, {appris['ic95'][1]:+.0f}] — il contient zéro, donc
+[{appris['ic95'][0]:+.0f}, {appris['ic95'][1]:+.0f}] : il contient zéro, donc
 l'écart est indiscernable du bruit d'échantillonnage. Sa politique ne dépend pas
 de la maison centrale : elle est **topologique**, comme ses descripteurs le
 laissaient espérer sans que personne ne l'ait vérifié. C'était la seule façon de
@@ -230,7 +229,7 @@ du centre.
 {conditions['reference']['agents']['appris']['taux_victoire']:.0%} à
 {conditions['disperse']['agents']['appris']['taux_victoire']:.0%}. Sur
 {mesure['parties']} parties cela représente une poignée de parties, trop peu
-pour en conclure quoi que ce soit — mais assez pour ne pas prétendre que la
+pour en conclure quoi que ce soit, mais assez pour ne pas prétendre que la
 condition dispersée lui est en tout point équivalente.
 
 *(mesure : `python scripts/fantomes_ailleurs.py` → `results/fantomes_ailleurs.json`,
@@ -316,64 +315,18 @@ graines, mêmes hyperparamètres : seul le jeu de descripteurs change.
 C'est le genre de résultat qu'un projet honnête doit publier tel quel. La
 question « faut-il donner plus d'information à l'agent ? » n'a pas de réponse
 évidente : plus de descripteurs, c'est plus de poids à estimer sur le même
-budget d'épisodes — et un modèle linéaire ne peut de toute façon pas composer
+budget d'épisodes, et un modèle linéaire ne peut de toute façon pas composer
 ces informations entre elles.
 """
 
 
 DEBIT_MESURES = """Toutes les mesures ci-dessous viennent d'une seule commande
 (`python scripts/campagne_rl.py`), sur **{parties} parties par agent**, à
-**ε = 0**, sur des graines de la plage d'évaluation — jamais vues pendant les
+**ε = 0**, sur des graines de la plage d'évaluation, jamais vues pendant les
 {episodes} épisodes d'entraînement. Elles sont reproductibles à l'identique.
 
 *Ces tableaux sont générés par `scripts/injecter_resultats.py` depuis
 `results/campagne.json` : aucun chiffre n'est recopié à la main.*"""
-
-
-def javascript(campagne: dict) -> str:
-    etapes = campagne["etapes"]
-    poids = etapes["train_4f_curriculum"]["poids"]
-    ordonnes = sorted(poids.items(), key=lambda item: -abs(item[1]))
-
-    def bloc(mesure: dict) -> dict:
-        return {
-            "agent": mesure["agent"],
-            "score_median": f"{mesure['score_median']:.0f}",
-            "score_ecart_type": f"{mesure['score_ecart_type']:.0f}",
-            "victoires": round(mesure["taux_victoire"] * 100),
-            "morts": round(mesure["taux_mort"] * 100),
-        }
-
-    appris_1f = etapes["train_1f"]["evaluation"]
-    quatre = etapes["comparatif_4f"]
-    un = etapes["baselines_1f"] + [appris_1f]
-
-    facteur = appris_1f["score_median"] / max(1, etapes["baselines_1f"][0]["score_median"])
-    facteur_4 = quatre[2]["score_median"] / max(1, quatre[0]["score_median"])
-
-    donnees = {
-        "un_fantome": [bloc(m) for m in un],
-        "quatre_fantomes": [bloc(m) for m in quatre],
-        "commentaire": (
-            f"L'agent appris fait <b>{facteur:.1f} ×</b> le hasard à un fantôme, "
-            f"<b>{facteur_4:.1f} ×</b> à quatre. 100 parties, graines jamais vues, ε = 0."
-        ),
-        "poids": [
-            {
-                "nom": nom,
-                "valeur": f"{valeur:+.2f}",
-                "lecture": lecture_de(nom, valeur).replace("**", ""),
-            }
-            for nom, valeur in ordonnes
-        ],
-        "commentaire_poids": (
-            "Aucun de ces poids n'a été écrit : ils sortent de "
-            f"{campagne['episodes']} épisodes. C'est ce qu'un réseau profond "
-            "n'aurait pas permis de montrer."
-        ),
-        "descripteurs": descripteurs_pour_le_support(),
-    }
-    return "const RESULTATS = " + json.dumps(donnees, ensure_ascii=False, indent=2) + ";"
 
 
 def descripteurs_pour_le_support() -> dict | None:
@@ -419,19 +372,6 @@ def main() -> int:
         return 1
     DOCUMENTATION.write_text(texte, encoding="utf-8")
 
-    html = PRESENTATION.read_text(encoding="utf-8")
-    html, nombre = re.subn(
-        r"const RESULTATS = .*?;\n(?=\n?function rendreResultats)",
-        lambda _: javascript(campagne) + "\n",
-        html,
-        count=1,
-        flags=re.S,
-    )
-    if not nombre:
-        print(f"declaration RESULTATS introuvable dans {PRESENTATION.name}")
-        return 1
-    PRESENTATION.write_text(html, encoding="utf-8")
-
     lisezmoi = LISEZMOI.read_text(encoding="utf-8")
     lisezmoi, nombre = re.subn(
         re.escape(DEBUT) + r".*?" + re.escape(FIN),
@@ -445,10 +385,7 @@ def main() -> int:
         return 1
     LISEZMOI.write_text(lisezmoi, encoding="utf-8")
 
-    print(
-        f"{LISEZMOI.name}, {DOCUMENTATION.name} et {PRESENTATION.name} "
-        f"mis a jour depuis {CAMPAGNE.name}"
-    )
+    print(f"{LISEZMOI.name} et {DOCUMENTATION.name} mis a jour depuis {CAMPAGNE.name}")
     return 0
 
 
@@ -460,7 +397,7 @@ def resume(campagne: dict) -> str:
         f"{campagne['parties_evaluation']} parties de graines jamais vues, ε = 0 :\n\n"
         + tableau(etapes["comparatif_4f"])
         + "\n\nL'agent **appris** dépasse l'heuristique écrite à la main. L'agent de "
-        "**recherche** les dépasse tous les deux — sans avoir rien appris, mais en "
+        "**recherche** les dépasse tous les deux, sans avoir rien appris, mais en "
         "payant à chaque coup ce que l'agent entraîné a payé une seule fois."
     )
 

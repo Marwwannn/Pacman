@@ -18,6 +18,9 @@ dev = [
     # Rend `docs/documentation.md` en HTML imprimable (scripts/documentation_html.py).
     # Le jeu et les agents n'en dependent pas.
     "markdown>=3.6",
+    # Genere le support oral `docs/presentation.pptx` (scripts/generer_presentation.py).
+    # Meme statut : outil de rendu, pas une dependance du jeu.
+    "python-pptx>=1.0",
 ]
 
 [project.scripts]
@@ -47,3 +50,9 @@ src = ["src", "tests"]
 # l'autre (0.16 a ajoute isort, bugbear, pyupgrade...), et une CI qui casse
 # parce que l'outil a ete mis a jour ne dit rien sur le code.
 select = ["E4", "E7", "E9", "F", "I"]
+
+[tool.ruff.lint.per-file-ignores]
+# Script de mise en page : plusieurs reglages par ligne (position, taille,
+# couleur) suivent la geometrie d'une diapositive ; l'aerer disperserait ce
+# qui se lit ensemble. Le style compact y est un choix, pas un oubli.
+"scripts/generer_presentation.py" = ["E701", "E702"]
