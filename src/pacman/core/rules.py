@@ -24,7 +24,7 @@ TILES_PER_SECOND = 12.0
 #:
 #: Sans cette separation, la cadence et la vitesse etaient le meme reglage :
 #: monter la cadence accelerait le jeu, la baisser rendait le mouvement
-#: saccade — a 12 ticks/s, une entite a 0,8 case/tick saute un tick sur cinq,
+#: saccade : a 12 ticks/s, une entite a 0,8 case/tick saute un tick sur cinq,
 #: et l'oeil voit la pause.
 SPEED_UNIT = TILES_PER_SECOND / TICKS_PER_SECOND
 
@@ -126,8 +126,8 @@ def rules_for(level: int) -> LevelRules:
         waves = WAVES_LATE
 
     # Vitesses : progression douce, plafonnee pour rester jouable. Les
-    # fractions se lisent comme dans la documentation d'origine — 0,8 veut
-    # dire « 80 % de la vitesse de reference » — et `SPEED_UNIT` les traduit
+    # fractions se lisent comme dans la documentation d'origine : 0,8 veut
+    # dire « 80 % de la vitesse de reference », et `SPEED_UNIT` les traduit
     # en cases par tick.
     pacman_speed = min(0.9, 0.8 + 0.01 * (level - 1)) * SPEED_UNIT
     ghost_speed = min(0.95, 0.75 + 0.02 * (level - 1)) * SPEED_UNIT

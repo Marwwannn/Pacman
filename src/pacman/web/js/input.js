@@ -2,7 +2,7 @@
  * Entrees du joueur : clavier et ecran tactile.
  *
  * Le client n'envoie que des intentions. C'est le moteur qui decide si le
- * virage est possible — et il memorise la demande jusqu'a ce qu'elle le
+ * virage est possible, et il memorise la demande jusqu'a ce qu'elle le
  * devienne, ce qui rend le controle souple sans qu'on ait rien a faire ici.
  */
 

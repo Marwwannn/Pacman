@@ -45,14 +45,14 @@ from .scores import ScoreBoard, ScoreEntry, ScoreSubmission
 from .sessions import GameSession, SessionError, SessionStore
 
 app = FastAPI(
-    title="Pac-Man — back-end",
+    title="Pac-Man : back-end",
     version="0.1.0",
     summary="Moteur de jeu Pac-Man expose en REST et WebSocket",
 )
 
 # Le client de jeu etant servi par ce meme serveur, aucune origine tierce n'a
 # besoin d'appeler l'API : la liste est vide par defaut. Une origine ouverte
-# laisserait n'importe quelle page du web piloter le serveur local du joueur —
+# laisserait n'importe quelle page du web piloter le serveur local du joueur :
 # creer des parties jusqu'a la limite, ou remplir le classement.
 # PACMAN_ALLOWED_ORIGINS rouvre la porte pour un front servi a part.
 ALLOWED_ORIGINS = [

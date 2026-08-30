@@ -9,10 +9,10 @@ Quatre regles, toutes destinees a empecher un chiffre flatteur mais faux :
    ses hesitations.
 3. **La mediane, jamais le meilleur run.** Cent parties, mediane et ecart-type.
    Le meilleur score d'un agent aleatoire peut depasser la mediane d'un agent
-   entraine — le publier serait mentir par selection.
+   entraine : le publier serait mentir par selection.
 4. **Le tirage de l'agent est remis a zero.** Les ex aequo entre actions sont
    departages au hasard ; sans cette remise a zero, le meme agent evalue avant
-   et apres un entrainement rend deux chiffres differents — mesure : 2895 puis
+   et apres un entrainement rend deux chiffres differents, mesure : 2895 puis
    2900 pour des poids identiques. Un ecart minuscule, mais qui ruine la seule
    promesse que ce projet fait vraiment : les memes conditions donnent le meme
    resultat.
@@ -58,7 +58,7 @@ class EvalReport:
     decisions_mean: float
     pellets_left_median: float
     #: Scores partie par partie, dans l'ordre des graines. Absents de
-    #: `as_dict()` — ils ne sont pas un resultat a publier mais la matiere
+    #: `as_dict()` : ils ne sont pas un resultat a publier mais la matiere
     #: brute qui permet de dire si un ecart entre deux mesures sort du bruit.
     scores: tuple[int, ...] = ()
 

@@ -2,24 +2,24 @@
 
 Les graines de l'evaluation ne resemaient que le depart de Pac-Man et l'errance
 des fantomes en mode effraye. Leurs quatre cases de depart, elles, ne bougeaient
-jamais — a l'entrainement comme a l'evaluation. La garde sur les graines protege
+jamais : a l'entrainement comme a l'evaluation. La garde sur les graines protege
 donc contre la memorisation d'une PARTIE, pas contre la dependance a cette
 CONFIGURATION. Rien dans les chiffres publies ne permettait de trancher.
 
 Ce script rejoue les memes agents, avec les MEMES poids deja appris (rien n'est
 reentraine), dans deux conditions :
 
-* **reference**  — la configuration d'origine, celle de tous les chiffres publies ;
-* **disperse**   — les quatre fantomes tires au sort hors de la maison, donc
+* **reference**  : la configuration d'origine, celle de tous les chiffres publies ;
+* **disperse**   : les quatre fantomes tires au sort hors de la maison, donc
                    actifs des le premier tick.
 
 La condition dispersee ne joue pas la meme partie : les quatre fantomes y sont
 actifs des le premier tick, la ou trois attendent leur quota de pastilles dans
-la maison. On l'attendait plus DURE ; la mesure dit l'inverse — heuristique et
+la maison. On l'attendait plus DURE ; la mesure dit l'inverse : heuristique et
 recherche y font MIEUX. Disperses, les fantomes partent chacun vers son coin au
 lieu de sortir groupes du centre. C'est exactement pourquoi les agents qui n'ont
-RIEN appris — l'aleatoire, l'heuristique ecrite a la main, la recherche en
-ligne — sont passes dans la meme condition : ils absorbent la variation de
+RIEN appris (l'aleatoire, l'heuristique ecrite a la main, la recherche en
+ligne) sont passes dans la meme condition : ils absorbent la variation de
 difficulte, quel qu'en soit le sens. Ce qui se lit, c'est l'ecart entre l'agent
 appris et eux, jamais son chiffre isole.
 
@@ -93,8 +93,8 @@ def configurations_distinctes(config: EnvConfig, parties: int) -> int:
 def intervalle_ecart(avant: list[int], apres: list[int]) -> tuple[float, float]:
     """Intervalle a 95 % de l'ecart entre les deux medianes, par bootstrap.
 
-    Les deux conditions ne rejouent pas les memes parties — un fantome place
-    ailleurs change la partie entiere — donc les echantillons sont retires
+    Les deux conditions ne rejouent pas les memes parties : un fantome place
+    ailleurs change la partie entiere, donc les echantillons sont retires
     independamment. L'intervalle repond a la seule question qui compte ici :
     l'ecart observe peut-il n'etre que du bruit d'echantillonnage ?
     """
@@ -113,7 +113,7 @@ def main() -> int:
 
     for condition, config in CONDITIONS.items():
         distinctes = configurations_distinctes(config, PARTIES)
-        print(f"\n=== {condition} — {distinctes} configuration(s) de depart sur {PARTIES} parties")
+        print(f"\n=== {condition} : {distinctes} configuration(s) de depart sur {PARTIES} parties")
         mesures[condition] = {"configurations_distinctes": distinctes, "agents": {}}
 
         for nom, agent, appris in agents():

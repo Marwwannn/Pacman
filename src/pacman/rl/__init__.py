@@ -1,7 +1,7 @@
 """Apprentissage par renforcement : un agent qui joue Pac-Man.
 
-A ne pas confondre avec `ai/`, qui contient l'intelligence des quatre fantomes
-— celle-la est ecrite a la main et ne s'entraine pas. Ici c'est le joueur qui
+A ne pas confondre avec `ai/`, qui contient l'intelligence des quatre fantomes :
+celle-la est ecrite a la main et ne s'entraine pas. Ici c'est le joueur qui
 apprend.
 
 Le paquet ne touche pas au moteur : il l'enveloppe. `core/` reste deterministe,

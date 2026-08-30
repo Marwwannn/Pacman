@@ -12,7 +12,7 @@ ce qui ramene l'horizon a ~100 pas par partie.
 fantomes, meme depart, generateurs jamais resemes : un agent y memorise une
 suite de coups qui donne un excellent score en apprentissage et s'effondre au
 premier changement. Chaque episode part donc d'une graine qui decale le depart
-de Pac-Man et l'errance des fantomes — la partie reste rejouable a l'identique,
+de Pac-Man et l'errance des fantomes : la partie reste rejouable a l'identique,
 mais deux graines donnent deux parties differentes.
 """
 
@@ -163,7 +163,7 @@ class PacmanEnv:
         Hors maison, un fantome n'a plus de quota de pastilles a attendre : il
         entre directement dans l'alternance scatter/chase, comme Blinky le fait
         deja dans la configuration d'origine. Les quatre sont donc actifs des le
-        premier tick, ce qui rend la partie plus dure en soi — c'est pourquoi la
+        premier tick, ce qui rend la partie plus dure en soi : c'est pourquoi la
         mesure ne vaut que comparee entre agents, un agent qui n'a rien appris
         servant de temoin.
         """

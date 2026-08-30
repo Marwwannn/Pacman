@@ -2,7 +2,7 @@
 
 `Game` est purement synchrone et deterministe : un meme etat plus une meme
 suite d'entrees donne toujours le meme resultat. Aucune horloge, aucun aleatoire,
-aucune dependance reseau — c'est ce qui rend le moteur testable et rejouable.
+aucune dependance reseau : c'est ce qui rend le moteur testable et rejouable.
 """
 
 from __future__ import annotations
@@ -143,7 +143,7 @@ class Game:
         l'apprendre : le moteur etant deterministe, ce que la copie vit est
         exactement ce que la partie vivrait.
 
-        Le labyrinthe n'est pas copie — il ne change jamais en cours de partie,
+        Le labyrinthe n'est pas copie : il ne change jamais en cours de partie,
         et le dupliquer a chaque noeud de recherche couterait plus cher que la
         recherche elle-meme.
         """

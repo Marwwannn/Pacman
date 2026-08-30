@@ -5,7 +5,7 @@ entraine et note, a chaque intersection : ce qu'il voyait, ce que chaque
 direction valait a ses yeux, la contribution de chaque descripteur a cette
 valeur, et ce qu'il a choisi.
 
-Le resultat est un `docs/decisions.html` autonome — donnees comprises — qui
+Le resultat est un `docs/decisions.html` autonome (donnees comprises) qui
 rend le raisonnement lisible case par case.
 
     python scripts/exporter_decisions.py
@@ -95,7 +95,7 @@ def evaluation_des_actions(agent, game, actions: list[Direction], env) -> list[d
     l'interet d'avoir refuse le reseau de neurones.
 
     Un descripteur qui vaut la MEME chose pour toutes les directions n'a beau
-    peser tres lourd, il ne departage rien — le biais en est le cas pur, et
+    peser tres lourd, il ne departage rien : le biais en est le cas pur, et
     `avancement` (part de pastilles mangees) aussi, puisqu'il decrit l'etat et
     non le coup. Les marquer evite de faire lire un raisonnement dans un terme
     qui ne choisit rien.

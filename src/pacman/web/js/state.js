@@ -40,7 +40,7 @@ const ECART_TELEPORT = 1.5;
  *     seuil 0,7 ->  4 % d'images figees, 36 ms de retard
  *     seuil 1,2 ->  0 % d'images figees, 52 ms de retard
  *
- * Le retard se stabilise a une demi-case quoi qu'il arrive — c'est le prix
+ * Le retard se stabilise a une demi-case quoi qu'il arrive : c'est le prix
  * d'un serveur qui ne dit que la case occupee, jamais la fraction parcourue.
  * Autant le payer et avoir un mouvement parfaitement continu.
  */
@@ -60,8 +60,8 @@ const cle = (x, y) => `${x},${y}`;
  *
  * L'avance se fait a vitesse constante, pas sur la duree d'une image du
  * serveur. C'est la difference entre un mouvement fluide et un mouvement
- * saccade : les pas du moteur sont irreguliers — une entite a 0,16 case par
- * tick avance un tick sur six, jamais exactement le meme — alors qu'a l'oeil,
+ * saccade : les pas du moteur sont irreguliers, une entite a 0,16 case par
+ * tick avance un tick sur six, jamais exactement le meme, alors qu'a l'oeil,
  * un personnage se deplace a vitesse egale. On lisse donc sur le rythme moyen
  * des pas, mesure en cours de partie plutot que suppose.
  */

@@ -746,7 +746,7 @@ class TestAgentDeRecherche:
 class TestDepartDesFantomes:
     """L'angle mort du protocole : les fantomes partaient toujours des memes cases.
 
-    Le nom `randomize_ghosts` promettait plus qu'il ne tenait — il ne reseme que
+    Le nom `randomize_ghosts` promettait plus qu'il ne tenait : il ne reseme que
     l'errance en mode effraye. La configuration de depart, elle, ne bougeait
     jamais. Ces tests fixent les deux faits : ce que la configuration d'origine
     fait vraiment, et ce que la dispersion change.
@@ -865,7 +865,7 @@ class TestReproductibiliteDeLEvaluation:
         original = evaluate(agent, games=8, config=config)
         # Graine de rechargement volontairement differente : elle ne sert qu'aux
         # ex aequo, que l'evaluation remet a zero. Les poids etant les memes, la
-        # mesure doit l'etre aussi — c'est ce qui rend `results/` verifiable.
+        # mesure doit l'etre aussi : c'est ce qui rend `results/` verifiable.
         recharge = evaluate(ApproximateQAgent.load(chemin, seed=99), games=8, config=config)
         assert original.as_dict() == recharge.as_dict()
 

@@ -6,7 +6,7 @@ appris (rejouables) et les mesures (citables).
 
     python scripts/campagne_rl.py
 
-Duree : quelques minutes. Rien n'est aleatoire d'un run a l'autre — les
+Duree : quelques minutes. Rien n'est aleatoire d'un run a l'autre : les
 graines d'entrainement comme d'evaluation sont fixees.
 """
 
@@ -35,7 +35,7 @@ EPISODES = 3_000
 PROFONDEURS = (1, 2, 3)
 #: Profondeur du comparatif final. Mesuree, pas supposee : 3 domine 2 sur la
 #: mediane (4990 contre 4290) ET sur les victoires (94 % contre 83 %). Son
-#: ecart-type est plus grand, mais c'est la dispersion de parties GAGNEES —
+#: ecart-type est plus grand, mais c'est la dispersion de parties GAGNEES :
 #: une victoire vaut de 4000 a 10690 selon les fantomes manges.
 PROFONDEUR_RETENUE = 3
 

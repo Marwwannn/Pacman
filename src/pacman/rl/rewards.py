@@ -7,7 +7,7 @@ structurants et ne doivent pas etre defaits sans mesure :
 - la mort doit dominer tout le reste, sinon l'agent apprend a se faire manger
   pour abreger une partie devenue couteuse ;
 - chaque pas de decision coute, sinon l'agent tourne indefiniment devant une
-  super-pastille sans jamais la manger — le detournement de recompense
+  super-pastille sans jamais la manger : le detournement de recompense
   classique sur Pac-Man.
 
 Le score brut du jeu n'est deliberement pas repris : la vie supplementaire a

@@ -65,7 +65,7 @@
 </style>
 </head>
 <body>
-<h1>L'IA joue — et on voit pourquoi</h1>
+<h1>L'IA joue : et on voit pourquoi</h1>
 <p class="sous" id="sous"></p>
 
 <div class="plateau">
@@ -103,10 +103,10 @@ const COULEURS = {blinky: '#ff0000', pinky: '#ffb8ff', inky: '#00ffff', clyde: '
 const NOMS = ['blinky', 'pinky', 'inky', 'clyde'];
 const FLECHES = {up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0]};
 const LIBELLES = {
-  power_pellet: 'super-pastille avalée — les fantômes deviennent comestibles',
+  power_pellet: 'super-pastille avalée : les fantômes deviennent comestibles',
   ghost_eaten: 'fantôme mangé',
   fruit_eaten: 'fruit attrapé',
-  pacman_died: 'attrapé — fin de la partie',
+  pacman_died: 'attrapé : fin de la partie',
   extra_life: 'vie supplémentaire',
   level_complete: 'niveau terminé',
   frightened: 'les fantômes fuient',
@@ -211,7 +211,7 @@ function afficherDecision(d) {
     entete.className = 'entete';
     const v = action.valeur_discriminante;
     entete.innerHTML = `<span class="nom">${action.direction}</span>` +
-      `<span class="valeur">${v === undefined ? '—' : (v > 0 ? '+' : '') + v.toFixed(0)}</span>`;
+      `<span class="valeur">${v === undefined ? '·' : (v > 0 ? '+' : '') + v.toFixed(0)}</span>`;
     bloc.appendChild(entete);
 
     const constants = (action.contributions || []).filter(c => !c.discrimine);
@@ -230,7 +230,7 @@ function afficherDecision(d) {
       pied.className = 'fixe';
       const somme = constants.reduce((s, c) => s + c.apport, 0);
       pied.textContent = `+ ${somme.toFixed(0)} de termes identiques pour toutes les directions ` +
-        `(${constants.map(c => c.nom).join(', ')}) — ils ne départagent rien.`;
+        `(${constants.map(c => c.nom).join(', ')}) : ils ne départagent rien.`;
       bloc.appendChild(pied);
     }
     cible.appendChild(bloc);
@@ -257,7 +257,7 @@ function montrer(n) {
   else if (image === PARTIE.images.length - 1) {
     const f = PARTIE.final;
     document.getElementById('annonce').textContent =
-      f.gagne ? 'niveau terminé' : f.mort ? 'partie terminée — attrapé' : 'fin du rejeu';
+      f.gagne ? 'niveau terminé' : f.mort ? 'partie terminée : attrapé' : 'fin du rejeu';
   }
 }
 
@@ -317,7 +317,7 @@ document.getElementById('sous').innerHTML =
 document.getElementById('note').innerHTML =
   `La valeur d'une direction est <b>Q(s,a) = w · f(s,a)</b> : une somme de produits ` +
   `« poids appris × descripteur ». Le chiffre affiché ne retient que les termes qui ` +
-  `<b>varient d'une direction à l'autre</b> — un descripteur identique partout (le biais, ` +
+  `<b>varient d'une direction à l'autre</b> : un descripteur identique partout (le biais, ` +
   `l'avancement dans le niveau) peut peser très lourd sans jamais rien choisir. ` +
   `<b>Vert</b> : ce qui pousse à y aller. <b>Rouge</b> : ce qui retient. ` +
   `C'est ce qu'un réseau de neurones n'aurait pas permis de montrer.`;

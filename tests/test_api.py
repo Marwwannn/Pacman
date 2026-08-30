@@ -40,7 +40,7 @@ class TestService:
 class TestNomDeLabyrinthe:
     """Le nom vient de l'exterieur : il ne doit jamais devenir un chemin.
 
-    Sans garde, `../mazes/classic` chargeait bien le plan — donc n'importe quel
+    Sans garde, `../mazes/classic` chargeait bien le plan, donc n'importe quel
     fichier .txt du disque, dont le parseur recrachait le contenu caractere par
     caractere dans ses messages d'erreur.
     """

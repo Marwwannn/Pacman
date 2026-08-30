@@ -8,7 +8,7 @@ dont l'issue est la meilleure.
 Deux proprietes du moteur rendent cela possible, et exact :
 
 - il est **deterministe**, donc ce que la copie vit est exactement ce que la
-  partie vivrait — pas de noeud de hasard, pas d'esperance a estimer, ce qui
+  partie vivrait : pas de noeud de hasard, pas d'esperance a estimer, ce qui
   distingue cette recherche d'un expectimax ou d'un MCTS classiques ;
 - il est **rapide** (177 000 ticks/s), donc quelques dizaines de simulations
   par decision restent gratuites a l'echelle d'une partie.
@@ -16,7 +16,7 @@ Deux proprietes du moteur rendent cela possible, et exact :
 L'interet dans un comparatif est ailleurs que dans le score : cet agent
 n'apprend rien et ne generalise rien. Il paie a chaque coup ce que l'agent
 entraine a paye une fois pour toutes. L'ecart entre les deux est la vraie
-question — savoir, ou recalculer.
+question : savoir, ou recalculer.
 """
 
 from __future__ import annotations
@@ -133,8 +133,8 @@ class SearchAgent:
 def _advance_to_decision(game: Game, metrics: MazeMetrics) -> bool:
     """Avance la partie jusqu'au prochain vrai choix. Faux si elle s'est terminee.
 
-    Meme regle que dans l'environnement d'apprentissage — un pas va d'une
-    intersection a la suivante — mais sans recompense ni statistique : ici on
+    Meme regle que dans l'environnement d'apprentissage : un pas va d'une
+    intersection a la suivante, mais sans recompense ni statistique : ici on
     ne mesure rien, on regarde seulement ou l'on arrive.
     """
     for _ in range(SEGMENT_TICKS):

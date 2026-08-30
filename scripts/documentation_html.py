@@ -3,7 +3,7 @@
 L'enonce demande une documentation au format PDF. Plutot que d'ajouter une
 dependance lourde (WeasyPrint et sa chaine GTK, LaTeX...), on produit un HTML
 mis en page pour l'impression, et on demande au navigateur deja present sur la
-machine — Chrome ou Edge, en mode sans fenetre — d'en faire le PDF. Le rendu
+machine (Chrome ou Edge, en mode sans fenetre) d'en faire le PDF. Le rendu
 est celui de Ctrl+P, sans le clic.
 
     python scripts/documentation_html.py
@@ -138,7 +138,7 @@ def main() -> int:
     corps = markdown.markdown(texte, extensions=["tables", "fenced_code", "toc", "sane_lists"])
     CIBLE.write_text(
         GABARIT.format(
-            titre="Pac-Man — documentation technique",
+            titre="Pac-Man : documentation technique",
             style=STYLE,
             corps=corps,
         ),

@@ -3,7 +3,7 @@
  *
  * Aucun fichier son : quelques oscillateurs suffisent pour les bips d'une
  * borne, et le jeu reste un seul dossier sans dependance. Les navigateurs
- * interdisent de jouer un son avant que le joueur ait agi — le contexte n'est
+ * interdisent de jouer un son avant que le joueur ait agi : le contexte n'est
  * donc cree qu'au premier appui sur une touche.
  */
 

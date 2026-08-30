@@ -16,7 +16,7 @@ et tres loin dans les faits.
 **Aucune information du futur.** Les fantomes sont lus a la position qu'ils
 occupent AU MOMENT du choix, jamais a celle qu'ils occuperont apres le tick.
 La seule projection est la case ou Pac-Man arriverait : c'est l'effet de
-l'action evaluee, donc ce qui rend la feature dependante de l'action — pas un
+l'action evaluee, donc ce qui rend la feature dependante de l'action : pas un
 renseignement que le jeu refuse au joueur. Un agent qui verrait les fantomes
 d'un tick en avance jouerait mieux et ne prouverait rien. Trois tests le
 gardent (`TestAucuneFuiteDuFutur`), dont un mesure l'ecart sur un tick ou les
@@ -25,10 +25,10 @@ l'avenir : c'est sa definition meme, et elle est declaree.
 
 **Deux jeux de descripteurs** cohabitent, et se comparent (voir `FEATURE_SETS`) :
 
-- `base` — douze quantites agregees : le chasseur le PLUS proche, la pastille
+- `base` : douze quantites agregees : le chasseur le PLUS proche, la pastille
   la PLUS proche. Compact, mais l'agent ne distingue pas deux fantomes a huit
   cases d'un seul.
-- `positions` — ajoute la position de CHAQUE fantome et la repartition de la
+- `positions` : ajoute la position de CHAQUE fantome et la repartition de la
   nourriture. Exprimees dans le repere de Pac-Man (distance + « cette action
   m'en rapproche-t-elle »), jamais en coordonnees absolues : un poids sur `x`
   signifierait « prefere la droite du plan », ce qui ne generalise a rien.
@@ -113,7 +113,7 @@ def named(values: tuple[float, ...]) -> dict[str, float]:
 # ===================================================================== positions
 
 #: Nombre de fantomes decrits un par un. Les emplacements sans fantome valent
-#: zero, ce qui permet au meme vecteur de servir a un fantome comme a quatre —
+#: zero, ce qui permet au meme vecteur de servir a un fantome comme a quatre :
 #: c'est ce qui rend le curriculum possible sans changer de modele.
 GHOST_SLOTS = 4
 
@@ -143,7 +143,7 @@ def extract_with_positions(
 
     Chaque fantome est decrit par trois nombres : a quelle distance il est, si
     l'action m'en rapproche, et s'il est comestible. Les fantomes sont ranges
-    du plus proche au plus lointain — sans cet ordre, echanger deux fantomes
+    du plus proche au plus lointain, sans cet ordre, echanger deux fantomes
     identiques changerait le vecteur, et l'agent devrait apprendre quatre fois
     la meme chose.
     """

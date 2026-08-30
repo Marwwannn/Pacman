@@ -33,7 +33,7 @@ class Blinky(PersonalityGhost):
     """Le rouge. Fonce droit sur Pac-Man : il vise sa case, sans detour.
 
     C'est le seul dont la cible est exactement la position du joueur, ce qui en
-    fait le poursuivant direct — les autres se coordonnent autour de lui.
+    fait le poursuivant direct : les autres se coordonnent autour de lui.
     """
 
     COLOR = "#ff0000"
@@ -71,7 +71,7 @@ class Pinky(LookaheadGhost):
 
     Reproduit le debordement d'origine : quand Pac-Man regarde vers le haut,
     la cible part aussi de quatre cases vers la gauche. C'etait un bug de 1980,
-    mais il fait partie du comportement attendu du jeu — d'ou l'option pour le
+    mais il fait partie du comportement attendu du jeu : d'ou l'option pour le
     desactiver.
     """
 

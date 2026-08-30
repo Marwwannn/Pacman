@@ -74,7 +74,7 @@ class MazeMetrics:
         Preferee a la distance normalisee pour les features. Deux raisons :
         une cible absente y vaut 0, donc elle ne contribue pas au total au lieu
         de se confondre avec le biais ; et la courbe se resserre la ou tout se
-        joue — passer de deux a une case d'un fantome compte bien plus que
+        joue : passer de deux a une case d'un fantome compte bien plus que
         passer de vingt a dix-neuf.
         """
         if distance == inf:

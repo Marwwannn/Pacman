@@ -51,7 +51,7 @@ class HeuristicAgent:
 
     Trois priorites, dans cet ordre : ne pas mourir, manger un fantome effraye
     tant que c'est possible, sinon aller a la pastille la plus proche. C'est
-    volontairement simple — le but est d'avoir une reference honnete, pas de
+    volontairement simple : le but est d'avoir une reference honnete, pas de
     gagner le concours.
     """
 

@@ -3,7 +3,7 @@
  *
  * Ce fichier ne connait aucune regle du jeu : il cree une partie, branche le
  * canal temps reel sur la vue, et fait tourner la boucle d'affichage. Toute la
- * logique est ailleurs — au back-end pour le jeu, dans les modules voisins
+ * logique est ailleurs : au back-end pour le jeu, dans les modules voisins
  * pour le rendu et les entrees.
  */
 
@@ -23,8 +23,8 @@ const PILOTE = new URLSearchParams(location.search).get("ia");
 const PILOTES = {
   aleatoire: "agent aléatoire",
   heuristique: "heuristique écrite à la main",
-  appris: "agent appris — Q-learning approximé",
-  recherche: "recherche en ligne — profondeur 3",
+  appris: "agent appris : Q-learning approximé",
+  recherche: "recherche en ligne : profondeur 3",
 };
 const LIBELLE_IA = PILOTES[PILOTE] ?? "agent inconnu";
 
@@ -82,7 +82,7 @@ class Client {
     await this.ecranTitre();
     // Un spectateur a deja dit ce qu'il voulait en ouvrant `?ia=...` : la
     // partie demarre seule. Les bruitages restent muets tant qu'aucune touche
-    // n'a ete pressee — le navigateur l'impose, et `Sounds.play` le sait.
+    // n'a ete pressee : le navigateur l'impose, et `Sounds.play` le sait.
     if (PILOTE) this.nouvellePartie();
     requestAnimationFrame((t) => this.boucle(t));
   }
@@ -94,7 +94,7 @@ class Client {
       this.hud.setBest(this.record);
     }
     this.hud.showOverlay(PILOTE ? "L'IA joue" : "Pac-Man", CONSIGNES + formatScores(classement));
-    this.hud.setStatus(PILOTE ? `Prêt — ${LIBELLE_IA}` : "Prêt à jouer");
+    this.hud.setStatus(PILOTE ? `Prêt : ${LIBELLE_IA}` : "Prêt à jouer");
   }
 
   /** Entree ou clic : selon le moment, ca lance, ca reprend ou ca rejoue. */
@@ -122,7 +122,7 @@ class Client {
     } catch (erreur) {
       this.enCours = false;
       const inconnu = PILOTE && /422/.test(erreur.message);
-      this.hud.setStatus(inconnu ? "IA inconnue" : `Serveur injoignable — ${erreur.message}`, true);
+      this.hud.setStatus(inconnu ? "IA inconnue" : `Serveur injoignable : ${erreur.message}`, true);
       this.hud.showOverlay(
         inconnu ? "IA inconnue" : "Hors service",
         inconnu
@@ -138,7 +138,7 @@ class Client {
         this.view.applyInit(message);
         this.hud.update(message.state);
         this.hud.hideOverlay();
-        this.hud.setStatus(PILOTE ? `L'IA joue — ${LIBELLE_IA}` : "Bonne chance !");
+        this.hud.setStatus(PILOTE ? `L'IA joue : ${LIBELLE_IA}` : "Bonne chance !");
       },
       onState: (message) => this.surEtat(message),
       onError: (message) => this.hud.setStatus(message, true),

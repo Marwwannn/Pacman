@@ -1,8 +1,8 @@
-# Pac-Man — un terrain de mesure pour l'intelligence artificielle
+# Pac-Man : un terrain de mesure pour l'intelligence artificielle
 
 **Documentation technique du projet**
 
-Module IA_PO — Projet d'Intelligence Artificielle Libre, Master 1, 2025-2026
+Module IA_PO : Projet d'Intelligence Artificielle Libre, Master 1, 2025-2026
 
 Dépôt : <https://github.com/Marwwannn/Pacman>
 
@@ -20,7 +20,7 @@ distinguer *« la méthode est mauvaise »* de *« le problème est mal posé »
 
 Ce projet prend le parti inverse : **construire le terrain et les agents, et
 les mesurer ensemble**. Le moteur de jeu est écrit ligne à ligne, donc chaque
-propriété dont l'apprentissage dépend — déterminisme, vitesse, topologie —
+propriété dont l'apprentissage dépend (déterminisme, vitesse, topologie)
 est connue, mesurée, et testée.
 
 ### 1.2 Pourquoi Pac-Man
@@ -33,7 +33,7 @@ Pac-Man est un banc d'essai classique de l'IA, et pour de bonnes raisons :
 - **L'adversaire est intelligent mais imparfait.** Les fantômes de 1980
   suivent une règle myope : à chaque case, ils prennent la direction qui
   réduit la distance à vol d'oiseau vers leur cible, sans voir les murs.
-  C'est cette myopie qui les rend battables — et qui rend le jeu apprenable.
+  C'est cette myopie qui les rend battables, et qui rend le jeu apprenable.
 - **Le score est une mesure honnête.** Pas de jugement humain à interpréter.
 
 ### 1.3 Public visé
@@ -41,7 +41,7 @@ Pac-Man est un banc d'essai classique de l'IA, et pour de bonnes raisons :
 Qui veut voir un agent apprendre sur un problème qu'il comprend entièrement :
 enseignement, démonstration, base de comparaison pour d'autres méthodes. Le
 jeu étant jouable dans un navigateur, le comportement de l'IA est lisible sans
-lire une ligne de code — on *voit* l'agent hésiter à une intersection.
+lire une ligne de code : on *voit* l'agent hésiter à une intersection.
 
 ---
 
@@ -94,7 +94,7 @@ Le dernier mérite un mot. Les trois premiers décident à partir de ce qu'ils
 intersection il clone la partie, joue chaque coup possible, laisse le moteur
 dérouler la suite, et garde la meilleure issue.
 
-Le moteur étant déterministe, cette recherche est **exacte** — il n'y a ni
+Le moteur étant déterministe, cette recherche est **exacte** : il n'y a ni
 nœud de hasard ni espérance à estimer, ce qui la distingue d'un expectimax ou
 d'un MCTS classiques. C'est une propriété du terrain, pas de l'agent.
 
@@ -122,7 +122,7 @@ convention de nommage), et tout moteur de jeu (le rendu est du canvas).
 
 ```
 src/pacman/
-├── core/     modèle du jeu — ne connaît ni le réseau ni FastAPI
+├── core/     modèle du jeu : ne connaît ni le réseau ni FastAPI
 ├── ai/       comportement des fantômes (hérite de core.Ghost)
 ├── rl/       agent joueur par apprentissage
 ├── api/      REST + WebSocket
@@ -141,7 +141,7 @@ l'apprentissage, sans modifier une ligne.
 Entity (ABC)
 ├── Pacman
 └── Ghost
-    └── PersonalityGhost          (ai/) — une cible, une personnalité
+    └── PersonalityGhost          (ai/) : une cible, une personnalité
         ├── Blinky                vise Pac-Man
         ├── LookaheadGhost        vise devant Pac-Man
         │   ├── Pinky             quatre cases devant
@@ -150,7 +150,7 @@ Entity (ABC)
 ```
 
 Les quatre fantômes ne diffèrent **que par la case visée** : la méthode
-`target()` est redéfinie, tout le reste — déplacement, modes, collisions — est
+`target()` est redéfinie, tout le reste (déplacement, modes, collisions) est
 hérité. C'est ce qui rend fidèle une IA de 204 lignes.
 
 Côté joueurs, le polymorphisme passe par un `Protocol` (typage structurel)
@@ -169,13 +169,13 @@ produirait environ 2 440 décisions sans conséquence par partie.
 
 L'environnement traverse donc les couloirs lui-même et ne rend la main qu'aux
 intersections. **L'horizon tombe de ~2 500 pas à ~100** : le problème
-d'attribution du crédit — « lequel de mes coups m'a tué ? » — devient 25 fois
+d'attribution du crédit (« lequel de mes coups m'a tué ? ») devient 25 fois
 plus court, sans rien perdre du jeu. C'est le gain le moins cher du projet.
 
 **② Le déterminisme du moteur est traité comme un piège.**
 
 Le moteur est parfaitement reproductible : deux parties lancées avec le même
-état donnent le même score au tick près. C'est indispensable pour tester —
+état donnent le même score au tick près. C'est indispensable pour tester,
 et c'est un piège pour apprendre. Même labyrinthe, mêmes fantômes, même
 départ : un agent y mémorise **une suite de coups** qui donne un score
 flatteur à l'entraînement et s'effondre au moindre changement. On croirait
@@ -186,7 +186,7 @@ Parade appliquée à trois niveaux :
 1. chaque épisode tire une graine qui décale le départ de Pac-Man et
    l'errance des fantômes ;
 2. l'évaluation se fait sur une **plage de graines disjointe** de
-   l'entraînement — `evaluate()` lève une erreur si on lui passe une graine
+   l'entraînement : `evaluate()` lève une erreur si on lui passe une graine
    d'entraînement, ce n'est pas une convention mais une garde ;
 3. les résultats se lisent en **médiane et écart-type sur 100 parties**,
    jamais au meilleur run.
@@ -210,14 +210,14 @@ rien apprendre à personne.
 
 ### 3.5 Les douze descripteurs
 
-Toutes les features sont bornées dans [0, 1] — ce n'est pas cosmétique : avec
+Toutes les features sont bornées dans [0, 1], et ce n'est pas cosmétique : avec
 des amplitudes hétérogènes, un même taux d'apprentissage ferait diverger un
 poids pendant qu'un autre bougerait à peine.
 
 Les distances sont **réelles dans le labyrinthe** (parcours en largeur avec
 cache), jamais à vol d'oiseau : deux cases séparées par un mur épais sont
 proches en ligne droite et très loin dans les faits. C'est précisément
-l'erreur que commettent les fantômes de 1980 — l'agent, lui, ne la commet pas.
+l'erreur que commettent les fantômes de 1980 : l'agent, lui, ne la commet pas.
 
 | Feature | Ce qu'elle dit |
 |---|---|
@@ -228,7 +228,7 @@ l'erreur que commettent les fantômes de 1980 — l'agent, lui, ne la commet pas
 | `proximite_proie` | opportunité : un fantôme effrayé est à +200 minimum |
 | `issues` | combien de sorties offre la case visée (une impasse en offre zéro) |
 | `demi_tour` | l'action est-elle un retour en arrière |
-| `avancement` | part de pastilles déjà mangées — sépare le début et la fin de partie |
+| `avancement` | part de pastilles déjà mangées : sépare le début et la fin de partie |
 
 ### 3.6 Aucune information du futur
 
@@ -236,23 +236,23 @@ Un agent est facile à rendre bon par accident : il suffit qu'il voie les
 fantômes **un tick en avance**. Le score monte, et il ne prouve plus rien.
 
 Garantie tenue ici : les fantômes sont lus à la position qu'ils occupent **au
-moment du choix**. La seule projection est la case où Pac-Man arriverait — et
+moment du choix**. La seule projection est la case où Pac-Man arriverait, et
 c'est l'effet de l'action évaluée, donc précisément ce qui rend le descripteur
 dépendant de l'action, pas un renseignement que le jeu refuse au joueur.
 
 Ce n'est pas une affirmation, c'est une mesure. Le test se place sur un tick
-où un fantôme **bouge réellement**, calcule les deux proximités possibles —
-depuis sa position d'avant, depuis celle d'après — vérifie qu'elles diffèrent,
+où un fantôme **bouge réellement**, calcule les deux proximités possibles
+(depuis sa position d'avant, depuis celle d'après), vérifie qu'elles diffèrent,
 puis vérifie que l'agent lit bien la seconde. Sans le contrôle « elles
 diffèrent », le test passerait aussi avec une lecture décalée d'un tick.
 
 Deux autres gardes complètent : évaluer une action ne fait **pas avancer la
 partie** (un extracteur qui simulerait un tick pour « voir venir » serait
-détecté), et déplacer un fantôme change **immédiatement** ce que l'agent voit
-— aucune mémoire, aucune anticipation.
+détecté), et déplacer un fantôme change **immédiatement** ce que l'agent voit :
+aucune mémoire, aucune anticipation.
 
 L'exception est assumée et déclarée : l'agent de recherche (§2.3) simule
-l'avenir. C'est sa définition même, et c'est pourquoi il gagne — voir §5.8.
+l'avenir. C'est sa définition même, et c'est pourquoi il gagne : voir §5.8.
 
 ### 3.7 Deux jeux de descripteurs, et pourquoi les comparer
 
@@ -271,7 +271,7 @@ Un second jeu, `positions` (26 poids), l'a été ajouté pour le savoir :
 
 **Ces positions sont exprimées dans le repère de Pac-Man**, jamais en
 coordonnées absolues. Ce n'est pas un détail de forme : dans un modèle
-linéaire, un poids sur `x` signifierait « préfère la droite du plan » — une
+linéaire, un poids sur `x` signifierait « préfère la droite du plan » : une
 règle qui ne généralise à rien. Une distance et un « ça me rapproche » sont la
 même information, exprimée là où elle est apprenable.
 
@@ -294,7 +294,7 @@ Le barème pèse plus lourd sur le résultat final que α et γ réunis.
 | Fantôme mangé | +200 … +1600 | chaîne du jeu d'origine |
 | Fruit | valeur du niveau | |
 | **Mort** | **−500** | **doit dominer** : sinon l'agent se suicide pour abréger une partie coûteuse |
-| **Pas de décision** | **−1** | **indispensable** : sinon il tourne devant une super-pastille sans jamais la manger — le *reward hacking* classique de Pac-Man |
+| **Pas de décision** | **−1** | **indispensable** : sinon il tourne devant une super-pastille sans jamais la manger, le *reward hacking* classique de Pac-Man |
 | Niveau terminé | +500 | |
 
 Le score brut du jeu **n'est pas repris comme récompense** : la vie
@@ -307,10 +307,10 @@ permet de prédire, donc du bruit pur pour l'apprentissage.
 
 L'énoncé demande que l'IA représente « à minima 70 % du projet ». Compté en
 lignes, ce dépôt ne l'atteint pas, et il vaut mieux le dire que le laisser
-compter : les modules d'IA — `ai/`, `rl/` et les quatre scripts de mesure —
+compter : les modules d'IA (`ai/`, `rl/` et les quatre scripts de mesure)
 font **47 % du Python**, 36 % avec le client web. Le reste est le moteur
 et l'API. Mais ils n'ont pas été écrits pour eux-mêmes : le moteur a été conçu
-comme un **banc d'essai** — déterministe, clonable, sans horloge — et c'est ce
+comme un **banc d'essai** (déterministe, clonable, sans horloge) et c'est ce
 qui a permis le protocole d'évaluation (§5), la recherche en ligne (§5.3) et le
 rejeu de chaque décision (§5.8). Sans terrain mesurable, aucun agent n'est
 évaluable. C'est la lecture que ce document défend ; le chiffre brut est là
@@ -338,7 +338,7 @@ Les tests ne se contentent pas de vérifier que le code s'exécute, ils
 
 Ce dernier test a une histoire instructive : il itérait sur une liste vide et
 passait donc systématiquement, **parce que le labyrinthe classique ne contient
-aucune impasse**. Il a été scindé en deux — un test qui *mesure* cette absence,
+aucune impasse**. Il a été scindé en deux : un test qui *mesure* cette absence,
 et un test du cul-de-sac joué sur un plan 11×7 construit exprès. Un test vert
 qui ne prouve rien est pire qu'un test absent : il rassure.
 
@@ -346,20 +346,20 @@ qui ne prouve rien est pire qu'un test absent : il rassure.
 
 ## 5. Métriques
 
-*(voir `results/campagne.json` — chiffres reproduits par
+*(voir `results/campagne.json` : chiffres reproduits par
 `python scripts/campagne_rl.py`)*
 
 <!-- RESULTATS -->
 
 Toutes les mesures ci-dessous viennent d'une seule commande
 (`python scripts/campagne_rl.py`), sur **100 parties par agent**, à
-**ε = 0**, sur des graines de la plage d'évaluation — jamais vues pendant les
+**ε = 0**, sur des graines de la plage d'évaluation, jamais vues pendant les
 3000 épisodes d'entraînement. Elles sont reproductibles à l'identique.
 
 *Ces tableaux sont générés par `scripts/injecter_resultats.py` depuis
 `results/campagne.json` : aucun chiffre n'est recopié à la main.*
 
-### 5.1 Un fantôme — l'agent atteint-il le plafond ?
+### 5.1 Un fantôme : l'agent atteint-il le plafond ?
 
 | Agent | Score médian | Écart-type | Min | Max | Victoires | Morts |
 |---|---:|---:|---:|---:|---:|---:|
@@ -367,7 +367,7 @@ Toutes les mesures ci-dessous viennent d'une seule commande
 | heuristique | 2870 | 895 | 50 | 3500 | 35% | 65% |
 | q-approxime | 2730 | 405 | 1030 | 3390 | 51% | 49% |
 
-### 5.2 Quatre fantômes — le jeu complet
+### 5.2 Quatre fantômes : le jeu complet
 
 | Agent | Score médian | Écart-type | Min | Max | Victoires | Morts |
 |---|---:|---:|---:|---:|---:|---:|
@@ -382,7 +382,7 @@ Et le témoin, entraîné directement à quatre fantômes sans passer par un :
 |---|---:|---:|---:|---:|---:|---:|
 | q-approxime | 2915 | 1136 | 340 | 5820 | 0% | 100% |
 
-Le curriculum **n'améliore donc pas le score** — il n'apporte qu'un peu de
+Le curriculum **n'améliore donc pas le score** : il n'apporte qu'un peu de
 régularité et quelques victoires. La recommandation initiale était bonne comme
 méthode (elle sépare « l'agent n'apprend pas » de « le problème est trop
 dur ») ; elle ne l'était pas comme gain de performance, et c'est la mesure qui
@@ -406,7 +406,7 @@ faible. C'est l'intérêt d'un modèle linéaire : **on lit la politique**.
 
 | Descripteur | Poids | Lecture |
 |---|---:|---|
-| `biais` | +1071.77 | constante — **sans effet sur les decisions** (identique pour toutes les actions) |
+| `biais` | +1071.77 | constante, **sans effet sur les decisions** (identique pour toutes les actions) |
 | `avancement` | -910.87 | prudence croissante en fin de partie |
 | `proximite_proie` | +461.08 | **chasse les fantomes effrayes** |
 | `proximite_chasseur` | -380.27 | **fuit les chasseurs** |
@@ -427,18 +427,18 @@ tableau se lisent a l'envers :
 - Deux descripteurs peuvent etre **colineaires**. Sur une case qui porte une
   pastille, `mange_pastille` vaut 1 *et* `proximite_pastille` vaut 1 : les
   deux poids se partagent le credit, et seule leur **somme** a un sens. Ici
-  elle reste positive — l'agent va bien manger.
+  elle reste positive : l'agent va bien manger.
 
 Ce que le tableau dit vraiment : l'agent a appris **la peur avant la
 gourmandise**. Fuir les chasseurs et l'encerclement pese plus lourd que
 n'importe quelle pastille, et chasser une proie effrayee pese plus encore. Ce
-sont exactement les trois priorites de l'heuristique ecrite a la main — sauf
+sont exactement les trois priorites de l'heuristique ecrite a la main, sauf
 que personne ne les lui a dites.
 
 
 ### 5.5 La courbe d'apprentissage (1 fantôme)
 
-Score médian par fenêtre de 500 épisodes, pendant l'entraînement — donc avec
+Score médian par fenêtre de 500 épisodes, pendant l'entraînement, donc avec
 l'exploration encore active, ce qui explique qu'il reste sous le score final.
 
 | Épisode | ε | Score médian |
@@ -466,26 +466,26 @@ graines, mêmes hyperparamètres : seul le jeu de descripteurs change.
 C'est le genre de résultat qu'un projet honnête doit publier tel quel. La
 question « faut-il donner plus d'information à l'agent ? » n'a pas de réponse
 évidente : plus de descripteurs, c'est plus de poids à estimer sur le même
-budget d'épisodes — et un modèle linéaire ne peut de toute façon pas composer
+budget d'épisodes, et un modèle linéaire ne peut de toute façon pas composer
 ces informations entre elles.
 
 ### 5.7 Les fantômes partaient toujours des mêmes cases
 
 Un angle mort du protocole, trouvé sur **une question de l'auteur** en
-relecture — « les positions des fantômes sont aléatoires ? » — à laquelle la
+relecture (« les positions des fantômes sont aléatoires ? ») à laquelle la
 réponse a été cherchée en **comptant** ce que les graines faisaient varier, au
 lieu de relire le code censé le produire : sur
 100 parties, l'évaluation ne produisait
 **1 seule configuration de
 départ des fantômes**. La graine ne resemait que la case de Pac-Man et l'errance
 en mode effrayé. La garde sur les graines protège donc contre la mémorisation
-d'une *partie*, pas contre la dépendance à une *configuration* — et rien dans
+d'une *partie*, pas contre la dépendance à une *configuration*, et rien dans
 les chiffres précédents ne permettait de trancher.
 
 Le test est court et **ne réentraîne rien** : les mêmes poids sont réévalués
 avec les quatre fantômes tirés au sort hors de la maison
 (100 configurations sur
-100 parties). Cette condition ne joue pas la même partie — les
+100 parties). Cette condition ne joue pas la même partie : les
 quatre fantômes y sont actifs dès le premier tick. On l'attendait plus dure ;
 elle est en réalité plus **facile**, parce que dispersés ils partent chacun vers
 son coin au lieu de sortir groupés du centre. C'est exactement pourquoi les
@@ -500,7 +500,7 @@ difficulté, quel qu'en soit le sens.
 | recherche | 4990 | 5890 | +900 | [+455, +1400] | **significatif** |
 
 **L'agent appris tient** : +130 points, intervalle
-[-300, +440] — il contient zéro, donc
+[-300, +440] : il contient zéro, donc
 l'écart est indiscernable du bruit d'échantillonnage. Sa politique ne dépend pas
 de la maison centrale : elle est **topologique**, comme ses descripteurs le
 laissaient espérer sans que personne ne l'ait vérifié. C'était la seule façon de
@@ -517,13 +517,15 @@ du centre.
 4% à
 0%. Sur
 100 parties cela représente une poignée de parties, trop peu
-pour en conclure quoi que ce soit — mais assez pour ne pas prétendre que la
+pour en conclure quoi que ce soit, mais assez pour ne pas prétendre que la
 condition dispersée lui est en tout point équivalente.
 
 *(mesure : `python scripts/fantomes_ailleurs.py` → `results/fantomes_ailleurs.json`,
 intervalles par bootstrap sur 2000 tirages, graine fixe)*
 
 <!-- FIN RESULTATS -->
+
+
 
 
 
@@ -540,13 +542,13 @@ python scripts/exporter_decisions.py     # puis ouvrir docs/decisions.html
 
 La page produite rejoue une partie et rend **chaque décision lisible** : le
 labyrinthe à cet instant, les directions envisagées, ce que chacune valait, et
-la décomposition terme à terme qui a tranché — en vert ce qui pousse à y
+la décomposition terme à terme qui a tranché : en vert ce qui pousse à y
 aller, en rouge ce qui retient.
 
 Elle met aussi en évidence quelque chose qu'aucun tableau de poids ne montre :
 un descripteur **identique pour toutes les directions** ne choisit rien, quel
 que soit son poids. Le biais est dans ce cas par construction, et
-`avancement` aussi — il décrit l'état, pas le coup. Sur les douze
+`avancement` aussi : il décrit l'état, pas le coup. Sur les douze
 descripteurs, deux ne participent donc jamais à un arbitrage. Ils sont sortis
 du chiffre affiché.
 
@@ -556,7 +558,7 @@ neurones (§3.4).
 
 ### 5.9 Apprendre ou recalculer
 
-L'agent de recherche ne sait rien, n'a rien appris, n'a aucun poids — et il
+L'agent de recherche ne sait rien, n'a rien appris, n'a aucun poids, et il
 gagne largement (§5.2). Le résultat n'est pas décevant pour l'apprentissage :
 il est **la mesure de ce que l'apprentissage achète**.
 
@@ -569,12 +571,12 @@ il est **la mesure de ce que l'apprentissage achète**.
 | Si les règles changent | à réentraîner | s'adapte seul |
 
 La recherche est meilleure ici **parce qu'elle a accès à un simulateur exact
-et gratuit**. C'est un luxe : dans presque toutes les applications réelles —
-un robot, un marché, un patient — simuler l'avenir est soit impossible, soit
+et gratuit**. C'est un luxe : dans presque toutes les applications réelles
+(un robot, un marché, un patient), simuler l'avenir est soit impossible, soit
 plus cher que d'agir. L'apprentissage existe précisément pour ces cas-là.
 
 Autrement dit, ce comparatif ne dit pas « la recherche gagne », il dit **« sur
-un terrain où l'on peut tout simuler, il ne faut pas apprendre »** — et la
+un terrain où l'on peut tout simuler, il ne faut pas apprendre »**, et la
 vraie question devient : dispose-t-on d'un tel terrain ?
 
 ---
@@ -586,7 +588,7 @@ détaillée dans le README (section « Usage IA »).
 
 ### 6.1 Ce qui a été utilisé
 
-**Claude Code** (Anthropic, modèles **Claude Opus 4.8** puis **Claude Opus 5** — le modèle exact figure dans le trailer de chaque commit), en ligne de
+**Claude Code** (Anthropic, modèles **Claude Opus 4.8** puis **Claude Opus 5** : le modèle exact figure dans le trailer de chaque commit), en ligne de
 commande, du 19/07/2026 au 21/08/2026. Aucun autre outil d'IA générative.
 
 L'usage est **total et assumé** : chaque commit du dépôt porte le
@@ -609,8 +611,8 @@ lignes mais de cadrer, arbitrer, éprouver et refuser.
 > vitesse, reproductibilité, nombre de points de décision. Dis-moi ce que ces
 > chiffres excluent comme approche. »
 
-A produit le chiffre structurant du projet — 34 points de décision sur 300
-cases — donc la décision par intersection, et l'exclusion du DQN sur pixels
+A produit le chiffre structurant du projet : 34 points de décision sur 300
+cases, donc la décision par intersection, et l'exclusion du DQN sur pixels
 (le moteur ne tourne « qu'à » 50 parties/s, insuffisant pour 100 000 épisodes).
 
 > « Le mouvement est saccadé quand je joue. »
@@ -625,7 +627,7 @@ A mené au constat mesuré de l'absence d'impasse et au plan construit exprès.
 
 > « Donne à l'agent la position de chaque fantôme et de la nourriture. »
 
-Le jeu de descripteurs `positions`, et le résultat négatif du §5.6 — moins bon
+Le jeu de descripteurs `positions`, et le résultat négatif du §5.6 : moins bon
 de 18 %, publié tel quel.
 
 > « Les positions des fantômes sont aléatoires ? »
@@ -645,7 +647,7 @@ Le jour du rendu : PDF manquant, CI absente, prérequis absents, critère des
   puis l'agent apprenant sont des décisions prises en cours de route.
 - **L'approche d'IA** : renforcement plutôt que non-supervisé strict.
 - **Les bugs trouvés en jouant, pas par les tests** : le jeu tournait à
-  48 cases/s (injouable) puis restait saccadé. Aucun test ne pouvait le voir —
+  48 cases/s (injouable) puis restait saccadé. Aucun test ne pouvait le voir,
   seul un humain, manette en main.
 - **Les deux résultats les plus importants du rendu viennent de questions
   humaines** (§5.6 et §5.7), pas d'une initiative de l'outil. L'outil a
@@ -703,7 +705,7 @@ python scripts/documentation_html.py     # docs/documentation.html -> Ctrl+P
 ```
 
 `--sans-entrainement` sur la première rejoue les mesures à partir des poids
-déjà présents dans `results/`, sans réapprendre — c'est aussi le contrôle que
+déjà présents dans `results/`, sans réapprendre : c'est aussi le contrôle que
 les poids publiés donnent bien les chiffres publiés.
 
 ---
@@ -715,11 +717,11 @@ les poids publiés donnent bien les chiffres publiés.
   isolément, sans planifier trois coups à l'avance. Il joue bien mieux que le
   hasard, il ne joue pas comme un humain.
 - **Les features sont écrites à la main.** C'est un choix (lisibilité), mais
-  cela veut dire que l'agent hérite de l'analyse humaine du problème — il
+  cela veut dire que l'agent hérite de l'analyse humaine du problème : il
   n'apprend pas *quoi regarder*, seulement *combien ça compte*.
 - **Un seul labyrinthe est mesuré.** Les poids appris devraient se transférer,
   puisque les features sont topologiques et non positionnelles. Le §5.7 en
-  vérifie une moitié — déplacer les quatre fantômes ne dégrade pas la politique —
+  vérifie une moitié : déplacer les quatre fantômes ne dégrade pas la politique,
   mais changer de *plan* reste non mesuré : c'est une autre question, et elle
   demanderait un second labyrinthe.
 - **Le rendu visuel n'a pas été inspecté image par image** ; il a été validé
@@ -728,15 +730,15 @@ les poids publiés donnent bien les chiffres publiés.
 ## 9. Pistes d'amélioration
 
 - **Un réseau à la place du modèle linéaire**, pour *croiser* les
-  descripteurs au lieu de les additionner — la limite que le §5.6 a rendue
+  descripteurs au lieu de les additionner : la limite que le §5.6 a rendue
   visible.
 - **Une recherche à budget de simulations (MCTS)** plutôt qu'à profondeur
   fixe, pour adapter le coût à la difficulté de chaque intersection.
-- **Un second labyrinthe**, pour mesurer le transfert des poids appris — le
+- **Un second labyrinthe**, pour mesurer le transfert des poids appris : le
   §5.7 n'en vérifie que la moitié.
 - Features apprises plutôt qu'écrites (auto-encodeur sur l'état local) : le
   non-supervisé retrouverait ici sa vraie place, en amont de la politique.
 - Niveaux multiples et vitesses croissantes, comme l'arcade.
 - Mode multijoueur, et fantômes « chasseurs » exploitant le vrai plus court
-  chemin (`pathfinding`) pour un mode difficile — ils cesseraient d'être
+  chemin (`pathfinding`) pour un mode difficile : ils cesseraient d'être
   myopes, donc battables.

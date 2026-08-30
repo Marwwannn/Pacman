@@ -235,7 +235,7 @@ class TestNiveaux:
 
         L'entite accumule sa vitesse et n'avance que lorsque l'accumulateur
         passe 1 : a 0,8 case/tick elle saute un tick sur cinq, et la pause est
-        cinq fois plus longue que le pas — l'oeil lit une saccade. En dessous
+        cinq fois plus longue que le pas : l'oeil lit une saccade. En dessous
         d'un tiers de case par tick, l'irregularite se noie dans le mouvement.
         """
         for niveau in (1, 10, 256):

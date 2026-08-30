@@ -3,7 +3,7 @@
 Le serveur n'apprend aucune regle du jeu ici : le pilote ne fait que CHOISIR
 une direction la ou un joueur humain l'aurait tapee, et le moteur fait le
 reste. Il reprend a l'identique la discipline de l'environnement
-d'entrainement (`rl/environment.py`) — decider aux intersections, suivre le
+d'entrainement (`rl/environment.py`) : decider aux intersections, suivre le
 couloir entre deux. C'est ce qui permet d'affirmer que l'agent que l'on
 regarde jouer dans le navigateur est exactement celui qui a ete mesure : un
 test le verifie case par case.

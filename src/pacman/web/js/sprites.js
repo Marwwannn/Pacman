@@ -2,7 +2,7 @@
  * Dessin des personnages et des objets.
  *
  * Tout est vectoriel : aucune image a charger, et le jeu reste net a toutes
- * les tailles. Chaque fonction recoit un centre en pixels — c'est le rendu
+ * les tailles. Chaque fonction recoit un centre en pixels : c'est le rendu
  * qui sait convertir une case en position a l'ecran, pas les sprites.
  */
 

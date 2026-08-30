@@ -4,7 +4,7 @@ La question posee : donner a l'agent la position de CHAQUE fantome et la
 repartition de la nourriture le rend-il meilleur qu'avec les douze quantites
 agregees ?
 
-Tout est tenu egal — memes graines d'entrainement, memes graines d'evaluation,
+Tout est tenu egal : memes graines d'entrainement, memes graines d'evaluation,
 memes hyperparametres, meme curriculum. Seul le jeu de descripteurs change.
 Sans cette egalite, l'ecart mesure ne voudrait rien dire.
 

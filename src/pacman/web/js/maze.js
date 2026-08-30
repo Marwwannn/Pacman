@@ -6,7 +6,7 @@
  * Redessiner 868 cases soixante fois par seconde n'apporterait rien.
  *
  * Les murs sont creux, comme sur la borne : un trait bleu suit la frontiere
- * entre le mur et le couloir. On l'obtient en deux passes — on remplit la case
+ * entre le mur et le couloir. On l'obtient en deux passes : on remplit la case
  * en bleu, puis on recreuse l'interieur en noir en ne reculant que des cotes
  * qui donnent sur un couloir. Les cotes partages entre deux murs ne reculent
  * pas : les cases voisines fusionnent, et le trait ne court que sur le bord
@@ -79,7 +79,7 @@ function peindreMur(ctx, grille, x, y) {
   const X = x * TILE;
   const Y = y * TILE;
 
-  // Passe 1 : la case entiere en bleu, arrondie a ses angles saillants —
+  // Passe 1 : la case entiere en bleu, arrondie a ses angles saillants :
   // ceux dont les deux cotes donnent sur un couloir.
   ctx.fillStyle = COULEUR_MUR;
   ctx.beginPath();

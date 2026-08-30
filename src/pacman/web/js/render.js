@@ -3,7 +3,7 @@
  *
  * Le decor est recopie depuis le canvas hors ecran, puis on empile ce qui
  * bouge. L'ordre compte : les pastilles d'abord, les personnages ensuite,
- * les gains de points par-dessus tout — un « 200 » cache par un fantome
+ * les gains de points par-dessus tout : un « 200 » cache par un fantome
  * serait illisible.
  */
 

@@ -97,7 +97,7 @@ class TestAuVolant:
 
         Meme agent, meme labyrinthe, aucune randomisation : la trajectoire de
         Pac-Man doit etre identique tick par tick entre la partie pilotee et
-        l'environnement de `rl/` — jusqu'a la mort, puisque l'environnement n'a
+        l'environnement de `rl/` : jusqu'a la mort, puisque l'environnement n'a
         qu'une vie.
         """
         trace_env: list[tuple[int, object]] = []
