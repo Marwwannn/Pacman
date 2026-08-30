@@ -53,6 +53,8 @@ a { color: var(--encre); text-decoration: underline; text-decoration-color: var(
 <p><strong>Documentation technique du projet</strong></p>
 <p>Module IA_PO : Projet d'Intelligence Artificielle Libre, Master 1, 2025-2026</p>
 <p>Dépôt : <a href="https://github.com/Marwwannn/Pacman">https://github.com/Marwwannn/Pacman</a></p>
+<p>Support oral en ligne :
+<a href="https://docs.google.com/presentation/d/1ykfCRB4OQPYf8w0sW2Sskm844TaiuC9IRnrmg_pgL1Q/edit?usp=sharing">https://docs.google.com/presentation/d/1ykfCRB4OQPYf8w0sW2Sskm844TaiuC9IRnrmg_pgL1Q/edit?usp=sharing</a></p>
 <hr />
 <h2 id="1-contexte-et-besoin">1. Contexte et besoin</h2>
 <h3 id="11-le-probleme">1.1 Le problème</h3>
@@ -1134,8 +1136,9 @@ document en HTML imprimable.</p>
 <h3 id="72-reproduire-les-chiffres-de-ce-document">7.2 Reproduire les chiffres de ce document</h3>
 <pre><code class="language-bash">python scripts/campagne_rl.py            # ~25 min : entraîne et mesure
 python scripts/comparer_descripteurs.py  # ~30 min : base contre positions
-python scripts/injecter_resultats.py     # réécrit le §5 et le support oral
+python scripts/injecter_resultats.py     # réécrit le §5 et le README
 python scripts/documentation_html.py     # docs/documentation.html -&gt; Ctrl+P
+python scripts/generer_presentation.py   # docs/presentation.pptx, le support oral
 </code></pre>
 <p><code>--sans-entrainement</code> sur la première rejoue les mesures à partir des poids
 déjà présents dans <code>results/</code>, sans réapprendre : c'est aussi le contrôle que

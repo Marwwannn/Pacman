@@ -600,6 +600,7 @@ sont traitées comme telles :
 - **Support oral** : [`docs/presentation.pptx`](docs/presentation.pptx)
   (17 diapositives avec captures du jeu, produit par
   `python scripts/generer_presentation.py` depuis `results/*.json` :
-  aucun chiffre recopié à la main ; s'importe tel quel dans Google Slides).
+  aucun chiffre recopié à la main), consultable en ligne sur
+  [Google Slides](https://docs.google.com/presentation/d/1ykfCRB4OQPYf8w0sW2Sskm844TaiuC9IRnrmg_pgL1Q/edit?usp=sharing).
 - **Script de la démo** : [`docs/demo.md`](docs/demo.md), chaque commande
   chronométrée.

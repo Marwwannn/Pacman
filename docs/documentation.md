@@ -6,6 +6,9 @@ Module IA_PO : Projet d'Intelligence Artificielle Libre, Master 1, 2025-2026
 
 Dépôt : <https://github.com/Marwwannn/Pacman>
 
+Support oral en ligne :
+<https://docs.google.com/presentation/d/1ykfCRB4OQPYf8w0sW2Sskm844TaiuC9IRnrmg_pgL1Q/edit?usp=sharing>
+
 ---
 
 ## 1. Contexte et besoin
@@ -700,8 +703,9 @@ Regarder l'IA jouer : http://127.0.0.1:8000/?ia=appris une fois le serveur lanc�
 ```bash
 python scripts/campagne_rl.py            # ~25 min : entraîne et mesure
 python scripts/comparer_descripteurs.py  # ~30 min : base contre positions
-python scripts/injecter_resultats.py     # réécrit le §5 et le support oral
+python scripts/injecter_resultats.py     # réécrit le §5 et le README
 python scripts/documentation_html.py     # docs/documentation.html -> Ctrl+P
+python scripts/generer_presentation.py   # docs/presentation.pptx, le support oral
 ```
 
 `--sans-entrainement` sur la première rejoue les mesures à partir des poids
